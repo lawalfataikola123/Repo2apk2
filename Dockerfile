@@ -2,14 +2,16 @@ FROM node:20-slim
 
 WORKDIR /app
 
-COPY server/package*.json ./server/
-RUN cd server && npm install
-
+# Install client dependencies and build
 COPY client/package*.json ./client/
-RUN cd client && npm install
+RUN cd client && npm install --legacy-peer-deps
 
 COPY client/ ./client/
 RUN cd client && npm run build
+
+# Install server dependencies
+COPY server/package*.json ./server/
+RUN cd server && npm install --only=production
 
 COPY server/ ./server/
 
