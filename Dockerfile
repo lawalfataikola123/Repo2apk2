@@ -9,7 +9,7 @@ COPY client/ ./client/
 RUN cd client && npm run build
 
 COPY server/package*.json ./server/
-RUN cd server && npm install --legacy-peer-deps --omit=dev
+RUN cd server && npm install --legacy-peer-deps
 
 COPY server/ ./server/
 RUN mkdir -p /app/builds /app/logs
