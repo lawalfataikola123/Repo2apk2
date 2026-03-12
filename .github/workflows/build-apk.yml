@@ -6,243 +6,54 @@ on:
       repo_url:
         description: 'GitHub Repository URL'
         required: true
-        default: 'https://github.com/username/repo'
-      build_type:
-        description: 'Build Type'
-        required: true
-        default: 'auto'
-        type: choice
-        options:
-          - auto
-          - gradle
-          - flutter
-          - react-native
 
 jobs:
   build-apk:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
+      - uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
 
       - name: Setup Android SDK
         run: |
-          sudo apt-get install -y wget unzip
-          wget -q https://dl.google.com/android/repository/commandlinetools-linux-10406996_latest.zip -O /tmp/cmdtools.zip
-          mkdir -p $HOME/android-sdk/cmdline-tools
-          unzip -q /tmp/cmdtools.zip -d /tmp/cmdtools
-          mv /tmp/cmdtools/cmdline-tools $HOME/android-sdk/cmdline-tools/latest
-          echo "ANDROID_HOME=$HOME/android-sdk" >> $GITHUB_ENV
-          echo "PATH=$PATH:$HOME/android-sdk/cmdline-tools/latest/bin:$HOME/android-sdk/platform-tools" >> $GITHUB_ENV
-          yes | $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses > /dev/null 2>&1 || true
-          $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+          wget -q https://dl.google.com/android/repository/commandlinetools-linux-10406996_latest.zip -O /tmp/cmd.zip
+          mkdir -p $HOME/android/cmdline-tools
+          unzip -q /tmp/cmd.zip -d /tmp/cmd
+          mv /tmp/cmd/cmdline-tools $HOME/android/cmdline-tools/latest
+          yes | $HOME/android/cmdline-tools/latest/bin/sdkmanager --licenses > /dev/null 2>&1 || true
+          $HOME/android/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+          echo "ANDROID_HOME=$HOME/android" >> $GITHUB_ENV
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.19.0'
           channel: 'stable'
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Clone Repository
+      - name: Clone and Build
         run: |
-          git clone --depth 1 ${{ github.event.inputs.repo_url }} /tmp/target-repo
-          ls /tmp/target-repo
-
-      - name: Detect Project Type
-        id: detect
-        run: |
-          if [ -f "/tmp/target-repo/pubspec.yaml" ]; then
-            echo "type=flutter" >> $GITHUB_OUTPUT
-            echo "Detected: Flutter"
-          elif [ -f "/tmp/target-repo/package.json" ] && [ -f "/tmp/target-repo/android/app/build.gradle" ]; then
-            echo "type=react-native" >> $GITHUB_OUTPUT
-            echo "Detected: React Native"
-          elif [ -f "/tmp/target-repo/android/app/build.gradle" ] || [ -f "/tmp/target-repo/app/build.gradle" ]; then
-            echo "type=gradle" >> $GITHUB_OUTPUT
-            echo "Detected: Native Android"
-          else
-            echo "type=unknown" >> $GITHUB_OUTPUT
-            echo "Unknown project type"
+          git clone --depth 1 ${{ github.event.inputs.repo_url }} /tmp/repo
+          cd /tmp/repo
+          if [ -f "pubspec.yaml" ]; then
+            flutter pub get
+            flutter build apk --release --no-tree-shake-icons
+            APK=$(find . -name "*.apk" | head -1)
+          elif [ -f "android/gradlew" ]; then
+            cd android && chmod +x gradlew
+            ./gradlew assembleRelease --no-daemon
+            APK=$(find . -name "*.apk" -path "*/release/*" | head -1)
+          elif [ -f "gradlew" ]; then
+            chmod +x gradlew
+            ./gradlew assembleRelease --no-daemon
+            APK=$(find . -name "*.apk" -path "*/release/*" | head -1)
           fi
+          echo "APK_PATH=/tmp/repo/$APK" >> $GITHUB_ENV
 
-      - name: Build Flutter APK
-        if: steps.detect.outputs.type == 'flutter'
-        run: |
-          cd /tmp/target-repo
-          flutter pub get
-          flutter build apk --release --no-tree-shake-icons
-          echo "APK_PATH=/tmp/target-repo/build/app/outputs/flutter-apk/app-release.apk" >> $GITHUB_ENV
-
-      - name: Build Gradle APK
-        if: steps.detect.outputs.type == 'gradle'
-        run: |
-          cd /tmp/target-repo
-          if [ -d "android" ]; then
-            cd android
-          fi
-          chmod +x gradlew
-          export ANDROID_HOME=$HOME/android-sdk
-          ./gradlew assembleRelease --no-daemon --stacktrace
-          APK=$(find . -name "*.apk" -path "*/release/*" | head -1)
-          echo "APK_PATH=$(pwd)/$APK" >> $GITHUB_ENV
-
-      - name: Build React Native APK
-        if: steps.detect.outputs.type == 'react-native'
-        run: |
-          cd /tmp/target-repo
-          npm install --legacy-peer-deps
-          cd android
-          chmod +x gradlew
-          export ANDROID_HOME=$HOME/android-sdk
-          ./gradlew assembleRelease --no-daemon
-          APK=$(find . -name "*.apk" -path "*/release/*" | head -1)
-          echo "APK_PATH=$(pwd)/$APK" >> $GITHUB_ENV
-
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
-          name: release-apk
+          name: app-release
           path: ${{ env.APK_PATH }}
           retention-days: 7
-
-      - name: Summary
-cat > .github/workflows/build-apk.yml << 'EOF'
-name: Build Android APK
-
-on:
-  workflow_dispatch:
-    inputs:
-      repo_url:
-        description: 'GitHub Repository URL'
-        required: true
-        default: 'https://github.com/username/repo'
-      build_type:
-        description: 'Build Type'
-        required: true
-        default: 'auto'
-        type: choice
-        options:
-          - auto
-          - gradle
-          - flutter
-          - react-native
-
-jobs:
-  build-apk:
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          java-version: '17'
-          distribution: 'temurin'
-
-      - name: Setup Android SDK
-        run: |
-          sudo apt-get install -y wget unzip
-          wget -q https://dl.google.com/android/repository/commandlinetools-linux-10406996_latest.zip -O /tmp/cmdtools.zip
-          mkdir -p $HOME/android-sdk/cmdline-tools
-          unzip -q /tmp/cmdtools.zip -d /tmp/cmdtools
-          mv /tmp/cmdtools/cmdline-tools $HOME/android-sdk/cmdline-tools/latest
-          echo "ANDROID_HOME=$HOME/android-sdk" >> $GITHUB_ENV
-          echo "PATH=$PATH:$HOME/android-sdk/cmdline-tools/latest/bin:$HOME/android-sdk/platform-tools" >> $GITHUB_ENV
-          yes | $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses > /dev/null 2>&1 || true
-          $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
-
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: '3.19.0'
-          channel: 'stable'
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Clone Repository
-        run: |
-          git clone --depth 1 ${{ github.event.inputs.repo_url }} /tmp/target-repo
-          ls /tmp/target-repo
-
-      - name: Detect Project Type
-        id: detect
-        run: |
-          if [ -f "/tmp/target-repo/pubspec.yaml" ]; then
-            echo "type=flutter" >> $GITHUB_OUTPUT
-            echo "Detected: Flutter"
-          elif [ -f "/tmp/target-repo/package.json" ] && [ -f "/tmp/target-repo/android/app/build.gradle" ]; then
-            echo "type=react-native" >> $GITHUB_OUTPUT
-            echo "Detected: React Native"
-          elif [ -f "/tmp/target-repo/android/app/build.gradle" ] || [ -f "/tmp/target-repo/app/build.gradle" ]; then
-            echo "type=gradle" >> $GITHUB_OUTPUT
-            echo "Detected: Native Android"
-          else
-            echo "type=unknown" >> $GITHUB_OUTPUT
-            echo "Unknown project type"
-          fi
-
-      - name: Build Flutter APK
-        if: steps.detect.outputs.type == 'flutter'
-        run: |
-          cd /tmp/target-repo
-          flutter pub get
-          flutter build apk --release --no-tree-shake-icons
-          echo "APK_PATH=/tmp/target-repo/build/app/outputs/flutter-apk/app-release.apk" >> $GITHUB_ENV
-
-      - name: Build Gradle APK
-        if: steps.detect.outputs.type == 'gradle'
-        run: |
-          cd /tmp/target-repo
-          if [ -d "android" ]; then
-            cd android
-          fi
-          chmod +x gradlew
-          export ANDROID_HOME=$HOME/android-sdk
-          ./gradlew assembleRelease --no-daemon --stacktrace
-          APK=$(find . -name "*.apk" -path "*/release/*" | head -1)
-          echo "APK_PATH=$(pwd)/$APK" >> $GITHUB_ENV
-
-      - name: Build React Native APK
-        if: steps.detect.outputs.type == 'react-native'
-        run: |
-          cd /tmp/target-repo
-          npm install --legacy-peer-deps
-          cd android
-          chmod +x gradlew
-          export ANDROID_HOME=$HOME/android-sdk
-          ./gradlew assembleRelease --no-daemon
-          APK=$(find . -name "*.apk" -path "*/release/*" | head -1)
-          echo "APK_PATH=$(pwd)/$APK" >> $GITHUB_ENV
-
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: release-apk
-          path: ${{ env.APK_PATH }}
-          retention-days: 7
-
-      - name: Summary
-        run: |
-          echo "## ✅ Build Complete!" >> $GITHUB_STEP_SUMMARY
-          echo "**Repo:** ${{ github.event.inputs.repo_url }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Type:** ${{ steps.detect.outputs.type }}" >> $GITHUB_STEP_SUMMARY
-          echo "Download APK from Artifacts section above" >> $GITHUB_STEP_SUMMARY
