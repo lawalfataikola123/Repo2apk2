@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       repo_url:
-        description: 'GitHub Repository URL to build APK from'
+        description: 'GitHub Repository URL'
         required: true
         default: 'https://github.com/ankidroid/Anki-Android'
 
@@ -15,53 +15,33 @@ jobs:
     steps:
       - uses: actions/setup-java@v4
         with:
-          java-version: "21"
+          java-version: '21'
           distribution: 'temurin'
 
       - name: Setup Android SDK
-        run: |
-          wget -q https://dl.google.com/android/repository/commandlinetools-linux-10406996_latest.zip -O /tmp/cmd.zip
-          mkdir -p $HOME/android/cmdline-tools
-          unzip -q /tmp/cmd.zip -d /tmp/cmd
-          mv /tmp/cmd/cmdline-tools $HOME/android/cmdline-tools/latest
-          yes | $HOME/android/cmdline-tools/latest/bin/sdkmanager --licenses > /dev/null 2>&1 || true
-          $HOME/android/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
-          echo "ANDROID_HOME=$HOME/android" >> $GITHUB_ENV
+        uses: android-actions/setup-android@v3
 
       - name: Clone Target Repo
         run: |
-          echo "Cloning: ${{ github.event.inputs.repo_url }}"
           git clone --depth 1 "${{ github.event.inputs.repo_url }}" /tmp/target
-          echo "=== Files in repo ==="
           ls /tmp/target
 
       - name: Build APK
         run: |
           cd /tmp/target
-          if [ -f "pubspec.yaml" ]; then
-            echo "Flutter project detected"
-            flutter pub get
-            flutter build apk --release --no-tree-shake-icons
-            find . -name "*.apk" -exec cp {} /tmp/output.apk \;
+          if [ -f "gradlew" ]; then
+            chmod +x gradlew
+            ./gradlew assembleDebug --no-daemon
           elif [ -f "android/gradlew" ]; then
-            echo "Android project detected"
             cd android
             chmod +x gradlew
-            export ANDROID_HOME=$HOME/android
             ./gradlew assembleDebug --no-daemon
-            find . -name "*.apk" -exec cp {} /tmp/output.apk \; 2>/dev/null || true
-          elif [ -f "gradlew" ]; then
-            echo "Gradle project detected"
-            chmod +x gradlew
-            export ANDROID_HOME=$HOME/android
-            ./gradlew assembleDebug --no-daemon
-            find . -name "*.apk" -exec cp {} /tmp/output.apk \; 2>/dev/null || true
           fi
-          ls -la /tmp/output.apk
+          find /tmp/target -name "*.apk" | head -5
+          find /tmp/target -name "*.apk" -exec cp {} /tmp/app.apk \; 2>/dev/null || true
 
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
-          name: app-release-apk
-          path: /tmp/output.apk
+          name: app-apk
+          path: /tmp/app.apk
           retention-days: 7
