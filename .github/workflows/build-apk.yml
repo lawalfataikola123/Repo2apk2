@@ -6,7 +6,6 @@ on:
       repo_url:
         description: 'GitHub Repository URL'
         required: true
-        default: 'https://github.com/ankidroid/Anki-Android'
 
 jobs:
   build-apk:
@@ -22,23 +21,21 @@ jobs:
         uses: android-actions/setup-android@v3
 
       - name: Clone Target Repo
-        run: |
-          git clone --depth 1 "${{ github.event.inputs.repo_url }}" /tmp/target
-          ls /tmp/target
+        run: git clone --depth 1 "${{ github.event.inputs.repo_url }}" /tmp/target
 
       - name: Build APK
         run: |
           cd /tmp/target
+          export JAVA_HOME=$(dirname $(dirname $(readlink -f $(which java))))
+          echo "Java: $(java -version 2>&1 | head -1)"
           if [ -f "gradlew" ]; then
             chmod +x gradlew
             ./gradlew assembleDebug --no-daemon
           elif [ -f "android/gradlew" ]; then
-            cd android
-            chmod +x gradlew
+            cd android && chmod +x gradlew
             ./gradlew assembleDebug --no-daemon
           fi
-          find /tmp/target -name "*.apk" | head -5
-          find /tmp/target -name "*.apk" -exec cp {} /tmp/app.apk \; 2>/dev/null || true
+          find /tmp/target -name "*.apk" -exec cp {} /tmp/app.apk \; 2>/dev/null
 
       - uses: actions/upload-artifact@v4
         with:
