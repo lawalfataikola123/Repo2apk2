@@ -1,1 +1,0 @@
-const express=require('express');const app=express();app.use(express.json());app.get('/',(_,r)=>r.send('<h1 style=color:green>WORKING v2</h1>'));app.listen(process.env.PORT||8080,()=>console.log('OK'));
