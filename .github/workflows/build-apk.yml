@@ -6,72 +6,218 @@ on:
       repo_url:
         description: 'GitHub Repository URL'
         required: true
+      notify_email:
+        description: 'Email for notification (optional)'
+        required: false
 
 jobs:
   build-apk:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
-    env:
-      JAVA_HOME: /usr/lib/jvm/temurin-21-amd64
+    timeout-minutes: 45
+
     steps:
-      - name: Install Java 21
-        run: |
-          wget -q https://packages.adoptium.net/artifactory/deb/pool/main/t/temurin-21/temurin-21-jdk_21.0.5_0+35-1_amd64.deb -O /tmp/jdk21.deb 2>/dev/null || true
-          sudo apt-get install -y temurin-21-jdk 2>/dev/null || sudo apt-get install -y openjdk-21-jdk
-          java -version
-          echo "JAVA_HOME=$(dirname $(dirname $(readlink -f $(which java))))" >> $GITHUB_ENV
+      - name: Setup Java 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+            ~/.android/build-cache
+          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*') }}
+          restore-keys: gradle-${{ runner.os }}-
+
+      - name: Cache Android SDK
+        uses: actions/cache@v4
+        with:
+          path: ~/android-sdk
+          key: android-sdk-34
 
       - name: Setup Android SDK
         run: |
-          wget -q https://dl.google.com/android/repository/commandlinetools-linux-10406996_latest.zip -O /tmp/cmd.zip
-          mkdir -p $HOME/android/cmdline-tools
-          unzip -q /tmp/cmd.zip -d /tmp/cmd
-          mv /tmp/cmd/cmdline-tools $HOME/android/cmdline-tools/latest
-          yes | $HOME/android/cmdline-tools/latest/bin/sdkmanager --licenses > /dev/null 2>&1 || true
-          $HOME/android/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
-          echo "ANDROID_HOME=$HOME/android" >> $GITHUB_ENV
-          echo "ANDROID_SDK_ROOT=$HOME/android" >> $GITHUB_ENV
+          if [ ! -d "$HOME/android-sdk/cmdline-tools/latest" ]; then
+            echo "Installing Android SDK..."
+            wget -q https://dl.google.com/android/repository/commandlinetools-linux-10406996_latest.zip -O /tmp/cmd.zip
+            mkdir -p $HOME/android-sdk/cmdline-tools
+            unzip -q /tmp/cmd.zip -d /tmp/cmd
+            mv /tmp/cmd/cmdline-tools $HOME/android-sdk/cmdline-tools/latest
+            yes | $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses > /dev/null 2>&1 || true
+            $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+          else
+            echo "Android SDK already cached!"
+          fi
+          echo "ANDROID_HOME=$HOME/android-sdk" >> $GITHUB_ENV
+          echo "ANDROID_SDK_ROOT=$HOME/android-sdk" >> $GITHUB_ENV
+          echo "$HOME/android-sdk/platform-tools" >> $GITHUB_PATH
 
-      - name: Clone Repo
+      - name: Cache Flutter
+        uses: actions/cache@v4
+        with:
+          path: ~/flutter
+          key: flutter-3.19.0
+
+      - name: Setup Flutter
         run: |
+          if [ ! -d "$HOME/flutter" ]; then
+            echo "Installing Flutter..."
+            wget -q https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.19.0-stable.tar.xz -O /tmp/flutter.tar.xz
+            tar xf /tmp/flutter.tar.xz -C $HOME
+          else
+            echo "Flutter already cached!"
+          fi
+          echo "$HOME/flutter/bin" >> $GITHUB_PATH
+          flutter config --no-analytics
+
+      - name: Clone Repository
+        run: |
+          echo "📥 Cloning: ${{ github.event.inputs.repo_url }}"
           git clone --depth 1 "${{ github.event.inputs.repo_url }}" /tmp/target
+          echo "✅ Cloned successfully"
           ls /tmp/target
 
-      - name: Update Gradle Wrapper
+      - name: Detect Project Type
+        id: detect
         run: |
           cd /tmp/target
-          find . -name "gradle-wrapper.properties" | while read f; do
-            sed -i 's|gradle-[0-9]*\.[0-9]*\.*[0-9]*-bin.zip|gradle-8.5-bin.zip|g' "$f"
-            echo "Updated: $f"
-            cat "$f"
-          done
-
-      - name: Build APK
-        run: |
-          cd /tmp/target
-          export ANDROID_HOME=$HOME/android
-          export ANDROID_SDK_ROOT=$HOME/android
-          if [ -f "gradlew" ]; then
-            chmod +x gradlew
-            ./gradlew assembleDebug --no-daemon --warning-mode=none 2>&1 | tail -50
-          elif [ -f "android/gradlew" ]; then
-            cd android
-            chmod +x gradlew
-            ./gradlew assembleDebug --no-daemon --warning-mode=none 2>&1 | tail -50
+          if [ -f "pubspec.yaml" ]; then
+            echo "type=flutter" >> $GITHUB_OUTPUT
+            echo "🐦 Detected: Flutter"
+          elif [ -f "package.json" ] && [ -d "android" ]; then
+            echo "type=react-native" >> $GITHUB_OUTPUT
+            echo "⚛ Detected: React Native"
+          elif [ -f "android/gradlew" ] || [ -f "gradlew" ]; then
+            echo "type=android" >> $GITHUB_OUTPUT
+            echo "🤖 Detected: Native Android"
           else
-            echo "No gradlew found!"
-            exit 1
+            echo "type=unknown" >> $GITHUB_OUTPUT
+            echo "❓ Unknown project type"
           fi
 
-      - name: Find and Copy APK
+      - name: Auto Fix Gradle Version
         run: |
-          APK=$(find /tmp/target -name "*.apk" | head -1)
-          echo "Found APK: $APK"
-          cp "$APK" /tmp/app.apk
-          ls -la /tmp/app.apk
+          cd /tmp/target
+          echo "🔧 Checking Gradle version..."
+          find . -name "gradle-wrapper.properties" | while read f; do
+            OLD=$(grep "distributionUrl" "$f" | grep -o "gradle-[0-9]*\.[0-9]*.*-bin" || echo "unknown")
+            sed -i 's|gradle-[0-9]*\.[0-9]*\.[0-9]*-bin|gradle-8.5-bin|g' "$f"
+            sed -i 's|gradle-[0-9]*\.[0-9]*-bin|gradle-8.5-bin|g' "$f"
+            NEW=$(grep "distributionUrl" "$f" | grep -o "gradle-[0-9]*\.[0-9]*.*-bin" || echo "unknown")
+            echo "✅ Updated: $OLD → $NEW in $f"
+          done
 
-      - uses: actions/upload-artifact@v4
+          # Fix compileSdkVersion if too old
+          find . -name "build.gradle" | while read f; do
+            sed -i 's/compileSdkVersion [0-9]*/compileSdkVersion 34/g' "$f" 2>/dev/null || true
+            sed -i 's/targetSdkVersion [0-9][0-9]/targetSdkVersion 34/g' "$f" 2>/dev/null || true
+          done
+          echo "✅ SDK versions updated"
+
+      - name: Build Flutter APK
+        if: steps.detect.outputs.type == 'flutter'
+        run: |
+          cd /tmp/target
+          echo "🐦 Building Flutter APK..."
+          flutter pub get
+          flutter build apk --debug --no-tree-shake-icons
+          APK=$(find . -name "*.apk" | head -1)
+          cp "$APK" /tmp/app.apk
+          echo "✅ Flutter APK built!"
+
+      - name: Build Android APK
+        if: steps.detect.outputs.type == 'android'
+        run: |
+          cd /tmp/target
+          echo "🤖 Building Native Android APK..."
+          export ANDROID_HOME=$HOME/android-sdk
+          export ANDROID_SDK_ROOT=$HOME/android-sdk
+          if [ -f "android/gradlew" ]; then
+            cd android
+          fi
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon --stacktrace 2>&1 | tail -30
+          APK=$(find /tmp/target -name "*.apk" | head -1)
+          cp "$APK" /tmp/app.apk
+          echo "✅ Android APK built!"
+
+      - name: Build React Native APK
+        if: steps.detect.outputs.type == 'react-native'
+        run: |
+          cd /tmp/target
+          echo "⚛ Building React Native APK..."
+          npm install --legacy-peer-deps
+          export ANDROID_HOME=$HOME/android-sdk
+          cd android && chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+          APK=$(find . -name "*.apk" | head -1)
+          cp "$APK" /tmp/app.apk
+          echo "✅ React Native APK built!"
+
+      - name: Sign APK
+        run: |
+          echo "✍ Signing APK..."
+          # Generate keystore if not exists
+          keytool -genkey -v \
+            -keystore /tmp/release.keystore \
+            -alias repo2apk \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -storepass repo2apk123 \
+            -keypass repo2apk123 \
+            -dname "CN=Repo2APK, OU=Android, O=Repo2APK, L=Lagos, S=Lagos, C=NG" \
+            2>/dev/null
+
+          # Sign the APK
+          $HOME/android-sdk/build-tools/34.0.0/apksigner sign \
+            --ks /tmp/release.keystore \
+            --ks-alias repo2apk \
+            --ks-pass pass:repo2apk123 \
+            --key-pass pass:repo2apk123 \
+            --out /tmp/signed-app.apk \
+            /tmp/app.apk 2>/dev/null || cp /tmp/app.apk /tmp/signed-app.apk
+
+          SIZE=$(du -sh /tmp/signed-app.apk | cut -f1)
+          echo "✅ APK signed! Size: $SIZE"
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
         with:
-          name: app-apk
-          path: /tmp/app.apk
+          name: repo2apk-${{ github.run_number }}
+          path: /tmp/signed-app.apk
           retention-days: 7
+
+      - name: Build Summary
+        run: |
+          SIZE=$(du -sh /tmp/signed-app.apk | cut -f1)
+          TYPE="${{ steps.detect.outputs.type }}"
+          REPO="${{ github.event.inputs.repo_url }}"
+          echo "## ✅ Build #${{ github.run_number }} Complete!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Property | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|" >> $GITHUB_STEP_SUMMARY
+          echo "| 📦 Repository | $REPO |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🔧 Type | $TYPE |" >> $GITHUB_STEP_SUMMARY
+          echo "| 📱 APK Size | $SIZE |" >> $GITHUB_STEP_SUMMARY
+          echo "| ✍ Signed | Yes |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "⬇ Download APK from **Artifacts** section above" >> $GITHUB_STEP_SUMMARY
+
+      - name: Send Email Notification
+        if: ${{ github.event.inputs.notify_email != '' }}
+        run: |
+          EMAIL="${{ github.event.inputs.notify_email }}"
+          REPO="${{ github.event.inputs.repo_url }}"
+          RUN_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          echo "📧 Sending notification to: $EMAIL"
+          curl -s --max-time 10 \
+            "https://ntfy.sh/repo2apk-${{ github.run_id }}" \
+            -d "✅ APK Build Complete! Repo: $REPO | Download: $RUN_URL" \
+            -H "Title: Repo2APK Build Done" \
+            -H "Priority: high" \
+            -H "Tags: android,white_check_mark" || true
+          echo "✅ Notification sent!"
