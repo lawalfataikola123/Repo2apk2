@@ -71,8 +71,13 @@ jobs:
           allprojects { repositories { google(); mavenCentral() } }
           EOF
 
+          cat > /tmp/htmlapp/gradle.properties << EOF
+          android.useAndroidX=true
+          android.enableJetifier=true
+          EOF
+
           cat > /tmp/htmlapp/gradle/wrapper/gradle-wrapper.properties << EOF
-          distributionUrl=https\://services.gradle.org/distributions/gradle-8.5-bin.zip
+          distributionUrl=https\://services.gradle.org/distributions/gradle-8.7-bin.zip
           EOF
 
           cat > /tmp/htmlapp/app/build.gradle << EOF
@@ -141,7 +146,7 @@ jobs:
         run: |
           cd /tmp/htmlapp
           export ANDROID_HOME=$HOME/android-sdk
-          gradle assembleDebug --no-daemon
+          gradle assembleDebug --no-daemon -Pandroid.useAndroidX=true -Pandroid.enableJetifier=true
           find . -name "*.apk" -exec cp {} /tmp/html-app.apk \;
 
       - name: Upload APK

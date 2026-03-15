@@ -58,13 +58,11 @@ jobs:
           mkdir -p /tmp/webviewapp
           cd /tmp/webviewapp
 
-          # settings.gradle
           cat > settings.gradle << EOF
           rootProject.name = "WebViewApp"
           include ':app'
           EOF
 
-          # root build.gradle
           cat > build.gradle << EOF
           buildscript {
               repositories { google(); mavenCentral() }
@@ -75,20 +73,17 @@ jobs:
           }
           EOF
 
-          # gradle wrapper
           mkdir -p gradle/wrapper
           cat > gradle/wrapper/gradle-wrapper.properties << EOF
-          distributionUrl=https\://services.gradle.org/distributions/gradle-8.5-bin.zip
+          distributionUrl=https\://services.gradle.org/distributions/gradle-8.7-bin.zip
           EOF
 
-          # gradlew
           cat > gradlew << 'GRADLEW'
           #!/bin/sh
           exec gradle "$@"
           GRADLEW
           chmod +x gradlew
 
-          # app/build.gradle
           mkdir -p app/src/main/java/$PKG_PATH
           mkdir -p app/src/main/res/layout
           mkdir -p app/src/main/res/values
@@ -116,7 +111,6 @@ jobs:
           }
           EOF
 
-          # AndroidManifest.xml
           cat > app/src/main/AndroidManifest.xml << EOF
           <?xml version="1.0" encoding="utf-8"?>
           <manifest xmlns:android="http://schemas.android.com/apk/res/android">
@@ -139,7 +133,6 @@ jobs:
           </manifest>
           EOF
 
-          # MainActivity.java
           cat > app/src/main/java/$PKG_PATH/MainActivity.java << EOF
           package $PKG;
           import android.app.Activity;
@@ -172,7 +165,6 @@ jobs:
           }
           EOF
 
-          # colors.xml
           cat > app/src/main/res/values/colors.xml << EOF
           <?xml version="1.0" encoding="utf-8"?>
           <resources>
@@ -180,7 +172,6 @@ jobs:
           </resources>
           EOF
 
-          # styles.xml
           cat > app/src/main/res/values/styles.xml << EOF
           <?xml version="1.0" encoding="utf-8"?>
           <resources>
@@ -190,8 +181,6 @@ jobs:
           </resources>
           EOF
 
-          echo "✅ WebView app created for: $URL"
-
       - name: Build APK
         run: |
           cd /tmp/webviewapp
@@ -199,7 +188,7 @@ jobs:
           export ANDROID_SDK_ROOT=$HOME/android-sdk
           gradle assembleDebug --no-daemon -Pandroid.useAndroidX=true -Pandroid.enableJetifier=true
           find . -name "*.apk" -exec cp {} /tmp/webview-app.apk \;
-          echo "✅ APK built! Size: $(du -sh /tmp/webview-app.apk | cut -f1)"
+          echo "✅ APK built!"
 
       - name: Sign APK
         run: |
