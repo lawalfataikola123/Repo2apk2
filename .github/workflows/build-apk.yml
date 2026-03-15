@@ -1,1 +1,50 @@
-# paste the YAML above exactly
+name: Build Android APK
+
+on:
+  workflow_dispatch:
+    inputs:
+      repo_url:
+        description: 'GitHub Repository URL'
+        required: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Clone repo
+        run: git clone --depth 1 "${{ github.event.inputs.repo_url }}" /tmp/app
+
+      - name: Force Gradle 8.5 and enable AndroidX
+        run: |
+          cd /tmp/app
+          # Overwrite every gradle-wrapper.properties
+          find . -name "gradle-wrapper.properties" -exec sh -c 'echo "distributionUrl=https\\://services.gradle.org/distributions/gradle-8.5-bin.zip" > {}' \;
+          # Create or update gradle.properties
+          PROP_FILE=$(find . -name "gradle.properties" -type f | head -1)
+          if [ -z "$PROP_FILE" ]; then
+            if [ -d "android" ]; then
+              PROP_FILE="android/gradle.properties"
+            else
+              PROP_FILE="gradle.properties"
+            fi
+          fi
+          echo "android.useAndroidX=true" >> "$PROP_FILE"
+          echo "android.enableJetifier=true" >> "$PROP_FILE"
+
+      - name: Build APK
+        run: |
+          cd /tmp/app
+          if [ -d "android" ]; then cd android; fi
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug
+          path: /tmp/app/**/*.apk
