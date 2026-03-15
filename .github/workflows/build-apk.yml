@@ -33,7 +33,7 @@ jobs:
       - name: Clone repository
         run: git clone --depth 1 "${{ github.event.inputs.repo_url }}" /tmp/app
 
-      # 🔧 FORCE GRADLE 8.5 – THIS IS THE KEY FIX
+      # 🔧 CRITICAL FIX: Force Gradle 8.5 and enable AndroidX
       - name: Force Gradle 8.5 and enable AndroidX
         run: |
           cd /tmp/app
