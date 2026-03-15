@@ -197,7 +197,7 @@ jobs:
           cd /tmp/webviewapp
           export ANDROID_HOME=$HOME/android-sdk
           export ANDROID_SDK_ROOT=$HOME/android-sdk
-          gradle assembleDebug --no-daemon
+          gradle assembleDebug --no-daemon -Pandroid.useAndroidX=true -Pandroid.enableJetifier=true
           find . -name "*.apk" -exec cp {} /tmp/webview-app.apk \;
           echo "✅ APK built! Size: $(du -sh /tmp/webview-app.apk | cut -f1)"
 
