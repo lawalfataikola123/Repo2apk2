@@ -16,25 +16,13 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Check Java version
-        run: java -version
-
       - name: Clone repository
         run: git clone --depth 1 "${{ github.event.inputs.repo_url }}" /tmp/app
 
-      - name: 🔧 FORCE GRADLE 8.5 AND ENABLE ANDROIDX (with debug)
+      - name: Force Gradle 8.5 and enable AndroidX
         run: |
           cd /tmp/app
-          echo "=== BEFORE FIX: gradle-wrapper.properties files ==="
-          find . -name "gradle-wrapper.properties" -exec cat {} \;
-
-          # Overwrite every gradle-wrapper.properties with Gradle 8.5
           find . -name "gradle-wrapper.properties" -exec sh -c 'echo "distributionUrl=https\\://services.gradle.org/distributions/gradle-8.5-bin.zip" > {}' \;
-
-          echo "=== AFTER FIX: gradle-wrapper.properties files ==="
-          find . -name "gradle-wrapper.properties" -exec cat {} \;
-
-          # Handle gradle.properties for AndroidX
           PROP_FILE=$(find . -name "gradle.properties" -type f | head -1)
           if [ -z "$PROP_FILE" ]; then
             if [ -d "android" ]; then
@@ -42,35 +30,16 @@ jobs:
             else
               PROP_FILE="gradle.properties"
             fi
-            touch "$PROP_FILE"
           fi
-
-          echo "=== BEFORE AndroidX: content of $PROP_FILE ==="
-          cat "$PROP_FILE" 2>/dev/null || echo "(file empty or missing)"
-
-          # Add AndroidX properties (avoid duplicates)
-          if ! grep -q "^android.useAndroidX=" "$PROP_FILE"; then
-            echo "android.useAndroidX=true" >> "$PROP_FILE"
-          fi
-          if ! grep -q "^android.enableJetifier=" "$PROP_FILE"; then
-            echo "android.enableJetifier=true" >> "$PROP_FILE"
-          fi
-
-          echo "=== AFTER AndroidX: content of $PROP_FILE ==="
-          cat "$PROP_FILE"
-
-      - name: Verify Gradle version
-        run: |
-          cd /tmp/app
-          if [ -d "android" ]; then cd android; fi
-          chmod +x gradlew
-          ./gradlew --version
+          echo "android.useAndroidX=true" >> "$PROP_FILE"
+          echo "android.enableJetifier=true" >> "$PROP_FILE"
 
       - name: Build debug APK
         run: |
           cd /tmp/app
           if [ -d "android" ]; then cd android; fi
-          ./gradlew assembleDebug --no-daemon
+          chmod +x gradlew
+          ./gradlew assembleDebug -Pandroid.useAndroidX=true -Pandroid.enableJetifier=true
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
