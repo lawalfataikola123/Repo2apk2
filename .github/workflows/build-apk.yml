@@ -1,1 +1,73 @@
-# PASTE THE ENTIRE CORRECTED YAML HERE (from the previous message)
+name: Build Android APK
+
+on:
+  workflow_dispatch:
+    inputs:
+      repo_url:
+        description: 'GitHub Repository URL'
+        required: true
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Setup Android SDK
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget unzip
+          mkdir -p $HOME/android-sdk/cmdline-tools
+          wget -q https://dl.google.com/android/repository/commandlinetools-linux-10406996_latest.zip -O /tmp/cmd.zip
+          unzip -q /tmp/cmd.zip -d /tmp/cmd
+          mv /tmp/cmd/cmdline-tools $HOME/android-sdk/cmdline-tools/latest
+          yes | $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses > /dev/null 2>&1 || true
+          $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+          echo "ANDROID_HOME=$HOME/android-sdk" >> $GITHUB_ENV
+          echo "$HOME/android-sdk/platform-tools" >> $GITHUB_PATH
+          echo "$HOME/android-sdk/build-tools/34.0.0" >> $GITHUB_PATH
+
+      - name: Clone repository
+        run: git clone --depth 1 "${{ github.event.inputs.repo_url }}" /tmp/app
+
+      # 🔧 FORCE GRADLE 8.5 – THIS IS THE KEY FIX
+      - name: Force Gradle 8.5 and enable AndroidX
+        run: |
+          cd /tmp/app
+          # Force Gradle 8.5 in every gradle-wrapper.properties
+          find . -name "gradle-wrapper.properties" | while read f; do
+            echo "distributionUrl=https\\://services.gradle.org/distributions/gradle-8.5-bin.zip" > "$f"
+            echo "✅ Forced Gradle 8.5 in $f"
+          done
+          # Ensure gradle.properties exists and contains android.useAndroidX=true
+          if [ -d "android" ]; then
+            PROP_FILE="android/gradle.properties"
+          else
+            PROP_FILE="gradle.properties"
+          fi
+          touch "$PROP_FILE"
+          if ! grep -q "^android.useAndroidX=" "$PROP_FILE"; then
+            echo "android.useAndroidX=true" >> "$PROP_FILE"
+          fi
+          if ! grep -q "^android.enableJetifier=" "$PROP_FILE"; then
+            echo "android.enableJetifier=true" >> "$PROP_FILE"
+          fi
+          echo "✅ AndroidX enabled in $PROP_FILE"
+
+      - name: Build debug APK
+        run: |
+          cd /tmp/app
+          if [ -d "android" ]; then
+            cd android
+          fi
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug
+          path: /tmp/app/**/*.apk
