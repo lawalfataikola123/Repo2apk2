@@ -68,7 +68,7 @@ jobs:
           cat > build.gradle << EOF
           buildscript {
               repositories { google(); mavenCentral() }
-              dependencies { classpath 'com.android.tools.build:gradle:8.1.0' }
+              dependencies { classpath 'com.android.tools.build:gradle:7.1.0' }
           }
           allprojects {
               repositories { google(); mavenCentral() }
@@ -78,7 +78,7 @@ jobs:
           # gradle wrapper
           mkdir -p gradle/wrapper
           cat > gradle/wrapper/gradle-wrapper.properties << EOF
-          distributionUrl=https\://services.gradle.org/distributions/gradle-8.5-bin.zip
+          distributionUrl=https\://services.gradle.org/distributions/gradle-7.6-bin.zip
           EOF
 
           # gradlew
