@@ -1,0 +1,39 @@
+name: GitHub to Live URL
+
+# Trigger: Manual or when you push to main
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "main" ]
+
+# Permissions needed to deploy to Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      # 1. Checkout the code from your repository
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # 2. Setup Pages (Prepares the environment)
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      # 3. Upload files to be hosted
+      # This takes everything in your repo and prepares it for hosting
+      - name: Upload Artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          # Upload the entire root directory
+          path: '.'
+
+      # 4. Deploy to GitHub Pages (Creates the Live URL)
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
