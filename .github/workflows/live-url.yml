@@ -1,39 +1,48 @@
+
 name: GitHub to Live URL
 
-# Trigger: Manual or when you push to main
 on:
   workflow_dispatch:
   push:
     branches: [ "main" ]
 
-# Permissions needed to deploy to Pages
 permissions:
   contents: read
   pages: write
   id-token: write
 
 jobs:
-  build-and-deploy:
+  deploy:
     runs-on: ubuntu-latest
     
     steps:
-      # 1. Checkout the code from your repository
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # 2. Setup Pages (Prepares the environment)
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
+      - name: Run Linux Commands (Like Termux)
+        run: |
+          # NOTE: GitHub Actions uses 'apt-get' instead of 'pkg'
+          # If you need to install tools (like python or wget):
+          # apt-get update -y
+          # apt-get install -y python3
+          
+          echo "Preparing files..."
+          
+          # Create a folder for the website
+          mkdir -p public
+          
+          # Copy all your files into the public folder
+          cp -r * public/
+          
+          # Clean up (remove the workflow folder from the website)
+          rm -rf public/.github
+          
+          echo "Done. Files are ready for Live URL."
 
-      # 3. Upload files to be hosted
-      # This takes everything in your repo and prepares it for hosting
-      - name: Upload Artifact
+      - name: Upload & Deploy
         uses: actions/upload-pages-artifact@v3
         with:
-          # Upload the entire root directory
-          path: '.'
-
-      # 4. Deploy to GitHub Pages (Creates the Live URL)
+          path: 'public'
+          
       - name: Deploy to GitHub Pages
-        id: deployment
         uses: actions/deploy-pages@v4
