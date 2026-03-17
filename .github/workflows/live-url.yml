@@ -1,4 +1,3 @@
-
 name: GitHub to Live URL
 
 on:
@@ -12,37 +11,22 @@ permissions:
   id-token: write
 
 jobs:
-  deploy:
+  build-and-deploy:
     runs-on: ubuntu-latest
     
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Run Linux Commands (Like Termux)
-        run: |
-          # NOTE: GitHub Actions uses 'apt-get' instead of 'pkg'
-          # If you need to install tools (like python or wget):
-          # apt-get update -y
-          # apt-get install -y python3
-          
-          echo "Preparing files..."
-          
-          # Create a folder for the website
-          mkdir -p public
-          
-          # Copy all your files into the public folder
-          cp -r * public/
-          
-          # Clean up (remove the workflow folder from the website)
-          rm -rf public/.github
-          
-          echo "Done. Files are ready for Live URL."
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
 
-      - name: Upload & Deploy
+      - name: Upload Artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: 'public'
-          
+          # This uploads the current directory directly
+          path: '.'
+
       - name: Deploy to GitHub Pages
+        id: deployment
         uses: actions/deploy-pages@v4
