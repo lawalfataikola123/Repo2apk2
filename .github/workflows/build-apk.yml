@@ -33,7 +33,7 @@ jobs:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: gradle-${{ runner.os }}-v2
+          key: gradle-${{ runner.os }}-v3
           restore-keys: gradle-${{ runner.os }}-
 
       - name: Cache Android SDK
@@ -66,6 +66,7 @@ jobs:
       - name: Clone Repository
         run: |
           git clone --depth 1 "${{ github.event.inputs.repo_url }}" /tmp/target
+          echo "=== Repo contents ==="
           ls /tmp/target
 
       - name: Detect Project Type
@@ -74,29 +75,59 @@ jobs:
           cd /tmp/target
           if [ -f "pubspec.yaml" ]; then
             echo "type=flutter" >> $GITHUB_OUTPUT
+            echo "Detected: Flutter"
           elif [ -f "package.json" ] && [ -d "android" ] && [ -f "android/gradlew" ]; then
             echo "type=react-native" >> $GITHUB_OUTPUT
+            echo "Detected: React Native"
           elif [ -f "android/gradlew" ]; then
             echo "type=android-sub" >> $GITHUB_OUTPUT
+            echo "Detected: Android (subfolder)"
           elif [ -f "gradlew" ]; then
             echo "type=android-root" >> $GITHUB_OUTPUT
+            echo "Detected: Android (root)"
           else
             echo "type=unknown" >> $GITHUB_OUTPUT
+            echo "Unknown type"
           fi
 
-      - name: Auto Fix Gradle and SDK Versions
+      - name: Auto Fix Gradle Issues
         run: |
           cd /tmp/target
+          echo "=== Fixing Gradle wrapper ==="
           find . -name "gradle-wrapper.properties" | while read f; do
             sed -i 's|gradle-[0-9]*\.[0-9]*\.*[0-9]*-bin|gradle-8.5-bin|g' "$f"
-            sed -i 's|gradle-[0-9]*\.[0-9]*\.*[0-9]*-all|gradle-8.5-all|g' "$f"
+            sed -i 's|gradle-[0-9]*\.[0-9]*\.*[0-9]*-all|gradle-8.5-bin|g' "$f"
+            echo "Fixed: $f -> $(grep distributionUrl $f)"
           done
+
+          echo "=== Fixing SDK versions ==="
           find . \( -name "build.gradle" -o -name "build.gradle.kts" \) | while read f; do
             sed -i 's/compileSdkVersion [0-9]*/compileSdkVersion 34/g' "$f" 2>/dev/null || true
             sed -i 's/compileSdk = [0-9]*/compileSdk = 34/g' "$f" 2>/dev/null || true
+            sed -i 's/compileSdk = [0-9]*/compileSdk = 34/g' "$f" 2>/dev/null || true
             sed -i 's/targetSdkVersion [12][0-9]/targetSdkVersion 34/g' "$f" 2>/dev/null || true
             sed -i 's/targetSdk = [12][0-9]/targetSdk = 34/g' "$f" 2>/dev/null || true
-            sed -i "s/com.android.tools.build:gradle:[0-9.]*/com.android.tools.build:gradle:8.1.0/g" "$f" 2>/dev/null || true
+            sed -i "s/com.android.tools.build:gradle:[0-9.]*/com.android.tools.build:gradle:8.2.0/g" "$f" 2>/dev/null || true
+          done
+
+          echo "=== Fixing settings.gradle.kts ==="
+          find . -name "settings.gradle.kts" | while read f; do
+            # Remove android{} block from settings file if present
+            python3 -c "
+          import re, sys
+          content = open('$f').read()
+          # Remove android block from settings
+          content = re.sub(r'android\s*\{[^}]*\}', '', content)
+          open('$f', 'w').write(content)
+          print('Fixed settings.gradle.kts')
+          " 2>/dev/null || true
+          done
+
+          echo "=== Fixing AGP version in libs.versions.toml ==="
+          find . -name "libs.versions.toml" | while read f; do
+            sed -i 's/agp = "[0-9.]*"/agp = "8.2.0"/g' "$f" 2>/dev/null || true
+            sed -i 's/android-gradle-plugin = "[0-9.]*"/android-gradle-plugin = "8.2.0"/g' "$f" 2>/dev/null || true
+            echo "Fixed: $f"
           done
 
       - name: Build Flutter APK
@@ -118,11 +149,12 @@ jobs:
           export ANDROID_HOME=$HOME/android-sdk
           chmod +x gradlew
           if [ "${{ github.event.inputs.build_type }}" = "release" ]; then
-            ./gradlew assembleRelease --no-daemon --warning-mode=none
+            ./gradlew assembleRelease --no-daemon --warning-mode=none --stacktrace 2>&1 | tail -50
           else
-            ./gradlew assembleDebug --no-daemon --warning-mode=none
+            ./gradlew assembleDebug --no-daemon --warning-mode=none --stacktrace 2>&1 | tail -50
           fi
-          find /tmp/target -name "*.apk" -not -path "*/test/*" -exec cp {} /tmp/output.apk \;
+          find /tmp/target -name "*.apk" -not -path "*/test/*" -exec cp {} /tmp/output.apk \; 2>/dev/null
+          ls -la /tmp/output.apk
 
       - name: Build Android APK root
         if: steps.detect.outputs.type == 'android-root'
@@ -131,11 +163,12 @@ jobs:
           export ANDROID_HOME=$HOME/android-sdk
           chmod +x gradlew
           if [ "${{ github.event.inputs.build_type }}" = "release" ]; then
-            ./gradlew assembleRelease --no-daemon --warning-mode=none
+            ./gradlew assembleRelease --no-daemon --warning-mode=none --stacktrace 2>&1 | tail -50
           else
-            ./gradlew assembleDebug --no-daemon --warning-mode=none
+            ./gradlew assembleDebug --no-daemon --warning-mode=none --stacktrace 2>&1 | tail -50
           fi
-          find . -name "*.apk" -not -path "*/test/*" -exec cp {} /tmp/output.apk \;
+          find . -name "*.apk" -not -path "*/test/*" -exec cp {} /tmp/output.apk \; 2>/dev/null
+          ls -la /tmp/output.apk
 
       - name: Build React Native APK
         if: steps.detect.outputs.type == 'react-native'
@@ -144,7 +177,7 @@ jobs:
           npm install --legacy-peer-deps
           export ANDROID_HOME=$HOME/android-sdk
           cd android && chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon --warning-mode=none
+          ./gradlew assembleDebug --no-daemon --warning-mode=none 2>&1 | tail -50
           find /tmp/target -name "*.apk" -not -path "*/test/*" -exec cp {} /tmp/output.apk \;
 
       - name: Unknown Project
@@ -168,7 +201,7 @@ jobs:
             --key-pass pass:repo2apk123 \
             --out /tmp/signed-app.apk \
             /tmp/output.apk 2>/dev/null || cp /tmp/output.apk /tmp/signed-app.apk
-          echo "Signed! Size: $(du -sh /tmp/signed-app.apk | cut -f1)"
+          echo "✅ Signed! Size: $(du -sh /tmp/signed-app.apk | cut -f1)"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
