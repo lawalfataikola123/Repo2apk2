@@ -1,0 +1,154 @@
+name: URL to APK
+on:
+  workflow_dispatch:
+    inputs:
+      website_url:
+        description: 'Website URL (e.g. https://google.com)'
+        required: true
+      app_name:
+        description: 'App Name'
+        required: true
+        default: 'My App'
+      package_name:
+        description: 'Package Name'
+        required: true
+        default: 'com.repo2apk.app'
+      app_color:
+        description: 'Theme Color (hex without #)'
+        required: false
+        default: '2196F3'
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Setup Java 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+      - name: Setup Android SDK
+        run: |
+          wget -q https://dl.google.com/android/repository/commandlinetools-linux-10406996_latest.zip -O /tmp/cmd.zip
+          mkdir -p $HOME/android-sdk/cmdline-tools
+          unzip -q /tmp/cmd.zip -d /tmp/cmd
+          mv /tmp/cmd/cmdline-tools $HOME/android-sdk/cmdline-tools/latest
+          yes | $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses > /dev/null 2>&1 || true
+          $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0" > /dev/null 2>&1
+          echo "ANDROID_HOME=$HOME/android-sdk" >> $GITHUB_ENV
+          echo "ANDROID_SDK_ROOT=$HOME/android-sdk" >> $GITHUB_ENV
+          echo "$HOME/android-sdk/build-tools/34.0.0" >> $GITHUB_PATH
+      - name: Create WebView App
+        run: |
+          PKG="${{ github.event.inputs.package_name }}"
+          APP="${{ github.event.inputs.app_name }}"
+          URL="${{ github.event.inputs.website_url }}"
+          COLOR="${{ github.event.inputs.app_color }}"
+          PKG_PATH=$(echo $PKG | tr '.' '/')
+          mkdir -p /tmp/webapp/app/src/main/java/$PKG_PATH
+          mkdir -p /tmp/webapp/app/src/main/res/values
+          mkdir -p /tmp/webapp/gradle/wrapper
+          cat > /tmp/webapp/settings.gradle << GRADLE
+          rootProject.name = "WebApp"
+          include ':app'
+          GRADLE
+          cat > /tmp/webapp/build.gradle << GRADLE
+          buildscript {
+              repositories { google(); mavenCentral() }
+              dependencies { classpath 'com.android.tools.build:gradle:8.1.0' }
+          }
+          allprojects { repositories { google(); mavenCentral() } }
+          GRADLE
+          cat > /tmp/webapp/gradle/wrapper/gradle-wrapper.properties << GRADLE
+          distributionUrl=https\://services.gradle.org/distributions/gradle-8.5-bin.zip
+          GRADLE
+          cat > /tmp/webapp/app/build.gradle << GRADLE
+          plugins { id 'com.android.application' }
+          android {
+              namespace '$PKG'
+              compileSdk 34
+              defaultConfig {
+                  applicationId '$PKG'
+                  minSdk 21
+                  targetSdk 34
+                  versionCode 1
+                  versionName '1.0'
+              }
+          }
+          dependencies {
+              implementation 'androidx.appcompat:appcompat:1.6.1'
+          }
+          GRADLE
+          cat > /tmp/webapp/app/src/main/AndroidManifest.xml << MANIFEST
+          <?xml version="1.0" encoding="utf-8"?>
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+              <uses-permission android:name="android.permission.INTERNET"/>
+              <application android:label="$APP" android:usesCleartextTraffic="true" android:theme="@style/AppTheme">
+                  <activity android:name=".MainActivity" android:exported="true">
+                      <intent-filter>
+                          <action android:name="android.intent.action.MAIN"/>
+                          <category android:name="android.intent.category.LAUNCHER"/>
+                      </intent-filter>
+                  </activity>
+              </application>
+          </manifest>
+          MANIFEST
+          cat > /tmp/webapp/app/src/main/java/$PKG_PATH/MainActivity.java << JAVA
+          package $PKG;
+          import android.app.Activity;
+          import android.os.Bundle;
+          import android.webkit.*;
+          public class MainActivity extends Activity {
+              private WebView w;
+              @Override protected void onCreate(Bundle s) {
+                  super.onCreate(s);
+                  w = new WebView(this);
+                  setContentView(w);
+                  w.getSettings().setJavaScriptEnabled(true);
+                  w.getSettings().setDomStorageEnabled(true);
+                  w.setWebViewClient(new WebViewClient());
+                  w.setWebChromeClient(new WebChromeClient());
+                  w.loadUrl("$URL");
+              }
+              @Override public void onBackPressed() {
+                  if (w.canGoBack()) w.goBack(); else super.onBackPressed();
+              }
+          }
+          JAVA
+          cat > /tmp/webapp/app/src/main/res/values/styles.xml << XML
+          <?xml version="1.0" encoding="utf-8"?>
+          <resources>
+              <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
+                  <item name="colorPrimary">#$COLOR</item>
+              </style>
+          </resources>
+          XML
+      - name: Build APK
+        run: |
+          cd /tmp/webapp
+          export ANDROID_HOME=$HOME/android-sdk
+          gradle assembleDebug --no-daemon
+          find . -name "*.apk" -exec cp {} /tmp/webview.apk \;
+      - name: Sign APK
+        run: |
+          keytool -genkey -v -keystore /tmp/ks.keystore -alias app \
+            -keyalg RSA -keysize 2048 -validity 10000 \
+            -storepass pass1234 -keypass pass1234 \
+            -dname "CN=Repo2APK,O=Repo2APK,C=NG" 2>/dev/null
+          apksigner sign --ks /tmp/ks.keystore --ks-alias app \
+            --ks-pass pass:pass1234 --key-pass pass:pass1234 \
+            --out /tmp/final.apk /tmp/webview.apk 2>/dev/null || cp /tmp/webview.apk /tmp/final.apk
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ github.event.inputs.app_name }}-url-apk
+          path: /tmp/final.apk
+          retention-days: 7
+      - name: Summary
+        run: |
+          echo "## ✅ URL to APK Complete!" >> $GITHUB_STEP_SUMMARY
+          echo "| | |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|" >> $GITHUB_STEP_SUMMARY
+          echo "| 🌐 URL | ${{ github.event.inputs.website_url }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 📱 App | ${{ github.event.inputs.app_name }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 📏 Size | $(du -sh /tmp/final.apk | cut -f1) |" >> $GITHUB_STEP_SUMMARY
