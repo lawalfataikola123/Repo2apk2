@@ -82,7 +82,7 @@ jobs:
           find . -name "gradle-wrapper.properties" -exec sed -i 's|gradle-[0-9]*\.[0-9]*\.*[0-9]*-all|gradle-8.11.1-bin|g' {} \;
           find . -name "build.gradle" -exec sed -i 's/compileSdkVersion [0-9]*/compileSdkVersion 34/g' {} \; 2>/dev/null || true
           find . -name "build.gradle" -exec sed -i 's/targetSdkVersion [12][0-9]/targetSdkVersion 34/g' {} \; 2>/dev/null || true
-          find . -name "build.gradle.kts" -exec sed -i 's/compileSdk = [0-9]*/compileSdk = 34/g' {} \; 2>/dev/null || true
+          find . -name "build.gradle.kts" -exec sed -i 's/compileSdk = [0-9][0-9]\b/compileSdk = 34/g' {} \; 2>/dev/null || true
           find . -name "build.gradle.kts" -exec sed -i 's/targetSdk = [12][0-9]/targetSdk = 34/g' {} \; 2>/dev/null || true
           echo "Gradle versions fixed!"
       - name: Build Flutter APK
