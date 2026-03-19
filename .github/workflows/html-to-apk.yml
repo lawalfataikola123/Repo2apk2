@@ -1,0 +1,166 @@
+name: HTML to APK
+on:
+  workflow_dispatch:
+    inputs:
+      html_url:
+        description: 'Raw URL of HTML file'
+        required: true
+      app_name:
+        description: 'App Name'
+        required: true
+        default: 'My HTML App'
+      package_name:
+        description: 'Package Name'
+        required: true
+        default: 'com.repo2apk.htmlapp'
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Setup Java 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+      - name: Setup Android SDK
+        run: |
+          wget -q https://dl.google.com/android/repository/commandlinetools-linux-10406996_latest.zip -O /tmp/cmd.zip
+          mkdir -p $HOME/android-sdk/cmdline-tools
+          unzip -q /tmp/cmd.zip -d /tmp/cmd
+          mv /tmp/cmd/cmdline-tools $HOME/android-sdk/cmdline-tools/latest
+          yes | $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses > /dev/null 2>&1 || true
+          $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0" > /dev/null 2>&1
+          echo "ANDROID_HOME=$HOME/android-sdk" >> $GITHUB_ENV
+          echo "ANDROID_SDK_ROOT=$HOME/android-sdk" >> $GITHUB_ENV
+          echo "$HOME/android-sdk/build-tools/34.0.0" >> $GITHUB_PATH
+      - name: Download HTML
+        run: |
+          mkdir -p /tmp/htmlfiles
+          wget -q "${{ github.event.inputs.html_url }}" -O /tmp/htmlfiles/index.html
+          echo "Downloaded HTML:"
+          head -5 /tmp/htmlfiles/index.html
+      - name: Create HTML Android App
+        run: |
+          PKG="${{ github.event.inputs.package_name }}"
+          APP="${{ github.event.inputs.app_name }}"
+          PKG_PATH=$(echo $PKG | tr '.' '/')
+          mkdir -p /tmp/htmlapp/app/src/main/java/$PKG_PATH
+          mkdir -p /tmp/htmlapp/app/src/main/assets
+          mkdir -p /tmp/htmlapp/app/src/main/res/values
+          mkdir -p /tmp/htmlapp/gradle/wrapper
+          cp /tmp/htmlfiles/index.html /tmp/htmlapp/app/src/main/assets/
+          cat > /tmp/htmlapp/settings.gradle << GRADLE
+rootProject.name = "HTMLApp"
+include ':app'
+GRADLE
+          cat > /tmp/htmlapp/build.gradle << GRADLE
+buildscript {
+    repositories { google(); mavenCentral() }
+    dependencies { classpath 'com.android.tools.build:gradle:8.1.0' }
+}
+allprojects { repositories { google(); mavenCentral() } }
+GRADLE
+          cat > /tmp/htmlapp/gradle/wrapper/gradle-wrapper.properties << GRADLE
+distributionBase=GRADLE_USER_HOME
+distributionPath=wrapper/dists
+distributionUrl=https\://services.gradle.org/distributions/gradle-8.5-bin.zip
+zipStoreBase=GRADLE_USER_HOME
+zipStorePath=wrapper/dists
+GRADLE
+          cat > /tmp/htmlapp/app/build.gradle << GRADLE
+plugins { id 'com.android.application' }
+android {
+    namespace '$PKG'
+    compileSdk 34
+    defaultConfig {
+        applicationId '$PKG'
+        minSdk 21
+        targetSdk 34
+        versionCode 1
+        versionName '1.0'
+    }
+}
+dependencies {
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+}
+GRADLE
+          cat > /tmp/htmlapp/app/src/main/AndroidManifest.xml << MANIFEST
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <application android:label="$APP" android:usesCleartextTraffic="true">
+        <activity android:name=".MainActivity" android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>
+MANIFEST
+          cat > /tmp/htmlapp/app/src/main/java/$PKG_PATH/MainActivity.java << JAVA
+package $PKG;
+import android.app.Activity;
+import android.os.Bundle;
+import android.webkit.WebSettings;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
+public class MainActivity extends Activity {
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        WebView webView = new WebView(this);
+        setContentView(webView);
+        WebSettings s = webView.getSettings();
+        s.setJavaScriptEnabled(true);
+        s.setDomStorageEnabled(true);
+        webView.setWebViewClient(new WebViewClient());
+        webView.loadUrl("file:///android_asset/index.html");
+    }
+}
+JAVA
+          cat > /tmp/htmlapp/app/src/main/res/values/styles.xml << XML
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar"/>
+</resources>
+XML
+      - name: Install Gradle 8.5
+        run: |
+          wget -q https://services.gradle.org/distributions/gradle-8.5-bin.zip -O /tmp/gradle.zip
+          unzip -q /tmp/gradle.zip -d /tmp/gradle-dist
+          echo "/tmp/gradle-dist/gradle-8.5/bin" >> $GITHUB_PATH
+      - name: Build APK
+        run: |
+          export PATH="/tmp/gradle-dist/gradle-8.5/bin:$PATH"
+          cd /tmp/htmlapp
+          export ANDROID_HOME=$HOME/android-sdk
+          gradle assembleDebug --no-daemon
+          find . -name "*.apk" -exec cp {} /tmp/html-app.apk \;
+          echo "Size: $(du -sh /tmp/html-app.apk | cut -f1)"
+      - name: Sign APK
+        run: |
+          keytool -genkey -v -keystore /tmp/ks.keystore -alias app \
+            -keyalg RSA -keysize 2048 -validity 10000 \
+            -storepass pass1234 -keypass pass1234 \
+            -dname "CN=Repo2APK,O=Repo2APK,C=NG" 2>/dev/null
+          apksigner sign --ks /tmp/ks.keystore --ks-alias app \
+            --ks-pass pass:pass1234 --key-pass pass:pass1234 \
+            --out /tmp/final-html.apk /tmp/html-app.apk 2>/dev/null || \
+            cp /tmp/html-app.apk /tmp/final-html.apk
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ github.event.inputs.app_name }}-html-apk
+          path: /tmp/final-html.apk
+          retention-days: 7
+      - name: Summary
+        run: |
+          SIZE=$(du -sh /tmp/final-html.apk 2>/dev/null | cut -f1 || echo "N/A")
+          echo "## HTML to APK Complete!" >> $GITHUB_STEP_SUMMARY
+          echo "| | |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|" >> $GITHUB_STEP_SUMMARY
+          echo "| HTML | ${{ github.event.inputs.html_url }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| App | ${{ github.event.inputs.app_name }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Size | $SIZE |" >> $GITHUB_STEP_SUMMARY
