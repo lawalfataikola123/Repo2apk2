@@ -1,0 +1,14 @@
+name: Build Android APK
+on:
+  workflow_dispatch:
+    inputs:
+      repo_url:
+        description: GitHub Repository URL
+        required: true
+        default: https://github.com/skydoves/Pokedex
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Test
+        run: echo "Hello"
