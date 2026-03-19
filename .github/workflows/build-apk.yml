@@ -78,8 +78,8 @@ jobs:
       - name: Fix Gradle Versions
         run: |
           cd /tmp/target
-          find . -name "gradle-wrapper.properties" -exec sed -i 's|gradle-[0-9]*\.[0-9]*\.*[0-9]*-bin|gradle-8.9-bin|g' {} \;
-          find . -name "gradle-wrapper.properties" -exec sed -i 's|gradle-[0-9]*\.[0-9]*\.*[0-9]*-all|gradle-8.9-bin|g' {} \;
+          find . -name "gradle-wrapper.properties" -exec sed -i 's|gradle-[0-9]*\.[0-9]*\.*[0-9]*-bin|gradle-8.11.1-bin|g' {} \;
+          find . -name "gradle-wrapper.properties" -exec sed -i 's|gradle-[0-9]*\.[0-9]*\.*[0-9]*-all|gradle-8.11.1-bin|g' {} \;
           find . -name "build.gradle" -exec sed -i 's/compileSdkVersion [0-9]*/compileSdkVersion 34/g' {} \; 2>/dev/null || true
           find . -name "build.gradle" -exec sed -i 's/targetSdkVersion [12][0-9]/targetSdkVersion 34/g' {} \; 2>/dev/null || true
           find . -name "build.gradle.kts" -exec sed -i 's/compileSdk = [0-9]*/compileSdk = 34/g' {} \; 2>/dev/null || true
