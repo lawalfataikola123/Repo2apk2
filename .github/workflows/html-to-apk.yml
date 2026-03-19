@@ -56,7 +56,7 @@ jobs:
           wget -q https://services.gradle.org/distributions/gradle-8.5-bin.zip -O /tmp/gradle.zip
           unzip -q /tmp/gradle.zip -d /tmp/gradle-dist
           export PATH="/tmp/gradle-dist/gradle-8.5/bin:$PATH"
-          cd /tmp/app && gradle assembleDebug --no-daemon
+          cd /tmp/app && unset ANDROID_SDK_ROOT && gradle assembleDebug --no-daemon
           find . -name "*.apk" -exec cp {} /tmp/output.apk \;
       - name: Sign and Upload
         run: |
