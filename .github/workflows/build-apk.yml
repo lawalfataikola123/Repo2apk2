@@ -1,10 +1,9 @@
 name: Build Android APK
-
 on:
   workflow_dispatch:
     inputs:
       repo_url:
-        description: 'GitHub Repository URL to build'
+        description: 'GitHub Repository URL'
         required: true
         default: 'https://github.com/skydoves/Pokedex'
       build_type:
@@ -15,7 +14,6 @@ on:
         options:
           - debug
           - release
-
 jobs:
   build-apk:
     runs-on: ubuntu-latest
@@ -26,7 +24,6 @@ jobs:
         with:
           java-version: '21'
           distribution: 'temurin'
-
       - name: Cache Gradle
         uses: actions/cache@v4
         with:
@@ -35,13 +32,11 @@ jobs:
             ~/.gradle/wrapper
           key: gradle-${{ runner.os }}-v3
           restore-keys: gradle-${{ runner.os }}-
-
       - name: Cache Android SDK
         uses: actions/cache@v4
         with:
           path: ~/android-sdk
           key: android-sdk-34-v2
-
       - name: Setup Android SDK
         run: |
           if [ ! -d "$HOME/android-sdk/cmdline-tools/latest" ]; then
@@ -56,80 +51,57 @@ jobs:
           echo "ANDROID_SDK_ROOT=$HOME/android-sdk" >> $GITHUB_ENV
           echo "$HOME/android-sdk/platform-tools" >> $GITHUB_PATH
           echo "$HOME/android-sdk/build-tools/34.0.0" >> $GITHUB_PATH
-
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
           cache: true
-
       - name: Clone Repository
         run: |
           git clone --depth 1 "${{ github.event.inputs.repo_url }}" /tmp/target
-          echo "=== Repo contents ==="
           ls /tmp/target
-
       - name: Detect Project Type
         id: detect
         run: |
           cd /tmp/target
           if [ -f "pubspec.yaml" ]; then
             echo "type=flutter" >> $GITHUB_OUTPUT
-            echo "Detected: Flutter"
           elif [ -f "package.json" ] && [ -d "android" ] && [ -f "android/gradlew" ]; then
             echo "type=react-native" >> $GITHUB_OUTPUT
-            echo "Detected: React Native"
           elif [ -f "android/gradlew" ]; then
             echo "type=android-sub" >> $GITHUB_OUTPUT
-            echo "Detected: Android (subfolder)"
           elif [ -f "gradlew" ]; then
             echo "type=android-root" >> $GITHUB_OUTPUT
-            echo "Detected: Android (root)"
           else
             echo "type=unknown" >> $GITHUB_OUTPUT
-            echo "Unknown type"
           fi
-
-      - name: Auto Fix Gradle Issues
+      - name: Fix Gradle Versions
         run: |
           cd /tmp/target
-          echo "=== Fixing Gradle wrapper ==="
           find . -name "gradle-wrapper.properties" | while read f; do
             sed -i 's|gradle-[0-9]*\.[0-9]*\.*[0-9]*-bin|gradle-8.5-bin|g' "$f"
             sed -i 's|gradle-[0-9]*\.[0-9]*\.*[0-9]*-all|gradle-8.5-bin|g' "$f"
-            echo "Fixed: $f -> $(grep distributionUrl $f)"
           done
-
-          echo "=== Fixing SDK versions ==="
           find . \( -name "build.gradle" -o -name "build.gradle.kts" \) | while read f; do
             sed -i 's/compileSdkVersion [0-9]*/compileSdkVersion 34/g' "$f" 2>/dev/null || true
-            sed -i 's/compileSdk = [0-9]*/compileSdk = 34/g' "$f" 2>/dev/null || true
             sed -i 's/compileSdk = [0-9]*/compileSdk = 34/g' "$f" 2>/dev/null || true
             sed -i 's/targetSdkVersion [12][0-9]/targetSdkVersion 34/g' "$f" 2>/dev/null || true
             sed -i 's/targetSdk = [12][0-9]/targetSdk = 34/g' "$f" 2>/dev/null || true
             sed -i "s/com.android.tools.build:gradle:[0-9.]*/com.android.tools.build:gradle:8.2.0/g" "$f" 2>/dev/null || true
           done
-
-          echo "=== Fixing settings.gradle.kts ==="
-          find . -name "settings.gradle.kts" | while read f; do
-            # Remove android{} block from settings file if present
-            python3 -c "
-          import re, sys
-          content = open('$f').read()
-          # Remove android block from settings
-          content = re.sub(r'android\s*\{[^}]*\}', '', content)
-          open('$f', 'w').write(content)
-          print('Fixed settings.gradle.kts')
-          " 2>/dev/null || true
-          done
-
-          echo "=== Fixing AGP version in libs.versions.toml ==="
           find . -name "libs.versions.toml" | while read f; do
             sed -i 's/agp = "[0-9.]*"/agp = "8.2.0"/g' "$f" 2>/dev/null || true
-            sed -i 's/android-gradle-plugin = "[0-9.]*"/android-gradle-plugin = "8.2.0"/g' "$f" 2>/dev/null || true
-            echo "Fixed: $f"
           done
-
+          if [ -f "settings.gradle.kts" ]; then
+            python3 << 'PYEOF'
+          import re
+          f = '/tmp/target/settings.gradle.kts'
+          content = open(f).read()
+          content = re.sub(r'android\s*\{[^}]*\}', '', content)
+          open(f, 'w').write(content)
+          print("Fixed settings.gradle.kts")
+          PYEOF
+          fi
       - name: Build Flutter APK
         if: steps.detect.outputs.type == 'flutter'
         run: |
@@ -141,7 +113,6 @@ jobs:
             flutter build apk --debug --no-tree-shake-icons
           fi
           find . -name "*.apk" -exec cp {} /tmp/output.apk \;
-
       - name: Build Android APK subfolder
         if: steps.detect.outputs.type == 'android-sub'
         run: |
@@ -149,13 +120,11 @@ jobs:
           export ANDROID_HOME=$HOME/android-sdk
           chmod +x gradlew
           if [ "${{ github.event.inputs.build_type }}" = "release" ]; then
-            ./gradlew assembleRelease --no-daemon --warning-mode=none --stacktrace 2>&1 | tail -50
+            ./gradlew assembleRelease --no-daemon --warning-mode=none
           else
-            ./gradlew assembleDebug --no-daemon --warning-mode=none --stacktrace 2>&1 | tail -50
+            ./gradlew assembleDebug --no-daemon --warning-mode=none
           fi
-          find /tmp/target -name "*.apk" -not -path "*/test/*" -exec cp {} /tmp/output.apk \; 2>/dev/null
-          ls -la /tmp/output.apk
-
+          find /tmp/target -name "*.apk" -not -path "*/test/*" -exec cp {} /tmp/output.apk \;
       - name: Build Android APK root
         if: steps.detect.outputs.type == 'android-root'
         run: |
@@ -163,13 +132,11 @@ jobs:
           export ANDROID_HOME=$HOME/android-sdk
           chmod +x gradlew
           if [ "${{ github.event.inputs.build_type }}" = "release" ]; then
-            ./gradlew assembleRelease --no-daemon --warning-mode=none --stacktrace 2>&1 | tail -50
+            ./gradlew assembleRelease --no-daemon --warning-mode=none
           else
-            ./gradlew assembleDebug --no-daemon --warning-mode=none --stacktrace 2>&1 | tail -50
+            ./gradlew assembleDebug --no-daemon --warning-mode=none
           fi
-          find . -name "*.apk" -not -path "*/test/*" -exec cp {} /tmp/output.apk \; 2>/dev/null
-          ls -la /tmp/output.apk
-
+          find . -name "*.apk" -not -path "*/test/*" -exec cp {} /tmp/output.apk \;
       - name: Build React Native APK
         if: steps.detect.outputs.type == 'react-native'
         run: |
@@ -177,15 +144,13 @@ jobs:
           npm install --legacy-peer-deps
           export ANDROID_HOME=$HOME/android-sdk
           cd android && chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon --warning-mode=none 2>&1 | tail -50
+          ./gradlew assembleDebug --no-daemon --warning-mode=none
           find /tmp/target -name "*.apk" -not -path "*/test/*" -exec cp {} /tmp/output.apk \;
-
       - name: Unknown Project
         if: steps.detect.outputs.type == 'unknown'
         run: |
-          echo "Could not detect project type!"
+          echo "Cannot detect project type!"
           exit 1
-
       - name: Sign APK
         run: |
           keytool -genkey -v \
@@ -201,23 +166,20 @@ jobs:
             --key-pass pass:repo2apk123 \
             --out /tmp/signed-app.apk \
             /tmp/output.apk 2>/dev/null || cp /tmp/output.apk /tmp/signed-app.apk
-          echo "✅ Signed! Size: $(du -sh /tmp/signed-app.apk | cut -f1)"
-
+          echo "Signed! Size: $(du -sh /tmp/signed-app.apk | cut -f1)"
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: repo2apk-build-${{ github.run_number }}
           path: /tmp/signed-app.apk
           retention-days: 7
-
       - name: Build Summary
         run: |
           SIZE=$(du -sh /tmp/signed-app.apk 2>/dev/null | cut -f1 || echo "N/A")
-          echo "## ✅ Build #${{ github.run_number }} Complete!" >> $GITHUB_STEP_SUMMARY
+          echo "## Build Complete!" >> $GITHUB_STEP_SUMMARY
           echo "| Property | Value |" >> $GITHUB_STEP_SUMMARY
           echo "|---|---|" >> $GITHUB_STEP_SUMMARY
-          echo "| 📦 Repo | ${{ github.event.inputs.repo_url }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| 🔧 Type | ${{ steps.detect.outputs.type }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| 🏗 Build | ${{ github.event.inputs.build_type }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| 📱 Size | $SIZE |" >> $GITHUB_STEP_SUMMARY
-          echo "| ✍ Signed | Yes |" >> $GITHUB_STEP_SUMMARY
+          echo "| Repo | ${{ github.event.inputs.repo_url }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Type | ${{ steps.detect.outputs.type }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Size | $SIZE |" >> $GITHUB_STEP_SUMMARY
+          echo "| Signed | Yes |" >> $GITHUB_STEP_SUMMARY
