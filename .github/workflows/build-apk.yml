@@ -79,18 +79,16 @@ jobs:
         run: |
           cd /tmp/target
           find . -name "gradle-wrapper.properties" | while read f; do
-            sed -i 's|gradle-[0-9]*\.[0-9]*\.*[0-9]*-bin|gradle-8.5-bin|g' "$f"
-            sed -i 's|gradle-[0-9]*\.[0-9]*\.*[0-9]*-all|gradle-8.5-bin|g' "$f"
+            sed -i 's|gradle-[0-9]*\.[0-9]*\.*[0-9]*-bin|gradle-8.9-bin|g' "$f"
+            sed -i 's|gradle-[0-9]*\.[0-9]*\.*[0-9]*-all|gradle-8.9-bin|g' "$f"
           done
           find . \( -name "build.gradle" -o -name "build.gradle.kts" \) | while read f; do
             sed -i 's/compileSdkVersion [0-9]*/compileSdkVersion 34/g' "$f" 2>/dev/null || true
             sed -i 's/compileSdk = [0-9]*/compileSdk = 34/g' "$f" 2>/dev/null || true
             sed -i 's/targetSdkVersion [12][0-9]/targetSdkVersion 34/g' "$f" 2>/dev/null || true
             sed -i 's/targetSdk = [12][0-9]/targetSdk = 34/g' "$f" 2>/dev/null || true
-            sed -i "s/com.android.tools.build:gradle:[0-9.]*/com.android.tools.build:gradle:8.2.0/g" "$f" 2>/dev/null || true
           done
           find . -name "libs.versions.toml" | while read f; do
-            sed -i 's/agp = "[0-9.]*"/agp = "8.2.0"/g' "$f" 2>/dev/null || true
           done
           if [ -f "settings.gradle.kts" ]; then
             python3 << 'PYEOF'
