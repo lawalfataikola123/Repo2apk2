@@ -30,7 +30,7 @@ jobs:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: gradle-${{ runner.os }}-v3
+          key: gradle-${{ runner.os }}-v4
           restore-keys: gradle-${{ runner.os }}-
       - name: Cache Android SDK
         uses: actions/cache@v4
@@ -78,28 +78,13 @@ jobs:
       - name: Fix Gradle Versions
         run: |
           cd /tmp/target
-          find . -name "gradle-wrapper.properties" | while read f; do
-            sed -i 's|gradle-[0-9]*\.[0-9]*\.*[0-9]*-bin|gradle-8.9-bin|g' "$f"
-            sed -i 's|gradle-[0-9]*\.[0-9]*\.*[0-9]*-all|gradle-8.9-bin|g' "$f"
-          done
-          find . \( -name "build.gradle" -o -name "build.gradle.kts" \) | while read f; do
-            sed -i 's/compileSdkVersion [0-9]*/compileSdkVersion 34/g' "$f" 2>/dev/null || true
-            sed -i 's/compileSdk = [0-9]*/compileSdk = 34/g' "$f" 2>/dev/null || true
-            sed -i 's/targetSdkVersion [12][0-9]/targetSdkVersion 34/g' "$f" 2>/dev/null || true
-            sed -i 's/targetSdk = [12][0-9]/targetSdk = 34/g' "$f" 2>/dev/null || true
-          done
-          find . -name "libs.versions.toml" | while read f; do
-          done
-          if [ -f "settings.gradle.kts" ]; then
-            python3 << 'PYEOF'
-          import re
-          f = '/tmp/target/settings.gradle.kts'
-          content = open(f).read()
-          content = re.sub(r'android\s*\{[^}]*\}', '', content)
-          open(f, 'w').write(content)
-          print("Fixed settings.gradle.kts")
-          PYEOF
-          fi
+          find . -name "gradle-wrapper.properties" -exec sed -i 's|gradle-[0-9]*\.[0-9]*\.*[0-9]*-bin|gradle-8.9-bin|g' {} \;
+          find . -name "gradle-wrapper.properties" -exec sed -i 's|gradle-[0-9]*\.[0-9]*\.*[0-9]*-all|gradle-8.9-bin|g' {} \;
+          find . -name "build.gradle" -exec sed -i 's/compileSdkVersion [0-9]*/compileSdkVersion 34/g' {} \; 2>/dev/null || true
+          find . -name "build.gradle" -exec sed -i 's/targetSdkVersion [12][0-9]/targetSdkVersion 34/g' {} \; 2>/dev/null || true
+          find . -name "build.gradle.kts" -exec sed -i 's/compileSdk = [0-9]*/compileSdk = 34/g' {} \; 2>/dev/null || true
+          find . -name "build.gradle.kts" -exec sed -i 's/targetSdk = [12][0-9]/targetSdk = 34/g' {} \; 2>/dev/null || true
+          echo "Gradle versions fixed!"
       - name: Build Flutter APK
         if: steps.detect.outputs.type == 'flutter'
         run: |
