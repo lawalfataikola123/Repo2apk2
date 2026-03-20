@@ -39,6 +39,7 @@ jobs:
       - name: Build APK
         run: |
           unset ANDROID_SDK_ROOT
+          export ANDROID_HOME=$HOME/android-sdk
           PKG="${{ github.event.inputs.package_name }}"
           APP="${{ github.event.inputs.app_name }}"
           PKG_PATH=$(echo $PKG | tr '.' '/')
@@ -48,6 +49,7 @@ jobs:
           mkdir -p /tmp/app/gradle/wrapper
           cp /tmp/index.html /tmp/app/app/src/main/assets/
           echo "sdk.dir=$HOME/android-sdk" > /tmp/app/local.properties
+          echo "android.useAndroidX=true" >> /tmp/app/local.properties
           printf 'rootProject.name = "App"\ninclude ":app"\n' > /tmp/app/settings.gradle
           printf 'buildscript {\n    repositories { google(); mavenCentral() }\n    dependencies { classpath "com.android.tools.build:gradle:8.1.0" }\n}\nallprojects { repositories { google(); mavenCentral() } }\n' > /tmp/app/build.gradle
           printf 'distributionUrl=https\\://services.gradle.org/distributions/gradle-8.5-bin.zip\n' > /tmp/app/gradle/wrapper/gradle-wrapper.properties
