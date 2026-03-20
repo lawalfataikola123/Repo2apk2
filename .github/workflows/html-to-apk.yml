@@ -54,6 +54,7 @@ jobs:
           printf 'package %s;\nimport android.app.*;\nimport android.os.*;\nimport android.webkit.*;\npublic class MainActivity extends Activity {\n    protected void onCreate(Bundle s) {\n        super.onCreate(s);\n        WebView w = new WebView(this); setContentView(w);\n        w.getSettings().setJavaScriptEnabled(true);\n        w.setWebViewClient(new WebViewClient());\n        w.loadUrl("file:///android_asset/index.html");\n    }\n}\n' $PKG > /tmp/app/app/src/main/java/$PKG_PATH/MainActivity.java
           printf '<?xml version="1.0" encoding="utf-8"?>\n<resources><style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar"/></resources>\n' > /tmp/app/app/src/main/res/values/styles.xml
           echo "sdk.dir=$HOME/android-sdk" > /tmp/app/local.properties
+          echo "android.useAndroidX=true" >> /tmp/app/gradle.properties
           wget -q https://services.gradle.org/distributions/gradle-8.5-bin.zip -O /tmp/gradle.zip
           unzip -q /tmp/gradle.zip -d /tmp/gradle-dist
           export PATH="/tmp/gradle-dist/gradle-8.5/bin:$PATH"
