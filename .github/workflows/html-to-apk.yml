@@ -58,7 +58,7 @@ jobs:
           printf 'buildscript {\n    repositories { google(); mavenCentral() }\n    dependencies { classpath "com.android.tools.build:gradle:8.1.0" }\n}\nallprojects { repositories { google(); mavenCentral() } }\n' > /tmp/app/build.gradle
           printf 'distributionUrl=https\\://services.gradle.org/distributions/gradle-8.5-bin.zip\n' > /tmp/app/gradle/wrapper/gradle-wrapper.properties
           printf 'plugins { id "com.android.application" }\nandroid {\n    namespace "%s"\n    compileSdk 34\n    defaultConfig { applicationId "%s"; minSdk 21; targetSdk 34; versionCode 1; versionName "1.0" }\n}\ndependencies {}\n' $PKG $PKG > /tmp/app/app/build.gradle
-          printf '<?xml version="1.0" encoding="utf-8"?>\n<manifest xmlns:android="http://schemas.android.com/apk/res/android">\n<uses-permission android:name="android.permission.INTERNET"/>\n<application android:label="%s" android:icon="@mipmap/ic_launcher" android:roundIcon="@mipmap/ic_launcher_round" android:usesCleartextTraffic="true" android:theme="@android:style/Theme.NoTitleBar">\n<activity android:name=".MainActivity" android:exported="true">\n<intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter>\n</activity></application></manifest>\n' "$APP" > /tmp/app/app/src/main/AndroidManifest.xml
+          printf '<?xml version="1.0" encoding="utf-8"?>\n<manifest xmlns:android="http://schemas.android.com/apk/res/android">\n<uses-permission android:name="android.permission.INTERNET"/>\n<application android:label="%s" android:usesCleartextTraffic="true" android:theme="@android:style/Theme.NoTitleBar">\n<activity android:name=".MainActivity" android:exported="true">\n<intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter>\n</activity></application></manifest>\n' "$APP" > /tmp/app/app/src/main/AndroidManifest.xml
           printf 'package %s;\nimport android.app.*;\nimport android.os.*;\nimport android.webkit.*;\npublic class MainActivity extends Activity {\n    protected void onCreate(Bundle s) {\n        super.onCreate(s);\n        WebView w = new WebView(this); setContentView(w);\n        w.getSettings().setJavaScriptEnabled(true);\n        w.getSettings().setDomStorageEnabled(true);\n        w.setWebViewClient(new WebViewClient());\n        w.loadUrl("file:///android_asset/index.html");\n    }\n}\n' $PKG > /tmp/app/app/src/main/java/$PKG_PATH/MainActivity.java
           if [ -n "${{ github.event.inputs.icon_url }}" ]; then
             wget -q "${{ github.event.inputs.icon_url }}" -O /tmp/custom-icon.png 2>/dev/null || true
@@ -69,6 +69,8 @@ jobs:
                 cp /tmp/custom-icon.png /tmp/app/app/src/main/res/$res/ic_launcher_round.png
               done
               echo "✅ Icon applied to all mipmap folders!"
+              # Add icon to manifest
+              sed -i 's/android:label="[^"]*"/& android:icon="@mipmap\/ic_launcher" android:roundIcon="@mipmap\/ic_launcher_round"/' /tmp/app/app/src/main/AndroidManifest.xml
             else
               echo "⚠ Icon download failed"
             fi
