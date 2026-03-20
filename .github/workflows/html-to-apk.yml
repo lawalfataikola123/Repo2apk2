@@ -53,10 +53,12 @@ jobs:
           printf '<?xml version="1.0" encoding="utf-8"?>\n<manifest xmlns:android="http://schemas.android.com/apk/res/android">\n<uses-permission android:name="android.permission.INTERNET"/>\n<application android:label="%s" android:usesCleartextTraffic="true">\n<activity android:name=".MainActivity" android:exported="true">\n<intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter>\n</activity></application></manifest>\n' "$APP" > /tmp/app/app/src/main/AndroidManifest.xml
           printf 'package %s;\nimport android.app.*;\nimport android.os.*;\nimport android.webkit.*;\npublic class MainActivity extends Activity {\n    protected void onCreate(Bundle s) {\n        super.onCreate(s);\n        WebView w = new WebView(this); setContentView(w);\n        w.getSettings().setJavaScriptEnabled(true);\n        w.setWebViewClient(new WebViewClient());\n        w.loadUrl("file:///android_asset/index.html");\n    }\n}\n' $PKG > /tmp/app/app/src/main/java/$PKG_PATH/MainActivity.java
           printf '<?xml version="1.0" encoding="utf-8"?>\n<resources><style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar"/></resources>\n' > /tmp/app/app/src/main/res/values/styles.xml
+          echo "sdk.dir=$HOME/android-sdk" > /tmp/app/local.properties
           wget -q https://services.gradle.org/distributions/gradle-8.5-bin.zip -O /tmp/gradle.zip
           unzip -q /tmp/gradle.zip -d /tmp/gradle-dist
           export PATH="/tmp/gradle-dist/gradle-8.5/bin:$PATH"
-          cd /tmp/app && unset ANDROID_SDK_ROOT && gradle assembleDebug --no-daemon
+          unset ANDROID_SDK_ROOT
+          cd /tmp/app && gradle assembleDebug --no-daemon
           find . -name "*.apk" -exec cp {} /tmp/output.apk \;
       - name: Sign and Upload
         run: |
