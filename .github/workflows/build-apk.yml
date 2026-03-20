@@ -7,6 +7,10 @@ on:
         required: true
         default: 'https://github.com/skydoves/Pokedex'
       build_type:
+      icon_url:
+        description: "Custom app icon URL"
+        required: false
+        default: ""
         description: 'Build Type'
         required: true
         default: 'debug'
