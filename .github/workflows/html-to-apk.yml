@@ -38,7 +38,6 @@ jobs:
           head -3 /tmp/index.html
       - name: Build APK
         run: |
-          unset ANDROID_SDK_ROOT
           PKG="${{ github.event.inputs.package_name }}"
           APP="${{ github.event.inputs.app_name }}"
           PKG_PATH=$(echo $PKG | tr '.' '/')
@@ -47,77 +46,19 @@ jobs:
           mkdir -p /tmp/app/app/src/main/res/values
           mkdir -p /tmp/app/gradle/wrapper
           cp /tmp/index.html /tmp/app/app/src/main/assets/
-          echo "sdk.dir=$HOME/android-sdk" > /tmp/app/local.properties
-          cat > /tmp/app/gradle.properties << GPROPS
-android.useAndroidX=true
-android.enableJetifier=true
-GPROPS
           printf 'rootProject.name = "App"\ninclude ":app"\n' > /tmp/app/settings.gradle
-          cat > /tmp/app/build.gradle << BGRADE
-buildscript {
-    repositories { google(); mavenCentral() }
-    dependencies { classpath "com.android.tools.build:gradle:8.1.0" }
-}
-allprojects { repositories { google(); mavenCentral() } }
-BGRADE
+          printf 'buildscript {\n    repositories { google(); mavenCentral() }\n    dependencies { classpath "com.android.tools.build:gradle:8.1.0" }\n}\nallprojects { repositories { google(); mavenCentral() } }\n' > /tmp/app/build.gradle
           printf 'distributionUrl=https\\://services.gradle.org/distributions/gradle-8.5-bin.zip\n' > /tmp/app/gradle/wrapper/gradle-wrapper.properties
-          cat > /tmp/app/app/build.gradle << APPGRADE
-plugins { id "com.android.application" }
-android {
-    namespace "$PKG"
-    compileSdk 34
-    defaultConfig {
-        applicationId "$PKG"
-        minSdk 21
-        targetSdk 34
-        versionCode 1
-        versionName "1.0"
-    }
-}
-dependencies {}
-APPGRADE
-          cat > /tmp/app/app/src/main/AndroidManifest.xml << MANIFEST
-<?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <uses-permission android:name="android.permission.INTERNET"/>
-    <application android:label="$APP" android:usesCleartextTraffic="true" android:theme="@android:style/Theme.NoTitleBar">
-        <activity android:name=".MainActivity" android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-                <category android:name="android.intent.category.LAUNCHER"/>
-            </intent-filter>
-        </activity>
-    </application>
-</manifest>
-MANIFEST
-          cat > /tmp/app/app/src/main/java/$PKG_PATH/MainActivity.java << JAVA
-package $PKG;
-import android.app.Activity;
-import android.os.Bundle;
-import android.webkit.WebSettings;
-import android.webkit.WebView;
-import android.webkit.WebViewClient;
-public class MainActivity extends Activity {
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        WebView webView = new WebView(this);
-        setContentView(webView);
-        WebSettings s = webView.getSettings();
-        s.setJavaScriptEnabled(true);
-        s.setDomStorageEnabled(true);
-        webView.setWebViewClient(new WebViewClient());
-        webView.loadUrl("file:///android_asset/index.html");
-    }
-}
-JAVA
+          printf 'plugins { id "com.android.application" }\nandroid {\n    namespace "%s"\n    compileSdk 34\n    defaultConfig { applicationId "%s"; minSdk 21; targetSdk 34; versionCode 1; versionName "1.0" }\n}\ndependencies { implementation "androidx.appcompat:appcompat:1.6.1" }\n' $PKG $PKG > /tmp/app/app/build.gradle
+          printf '<?xml version="1.0" encoding="utf-8"?>\n<manifest xmlns:android="http://schemas.android.com/apk/res/android">\n<uses-permission android:name="android.permission.INTERNET"/>\n<application android:label="%s" android:usesCleartextTraffic="true">\n<activity android:name=".MainActivity" android:exported="true">\n<intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter>\n</activity></application></manifest>\n' "$APP" > /tmp/app/app/src/main/AndroidManifest.xml
+          printf 'package %s;\nimport android.app.*;\nimport android.os.*;\nimport android.webkit.*;\npublic class MainActivity extends Activity {\n    protected void onCreate(Bundle s) {\n        super.onCreate(s);\n        WebView w = new WebView(this); setContentView(w);\n        w.getSettings().setJavaScriptEnabled(true);\n        w.setWebViewClient(new WebViewClient());\n        w.loadUrl("file:///android_asset/index.html");\n    }\n}\n' $PKG > /tmp/app/app/src/main/java/$PKG_PATH/MainActivity.java
+          printf '<?xml version="1.0" encoding="utf-8"?>\n<resources><style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar"/></resources>\n' > /tmp/app/app/src/main/res/values/styles.xml
           wget -q https://services.gradle.org/distributions/gradle-8.5-bin.zip -O /tmp/gradle.zip
           unzip -q /tmp/gradle.zip -d /tmp/gradle-dist
           export PATH="/tmp/gradle-dist/gradle-8.5/bin:$PATH"
           cd /tmp/app && gradle assembleDebug --no-daemon
           find . -name "*.apk" -exec cp {} /tmp/output.apk \;
-          echo "Size: $(du -sh /tmp/output.apk | cut -f1)"
-      - name: Sign APK
+      - name: Sign and Upload
         run: |
           keytool -genkey -v -keystore /tmp/ks.keystore -alias app \
             -keyalg RSA -keysize 2048 -validity 10000 \
