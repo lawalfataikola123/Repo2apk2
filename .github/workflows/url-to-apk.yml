@@ -14,6 +14,10 @@ on:
         required: true
         default: 'com.repo2apk.app'
       app_color:
+      icon_url:
+        description: "Custom app icon URL"
+        required: false
+        default: ""
         description: 'Theme Color hex without #'
         required: false
         default: '2196F3'
