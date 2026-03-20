@@ -3,1216 +3,911 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Repo2APK — Convert Anything to Android APK</title>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Clash+Display:wght@400;600;700&display=swap" rel="stylesheet">
+<title>Repo2APK — GitHub to Android in Minutes</title>
+<meta name="description" content="Convert any GitHub repo, website URL, or HTML file into a signed Android APK using GitHub Actions. Free, fast, professional.">
+<meta name="theme-color" content="#06060c">
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Unbounded:wght@400;700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;700;800&display=swap');
-
 *{margin:0;padding:0;box-sizing:border-box}
-
 :root{
-  --bg:#04080c;
-  --surface:#080f18;
-  --card:#0a1420;
-  --border:#0f2035;
-  --accent:#00ff88;
-  --accent2:#00d4ff;
-  --accent3:#ff6b35;
-  --warn:#ffd700;
-  --error:#ff3355;
-  --text:#dce8f0;
-  --muted:#4a6070;
-  --dim:#1a2f40;
+  --bg:#06060c;--bg2:#09090f;--card:#0d0d18;--card2:#111122;
+  --border:#1a1a30;--border2:#242440;
+  --g1:#00ffb3;--g2:#7b61ff;--g3:#ff6b6b;--g4:#ffd93d;
+  --text:#e8e8f0;--text2:#9090b0;--muted:#404060;
+  --success:#00ffb3;--error:#ff4466;--warn:#ffd93d;
 }
-
 html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;overflow-x:hidden}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
 
-body{
-  background:var(--bg);
-  color:var(--text);
-  font-family:'Syne',sans-serif;
-  min-height:100vh;
-  overflow-x:hidden;
-}
+/* BG */
+.bg-canvas{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.bg-orb{position:absolute;border-radius:50%;filter:blur(100px);opacity:.1;animation:orbFloat 8s ease-in-out infinite}
+.bg-orb-1{width:600px;height:600px;background:var(--g1);top:-200px;right:-100px}
+.bg-orb-2{width:500px;height:500px;background:var(--g2);bottom:-200px;left:-100px;animation-delay:3s}
+.bg-orb-3{width:300px;height:300px;background:var(--g3);top:50%;left:50%;animation-delay:1.5s;opacity:.05}
+@keyframes orbFloat{0%,100%{transform:translate(0,0)}50%{transform:translate(20px,-30px)}}
+.bg-grid{position:fixed;inset:0;background-image:linear-gradient(rgba(255,255,255,.012) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.012) 1px,transparent 1px);background-size:60px 60px;pointer-events:none;z-index:0}
 
-/* Animated background grid */
-body::before{
-  content:'';
-  position:fixed;
-  inset:0;
-  background-image:
-    linear-gradient(rgba(0,255,136,.025) 1px,transparent 1px),
-    linear-gradient(90deg,rgba(0,255,136,.025) 1px,transparent 1px);
-  background-size:50px 50px;
-  animation:gridMove 20s linear infinite;
-  pointer-events:none;
-  z-index:0;
-}
-
-@keyframes gridMove{
-  0%{background-position:0 0}
-  100%{background-position:50px 50px}
-}
-
-/* Ambient glows */
-.glow-1{
-  position:fixed;top:-20%;right:-10%;
-  width:60vw;height:60vw;
-  background:radial-gradient(circle,rgba(0,212,255,.04) 0%,transparent 70%);
-  pointer-events:none;z-index:0;
-}
-.glow-2{
-  position:fixed;bottom:-20%;left:-10%;
-  width:50vw;height:50vw;
-  background:radial-gradient(circle,rgba(0,255,136,.04) 0%,transparent 70%);
-  pointer-events:none;z-index:0;
-}
+/* ADS */
+.ad-ribbon{position:sticky;top:0;z-index:200;background:rgba(6,6,12,.9);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:6px 20px;display:flex;align-items:center;gap:12px}
+.ad-ribbon.hidden{display:none}
+.ad-label-sm{font-size:9px;font-family:'Space Mono',monospace;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;white-space:nowrap}
+.ad-ribbon-inner{flex:1;min-height:50px;display:flex;align-items:center;justify-content:center}
+.ad-close-btn{background:none;border:1px solid var(--border);border-radius:4px;color:var(--muted);padding:3px 8px;font-size:10px;cursor:pointer;white-space:nowrap;font-family:'Space Mono',monospace;transition:all .2s}
+.ad-close-btn:hover{color:var(--warn);border-color:var(--warn)}
+.ad-box{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:20px}
+.ad-box.hidden{display:none}
+.ad-box-top{padding:8px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
+.ad-box-label{font-size:9px;color:var(--muted);font-family:'Space Mono',monospace;text-transform:uppercase;letter-spacing:.1em}
+.ad-remove{font-size:9px;color:var(--warn);cursor:pointer;font-family:'Space Mono',monospace;padding:2px 8px;border:1px solid rgba(255,217,61,.2);border-radius:3px;transition:all .2s}
+.ad-remove:hover{background:rgba(255,217,61,.08)}
+.ad-box-inner{padding:12px;min-height:90px;display:flex;align-items:center;justify-content:center}
 
 /* NAV */
-nav{
-  position:sticky;top:0;z-index:100;
-  background:rgba(4,8,12,.85);
-  backdrop-filter:blur(20px);
-  border-bottom:1px solid var(--border);
-  padding:0 24px;
-  display:flex;align-items:center;justify-content:space-between;
-  height:56px;
-}
-
-.logo{
-  display:flex;align-items:center;gap:10px;
-  text-decoration:none;
-}
-.logo-mark{
-  width:32px;height:32px;
-  background:linear-gradient(135deg,var(--accent),var(--accent2));
-  border-radius:8px;
-  display:flex;align-items:center;justify-content:center;
-  font-size:16px;font-weight:700;color:#000;
-  font-family:'JetBrains Mono',monospace;
-  box-shadow:0 0 20px rgba(0,255,136,.3);
-}
-.logo-text{
-  font-family:'JetBrains Mono',monospace;
-  font-weight:700;font-size:16px;
-  color:var(--accent);
-  letter-spacing:-0.5px;
-}
-
+nav{position:relative;z-index:100;padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:64px;border-bottom:1px solid var(--border);background:rgba(6,6,12,.8);backdrop-filter:blur(24px)}
+.logo{display:flex;align-items:center;gap:12px;text-decoration:none}
+.logo-icon{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--g1),var(--g2));display:flex;align-items:center;justify-content:center;font-family:'Unbounded',sans-serif;font-size:13px;font-weight:900;color:#000;box-shadow:0 0 24px rgba(0,255,179,.25)}
+.logo-name{font-family:'Unbounded',sans-serif;font-size:15px;font-weight:700;background:linear-gradient(90deg,var(--g1),var(--g2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.logo-ver{font-size:9px;color:var(--muted);font-family:'Space Mono',monospace;padding:2px 6px;border:1px solid var(--border);border-radius:3px}
 .nav-right{display:flex;align-items:center;gap:8px}
-
-.nav-link{
-  padding:5px 12px;border-radius:6px;
-  font-size:12px;font-weight:600;
-  border:1px solid var(--border);
-  background:transparent;color:var(--muted);
-  text-decoration:none;cursor:pointer;
-  transition:all .2s;font-family:'Syne',sans-serif;
-}
-.nav-link:hover{color:var(--text);border-color:var(--accent2)}
-
-.credits-pill{
-  padding:4px 10px;border-radius:20px;
-  font-size:11px;font-weight:700;
-  font-family:'JetBrains Mono',monospace;
-  background:rgba(255,215,0,.08);
-  border:1px solid rgba(255,215,0,.2);
-  color:var(--warn);cursor:pointer;
-}
+.nav-pill{padding:6px 14px;border-radius:20px;font-size:11px;font-weight:600;border:1px solid var(--border);background:var(--card);color:var(--text2);cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif;text-decoration:none;display:flex;align-items:center;gap:5px}
+.nav-pill:hover{border-color:var(--g2);color:var(--text)}
+.nav-pill.accent{background:rgba(0,255,179,.08);border-color:rgba(0,255,179,.2);color:var(--g1)}
 
 /* HERO */
-.hero{
-  position:relative;z-index:1;
-  padding:70px 24px 40px;
-  text-align:center;max-width:800px;margin:0 auto;
-}
+.hero{position:relative;z-index:1;padding:64px 24px 48px;text-align:center;max-width:720px;margin:0 auto}
+.hero-badge{display:inline-flex;align-items:center;gap:6px;padding:5px 14px;border-radius:20px;background:rgba(123,97,255,.1);border:1px solid rgba(123,97,255,.2);font-size:11px;color:var(--g2);margin-bottom:24px;font-family:'Space Mono',monospace;animation:fadeUp .5s ease both}
+.badge-dot{width:6px;height:6px;border-radius:50%;background:var(--g1);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.hero-title{font-family:'Unbounded',sans-serif;font-size:clamp(26px,5vw,54px);font-weight:900;line-height:1.1;margin-bottom:20px;animation:fadeUp .5s ease .1s both}
+.hero-title .t1{color:var(--text)}
+.hero-title .t2{display:block;background:linear-gradient(90deg,var(--g1) 0%,var(--g2) 50%,var(--g3) 100%);background-size:200%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:gradAnim 4s linear infinite}
+@keyframes gradAnim{0%{background-position:0%}100%{background-position:200%}}
+.hero-sub{font-size:15px;color:var(--text2);line-height:1.8;max-width:480px;margin:0 auto 36px;animation:fadeUp .5s ease .2s both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
 
-.hero-eyebrow{
-  display:inline-flex;align-items:center;gap:6px;
-  padding:4px 14px;
-  background:rgba(0,255,136,.06);
-  border:1px solid rgba(0,255,136,.15);
-  border-radius:20px;
-  font-size:11px;font-family:'JetBrains Mono',monospace;
-  color:var(--accent);margin-bottom:24px;
-  animation:fadeUp .6s ease both;
-}
+.feature-pills{display:flex;flex-wrap:wrap;gap:7px;justify-content:center;margin-bottom:48px;animation:fadeUp .5s ease .3s both}
+.fpill{padding:5px 12px;border-radius:20px;font-size:11px;border:1px solid var(--border);background:var(--card);color:var(--text2);display:flex;align-items:center;gap:5px}
+.fpill span{color:var(--g1)}
 
-.hero-title{
-  font-size:clamp(32px,6vw,62px);
-  font-weight:800;line-height:1.05;
-  margin-bottom:16px;
-  animation:fadeUp .6s ease .1s both;
-}
+/* STATS */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:14px;overflow:hidden;max-width:720px;margin:0 auto 32px;position:relative;z-index:1;animation:fadeUp .5s ease .4s both}
+.stat-item{background:var(--card);padding:18px 12px;text-align:center}
+.stat-num{font-family:'Unbounded',sans-serif;font-size:20px;font-weight:900;background:linear-gradient(135deg,var(--g1),var(--g2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;display:block;margin-bottom:4px}
+.stat-lbl{font-size:10px;color:var(--muted);font-family:'Space Mono',monospace;text-transform:uppercase;letter-spacing:.08em}
 
-.hero-title .line1{color:var(--text)}
-.hero-title .line2{
-  background:linear-gradient(90deg,var(--accent) 0%,var(--accent2) 50%,var(--accent3) 100%);
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
-  background-size:200% auto;
-  animation:shimmer 3s linear infinite;
-}
+/* APP */
+.app{position:relative;z-index:1;max-width:720px;margin:0 auto;padding:0 24px 40px}
 
-@keyframes shimmer{
-  0%{background-position:0% center}
-  100%{background-position:200% center}
-}
-
-.hero-sub{
-  font-size:15px;color:var(--muted);
-  max-width:480px;margin:0 auto 40px;
-  line-height:1.75;
-  animation:fadeUp .6s ease .2s both;
-}
-
-@keyframes fadeUp{
-  from{opacity:0;transform:translateY(20px)}
-  to{opacity:1;transform:translateY(0)}
-}
-
-/* STATS BAR */
-.stats{
-  position:relative;z-index:1;
-  max-width:700px;margin:0 auto;
-  padding:0 24px 32px;
-  display:flex;gap:0;
-  background:var(--card);
-  border:1px solid var(--border);
-  border-radius:12px;
-  animation:fadeUp .6s ease .3s both;
-  overflow:hidden;
-}
-
-.stat{
-  flex:1;padding:16px;text-align:center;
-  border-right:1px solid var(--border);
-}
-.stat:last-child{border-right:none}
-.stat-num{
-  font-family:'JetBrains Mono',monospace;
-  font-size:22px;font-weight:700;
-  color:var(--accent);display:block;
-}
-.stat-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em}
-
-/* MAIN CONTENT */
-.main{
-  position:relative;z-index:1;
-  max-width:800px;margin:32px auto 0;
-  padding:0 24px;
-}
+/* ALERT */
+.alert{padding:10px 16px;border-radius:10px;font-size:12px;display:flex;align-items:center;gap:8px;margin-bottom:16px;line-height:1.5}
+.alert.warn{background:rgba(255,217,61,.06);border:1px solid rgba(255,217,61,.15);color:var(--warn)}
+.alert a{color:var(--g1);cursor:pointer;text-decoration:underline}
 
 /* TABS */
-.tabs{
-  display:flex;gap:0;
-  border-radius:10px;overflow:hidden;
-  border:1px solid var(--border);
-  margin-bottom:20px;
-}
-
-.tab{
-  flex:1;padding:12px 8px;text-align:center;
-  font-size:12px;font-weight:700;
-  font-family:'JetBrains Mono',monospace;
-  cursor:pointer;
-  background:var(--surface);color:var(--muted);
-  border-right:1px solid var(--border);
-  transition:all .25s;
-  display:flex;align-items:center;justify-content:center;gap:6px;
-}
-.tab:last-child{border-right:none}
-.tab:hover{color:var(--text);background:var(--card)}
-.tab.active{
-  color:var(--accent);
-  background:rgba(0,255,136,.06);
-  border-bottom:2px solid var(--accent);
-}
-
-.tab-content{display:none}
-.tab-content.active{display:block;animation:fadeUp .3s ease}
+.tabs{display:grid;grid-template-columns:repeat(3,1fr);background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:20px;padding:4px;gap:4px}
+.tab{padding:10px 8px;border-radius:8px;text-align:center;font-size:11px;font-weight:600;cursor:pointer;color:var(--muted);transition:all .2s;display:flex;align-items:center;justify-content:center;gap:5px;font-family:'DM Sans',sans-serif}
+.tab:hover{color:var(--text2);background:rgba(255,255,255,.03)}
+.tab.active{background:var(--card2);color:var(--text);box-shadow:0 1px 8px rgba(0,0,0,.3)}
+.tab-em{font-size:14px}
+.tab-pane{display:none;animation:fadeUp .25s ease}
+.tab-pane.active{display:block}
 
 /* CARD */
-.card{
-  background:var(--card);
-  border:1px solid var(--border);
-  border-radius:14px;overflow:hidden;
-  margin-bottom:20px;
-}
-
-.card-head{
-  padding:16px 20px;
-  border-bottom:1px solid var(--border);
-  display:flex;align-items:center;gap:10px;
-}
-.card-icon{
-  width:32px;height:32px;border-radius:8px;
-  display:flex;align-items:center;justify-content:center;
-  font-size:14px;flex-shrink:0;
-}
-.card-icon.green{background:rgba(0,255,136,.1);border:1px solid rgba(0,255,136,.2)}
-.card-icon.blue{background:rgba(0,212,255,.1);border:1px solid rgba(0,212,255,.2)}
-.card-icon.orange{background:rgba(255,107,53,.1);border:1px solid rgba(255,107,53,.2)}
-
-.card-title{font-size:14px;font-weight:700}
-.card-sub{font-size:11px;color:var(--muted);margin-top:2px;font-family:'JetBrains Mono',monospace}
-
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:16px}
+.card-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px}
+.card-ico{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.card-ico.green{background:rgba(0,255,179,.08);border:1px solid rgba(0,255,179,.15)}
+.card-ico.purple{background:rgba(123,97,255,.08);border:1px solid rgba(123,97,255,.15)}
+.card-ico.red{background:rgba(255,107,107,.08);border:1px solid rgba(255,107,107,.15)}
+.card-title{font-family:'Unbounded',sans-serif;font-size:12px;font-weight:700}
+.card-subtitle{font-size:10px;color:var(--muted);margin-top:3px;font-family:'Space Mono',monospace}
 .card-body{padding:20px}
 
-/* FORM ELEMENTS */
+/* FORM */
 .field{margin-bottom:14px}
-
-label{
-  display:block;
-  font-size:10px;font-family:'JetBrains Mono',monospace;
-  color:var(--muted);text-transform:uppercase;
-  letter-spacing:.1em;margin-bottom:6px;
-}
-
-.inp-wrap{position:relative}
-.inp-icon{
-  position:absolute;left:12px;top:50%;transform:translateY(-50%);
-  color:var(--muted);font-size:14px;pointer-events:none;
-}
-
-input,select,textarea{
-  width:100%;
-  background:var(--surface);
-  border:1px solid var(--border);
-  border-radius:8px;
-  padding:11px 12px 11px 36px;
-  color:var(--text);
-  font-size:13px;font-family:'JetBrains Mono',monospace;
-  outline:none;transition:border-color .2s;
-  -webkit-appearance:none;
-}
-
+.field-label{font-size:9px;font-family:'Space Mono',monospace;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;margin-bottom:6px;display:flex;align-items:center;gap:5px}
+.req{color:var(--g3)}
+.input-wrap{position:relative}
+.input-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:13px;pointer-events:none}
+input,select,textarea{width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:11px 12px 11px 36px;color:var(--text);font-size:13px;outline:none;font-family:'DM Sans',sans-serif;transition:border-color .2s,box-shadow .2s;-webkit-appearance:none;appearance:none}
 select,textarea{padding-left:12px}
-textarea{resize:vertical;min-height:80px;padding:12px}
-input:focus,select:focus,textarea:focus{border-color:var(--accent2)}
-input::placeholder,textarea::placeholder{color:var(--muted)}
-
+input:focus,select:focus,textarea:focus{border-color:var(--g2);box-shadow:0 0 0 3px rgba(123,97,255,.1)}
+input::placeholder{color:var(--muted)}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 
-/* NOTICE BOXES */
-.notice{
-  padding:10px 14px;border-radius:8px;
-  font-size:12px;display:flex;gap:8px;
-  align-items:flex-start;line-height:1.5;
-  margin-bottom:12px;
-}
-.notice.warn{background:rgba(255,215,0,.06);border:1px solid rgba(255,215,0,.15);color:var(--warn)}
-.notice.info{background:rgba(0,212,255,.05);border:1px solid rgba(0,212,255,.12);color:var(--accent2)}
-.notice.success{background:rgba(0,255,136,.05);border:1px solid rgba(0,255,136,.12);color:var(--accent)}
+/* COLOR */
+.color-row{display:flex;align-items:center;gap:8px}
+.color-input{flex:1}
+.swatches{display:flex;gap:5px}
+.swatch{width:24px;height:24px;border-radius:6px;cursor:pointer;border:2px solid transparent;transition:all .15s;flex-shrink:0}
+.swatch:hover,.swatch.on{border-color:var(--text);transform:scale(1.1)}
 
-/* BUTTONS */
-.btn-primary{
-  width:100%;padding:13px;
-  background:linear-gradient(135deg,var(--accent),#00cc70);
-  color:#000;border:none;border-radius:8px;
-  font-family:'Syne',sans-serif;font-size:14px;font-weight:700;
-  cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;
-  transition:all .2s;margin-top:6px;
-  box-shadow:0 4px 20px rgba(0,255,136,.2);
-}
-.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 28px rgba(0,255,136,.3)}
-.btn-primary:active{transform:translateY(0)}
-.btn-primary:disabled{background:var(--dim);color:var(--muted);cursor:not-allowed;transform:none;box-shadow:none}
+/* ICON ZONE */
+.icon-zone{border:1.5px dashed var(--border2);border-radius:12px;padding:16px;display:flex;align-items:center;gap:14px;cursor:pointer;transition:all .25s;margin-bottom:14px;background:var(--bg2)}
+.icon-zone:hover{border-color:var(--g2);background:rgba(123,97,255,.04)}
+.icon-zone.has-icon{border-color:var(--g1);border-style:solid;background:rgba(0,255,179,.03)}
+.icon-thumb{width:60px;height:60px;border-radius:14px;background:var(--card2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;overflow:hidden;position:relative}
+.icon-thumb img{width:100%;height:100%;object-fit:cover;border-radius:13px}
+.thumb-overlay{position:absolute;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;font-size:18px;border-radius:13px}
+.icon-zone:hover .thumb-overlay{display:flex}
+.icon-text{flex:1;min-width:0}
+.icon-text-title{font-size:12px;font-weight:600;margin-bottom:3px}
+.icon-text-sub{font-size:10px;color:var(--muted);line-height:1.6}
+.icon-actions{display:flex;flex-direction:column;gap:5px;flex-shrink:0}
+.btn-choose{padding:5px 12px;border-radius:7px;background:rgba(123,97,255,.1);border:1px solid rgba(123,97,255,.2);color:var(--g2);font-size:10px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s;white-space:nowrap}
+.btn-choose:hover{background:rgba(123,97,255,.2)}
+.btn-clear{padding:5px 12px;border-radius:7px;background:rgba(255,68,102,.08);border:1px solid rgba(255,68,102,.15);color:var(--error);font-size:10px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s;white-space:nowrap;display:none}
+.btn-clear:hover{background:rgba(255,68,102,.15)}
+.icon-zone.has-icon .btn-clear{display:block}
+input[type=file]{display:none}
 
-.btn-secondary{
-  flex:1;padding:10px;
-  background:transparent;
-  border:1px solid var(--border);border-radius:8px;
-  color:var(--muted);font-family:'Syne',sans-serif;
-  font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;
-}
-.btn-secondary:hover{color:var(--text);border-color:var(--accent2)}
-
-.btn-pay{
-  flex:2;padding:10px;
-  background:linear-gradient(135deg,var(--warn),#ffb700);
-  border:none;border-radius:8px;color:#000;
-  font-family:'Syne',sans-serif;font-size:12px;font-weight:700;
-  cursor:pointer;transition:all .2s;
-}
-.btn-pay:hover{transform:translateY(-1px)}
+/* BUILD BTN */
+.build-btn{width:100%;padding:14px;border:none;border-radius:12px;font-family:'Unbounded',sans-serif;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .25s;margin-top:4px;position:relative;overflow:hidden}
+.build-btn::before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.1),transparent);transform:translateX(-100%);transition:transform .5s}
+.build-btn:hover::before{transform:translateX(100%)}
+.build-btn.green{background:linear-gradient(135deg,#00e6a0,#00ffb3);color:#000;box-shadow:0 4px 24px rgba(0,255,179,.25)}
+.build-btn.green:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(0,255,179,.35)}
+.build-btn.purple{background:linear-gradient(135deg,#6b4fff,#7b61ff);color:#fff;box-shadow:0 4px 24px rgba(123,97,255,.3)}
+.build-btn.purple:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(123,97,255,.4)}
+.build-btn.red{background:linear-gradient(135deg,#ff4466,#ff6b8a);color:#fff;box-shadow:0 4px 24px rgba(255,68,102,.25)}
+.build-btn.red:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(255,68,102,.35)}
+.build-btn:disabled{background:var(--card2)!important;color:var(--muted)!important;cursor:not-allowed;transform:none!important;box-shadow:none!important}
+.btn-spinner{width:14px;height:14px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;animation:spin .7s linear infinite;display:none}
+.build-btn.loading .btn-spinner{display:block}
+.build-btn.loading .btn-label{opacity:.7}
+@keyframes spin{to{transform:rotate(360deg)}}
 
 /* PROGRESS */
-.progress{display:none;padding:0 20px 20px}
-.progress.show{display:block;animation:fadeUp .3s ease}
-
-.step-track{
-  display:flex;border-radius:8px;overflow:hidden;
-  border:1px solid var(--border);margin-bottom:14px;
-}
-.step-item{
-  flex:1;padding:8px 4px;text-align:center;
-  font-size:9px;font-family:'JetBrains Mono',monospace;
-  color:var(--muted);background:var(--surface);
-  border-right:1px solid var(--border);transition:all .3s;
-}
-.step-item:last-child{border-right:none}
-.step-item.active{color:var(--accent2);background:rgba(0,212,255,.06)}
-.step-item.done{color:var(--accent);background:rgba(0,255,136,.06)}
-.step-item.err{color:var(--error);background:rgba(255,51,85,.06)}
-.step-em{font-size:12px;display:block;margin-bottom:2px}
-
-.pbar-track{
-  background:var(--surface);border-radius:3px;height:3px;
-  overflow:hidden;margin-bottom:12px;border:1px solid var(--border);
-}
-.pbar-fill{
-  height:100%;
-  background:linear-gradient(90deg,var(--accent),var(--accent2));
-  border-radius:3px;transition:width .5s ease;width:0%;
-}
+.prog-section{display:none;padding:0 20px 20px;animation:fadeUp .3s ease}
+.prog-section.show{display:block}
+.steps{display:flex;background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:12px}
+.step{flex:1;padding:8px 4px;text-align:center;font-size:8px;font-family:'Space Mono',monospace;color:var(--muted);border-right:1px solid var(--border);transition:all .3s;text-transform:uppercase;letter-spacing:.06em}
+.step:last-child{border-right:none}
+.step-icon{font-size:12px;display:block;margin-bottom:2px}
+.step.active{color:var(--g2);background:rgba(123,97,255,.06)}
+.step.done{color:var(--g1);background:rgba(0,255,179,.04)}
+.step.fail{color:var(--error);background:rgba(255,68,102,.06)}
+.pbar{height:2px;background:var(--border);border-radius:1px;margin-bottom:14px;overflow:hidden}
+.pbar-fill{height:100%;border-radius:1px;width:0%;transition:width .6s cubic-bezier(.4,0,.2,1);background:linear-gradient(90deg,var(--g1),var(--g2),var(--g3));background-size:200%;animation:pbarAnim 2s linear infinite}
+@keyframes pbarAnim{0%{background-position:0%}100%{background-position:200%}}
 
 /* TERMINAL */
-.terminal{background:#020a0f;border:1px solid var(--border);border-radius:8px;overflow:hidden}
-.term-head{
-  padding:8px 12px;background:var(--surface);
-  border-bottom:1px solid var(--border);
-  display:flex;align-items:center;gap:8px;
-  font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);
-}
-.term-dots{display:flex;gap:4px}
-.term-dot{width:8px;height:8px;border-radius:50%}
-.term-status{
-  margin-left:auto;padding:2px 7px;border-radius:3px;
-  font-size:9px;font-weight:700;font-family:'JetBrains Mono',monospace;
-}
-.term-status.building{background:rgba(0,212,255,.12);color:var(--accent2)}
-.term-status.success{background:rgba(0,255,136,.12);color:var(--accent)}
-.term-status.failed{background:rgba(255,51,85,.12);color:var(--error)}
-.term-body{
-  padding:12px;height:180px;overflow-y:auto;
-  font-family:'JetBrains Mono',monospace;font-size:11px;line-height:1.7;
-}
-.term-body::-webkit-scrollbar{width:3px}
-.term-body::-webkit-scrollbar-thumb{background:var(--dim);border-radius:2px}
-.log-line{display:flex;gap:8px;margin-bottom:1px}
-.log-n{color:var(--dim);min-width:24px;user-select:none}
-.log-t{color:#5a7a8a}
-.log-t.g{color:var(--accent)}.log-t.b{color:var(--accent2)}
-.log-t.r{color:var(--error)}.log-t.y{color:var(--warn)}
+.terminal{border-radius:12px;overflow:hidden;border:1px solid var(--border)}
+.term-bar{background:var(--card2);padding:8px 14px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--border)}
+.term-dots{display:flex;gap:5px}
+.term-dot{width:10px;height:10px;border-radius:50%}
+.term-title-lbl{font-size:10px;color:var(--muted);font-family:'Space Mono',monospace;margin-left:4px}
+.badge{margin-left:auto;padding:2px 8px;border-radius:4px;font-size:9px;font-family:'Space Mono',monospace;font-weight:700;text-transform:uppercase;letter-spacing:.08em}
+.badge.building{background:rgba(123,97,255,.12);color:var(--g2)}
+.badge.success{background:rgba(0,255,179,.12);color:var(--g1)}
+.badge.failed{background:rgba(255,68,102,.12);color:var(--error)}
+.badge.idle{background:rgba(255,255,255,.04);color:var(--muted)}
+.term-body{background:#04040a;padding:14px;height:200px;overflow-y:auto;font-family:'Space Mono',monospace;font-size:11px;line-height:1.8}
+.term-body::-webkit-scrollbar{width:2px}
+.term-body::-webkit-scrollbar-thumb{background:var(--border2)}
+.log{display:flex;gap:10px}
+.log-n{color:var(--muted);min-width:26px;user-select:none;font-size:10px}
+.log-m{flex:1;word-break:break-all}
+.log-m.g{color:#00e6a0}.log-m.b{color:#7b91ff}.log-m.r{color:#ff6680}.log-m.y{color:#ffd93d}.log-m.d{color:var(--muted)}
 
 /* RESULT */
-.result{margin-top:14px;padding:14px;border-radius:8px;display:none}
-.result.ok{display:block;background:rgba(0,255,136,.05);border:1px solid rgba(0,255,136,.15)}
-.result.fail{display:block;background:rgba(255,51,85,.05);border:1px solid rgba(255,51,85,.15)}
-.result-title{font-size:13px;font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:8px}
-.dl-btn{
-  display:inline-flex;align-items:center;gap:6px;
-  padding:8px 16px;background:var(--accent);color:#000;
-  border-radius:7px;text-decoration:none;font-weight:700;font-size:12px;
-  transition:all .2s;
-}
-.dl-btn:hover{background:#00e87a;transform:translateY(-1px)}
-.gh-btn{
-  display:inline-flex;align-items:center;gap:5px;
-  padding:8px 12px;border:1px solid var(--border);color:var(--muted);
-  border-radius:7px;text-decoration:none;font-size:11px;margin-left:6px;
-  transition:all .2s;
-}
-.gh-btn:hover{color:var(--text);border-color:var(--accent2)}
+.result-box{margin-top:14px;border-radius:12px;padding:16px;display:none;animation:fadeUp .3s ease}
+.result-box.ok{display:block;background:rgba(0,255,179,.04);border:1px solid rgba(0,255,179,.15)}
+.result-box.fail{display:block;background:rgba(255,68,102,.04);border:1px solid rgba(255,68,102,.15)}
+.result-title{font-size:13px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.result-actions{display:flex;flex-direction:column;gap:8px}
+.dl-primary{display:flex;align-items:center;justify-content:center;gap:8px;padding:13px 20px;border-radius:10px;background:linear-gradient(135deg,var(--g1),#00e6a0);color:#000;font-weight:700;font-size:13px;text-decoration:none;transition:all .2s;font-family:'DM Sans',sans-serif}
+.dl-primary:hover{transform:translateY(-1px);box-shadow:0 6px 24px rgba(0,255,179,.3)}
+.dl-secondary{display:flex;align-items:center;justify-content:center;gap:6px;padding:10px 16px;border-radius:10px;border:1px solid var(--border2);color:var(--text2);font-size:12px;text-decoration:none;transition:all .2s;font-family:'DM Sans',sans-serif;background:var(--card2)}
+.dl-secondary:hover{border-color:var(--g2);color:var(--text)}
+.result-hint{font-size:10px;color:var(--muted);line-height:1.9;padding:10px 12px;background:var(--bg2);border-radius:8px;font-family:'Space Mono',monospace}
 
 /* HISTORY */
-.hist-section{margin-bottom:40px}
-.sect-head{
-  font-size:11px;font-weight:700;color:var(--muted);
-  font-family:'JetBrains Mono',monospace;text-transform:uppercase;
-  letter-spacing:.12em;margin-bottom:12px;
-  display:flex;align-items:center;justify-content:space-between;
-}
-.sect-link{font-size:10px;color:var(--accent2);text-decoration:none}
+.section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.section-title{font-size:10px;font-family:'Space Mono',monospace;color:var(--muted);text-transform:uppercase;letter-spacing:.12em}
+.section-link{font-size:10px;color:var(--g2);text-decoration:none}
+.section-link:hover{color:var(--g1)}
 .hist-list{display:flex;flex-direction:column;gap:6px}
-.hist-item{
-  background:var(--card);border:1px solid var(--border);
-  border-radius:10px;padding:12px 14px;
-  display:flex;align-items:center;gap:10px;
-  cursor:pointer;transition:all .2s;
-}
-.hist-item:hover{border-color:var(--accent2);transform:translateX(2px)}
-.hist-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
-.hist-dot.success{background:var(--accent);box-shadow:0 0 6px var(--accent)}
-.hist-dot.failed{background:var(--error)}
-.hist-dot.building{background:var(--accent2);animation:pulse 1.5s infinite}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
-.hist-info{flex:1;min-width:0}
-.hist-name{font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.hist-meta{font-size:10px;color:var(--muted);margin-top:1px;font-family:'JetBrains Mono',monospace}
-.hist-badge{
-  padding:2px 7px;border-radius:3px;
-  font-size:9px;font-family:'JetBrains Mono',monospace;font-weight:700;
-}
-.hist-badge.success{background:rgba(0,255,136,.1);color:var(--accent)}
-.hist-badge.failed{background:rgba(255,51,85,.1);color:var(--error)}
+.hist-item{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:all .2s}
+.hist-item:hover{border-color:var(--border2);transform:translateX(3px)}
+.h-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.h-dot.success{background:var(--g1);box-shadow:0 0 8px rgba(0,255,179,.5)}
+.h-dot.failed{background:var(--error)}
+.h-dot.building{background:var(--g2);animation:pulse 1.5s infinite}
+.h-info{flex:1;min-width:0}
+.h-name{font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.h-meta{font-size:10px;color:var(--muted);margin-top:2px;font-family:'Space Mono',monospace}
+.h-chip{padding:3px 8px;border-radius:4px;font-size:9px;font-family:'Space Mono',monospace;font-weight:700;text-transform:uppercase}
+.h-chip.success{background:rgba(0,255,179,.08);color:var(--g1)}
+.h-chip.failed{background:rgba(255,68,102,.08);color:var(--error)}
+.empty-hist{padding:32px;text-align:center;background:var(--card);border:1px dashed var(--border);border-radius:12px;color:var(--muted);font-size:12px;font-family:'Space Mono',monospace}
+.empty-icon{font-size:28px;margin-bottom:10px;display:block;opacity:.4}
 
 /* MODALS */
-.overlay{
-  display:none;position:fixed;inset:0;
-  background:rgba(0,0,0,.85);backdrop-filter:blur(8px);
-  z-index:200;align-items:center;justify-content:center;padding:20px;
-}
+.overlay{display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.8);backdrop-filter:blur(12px);align-items:center;justify-content:center;padding:20px}
 .overlay.show{display:flex}
-.modal{
-  background:var(--card);border:1px solid var(--border);
-  border-radius:16px;padding:24px;max-width:420px;width:100%;
-  animation:fadeUp .3s ease;
-}
-.modal h3{font-size:16px;font-weight:700;margin-bottom:8px}
-.modal p{font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.6}
-.modal-steps{
-  background:var(--surface);border-radius:8px;padding:12px;
-  margin-bottom:16px;font-size:11px;color:var(--muted);
-  line-height:2.2;font-family:'JetBrains Mono',monospace;
-}
-.modal-steps a{color:var(--accent2)}
-.modal-foot{display:flex;gap:8px;margin-top:14px}
-
-/* PRICING MODAL */
-.price-cards{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
-.price-card{
-  padding:12px 14px;border:1px solid var(--border);
-  border-radius:8px;cursor:pointer;transition:all .2s;
-}
-.price-card:hover,.price-card.selected{border-color:var(--accent);background:rgba(0,255,136,.04)}
-.price-card-top{display:flex;align-items:center;justify-content:space-between}
+.modal{background:var(--card);border:1px solid var(--border2);border-radius:20px;padding:28px;max-width:440px;width:100%;animation:modalIn .3s cubic-bezier(.34,1.56,.64,1)}
+@keyframes modalIn{from{opacity:0;transform:scale(.9) translateY(20px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.modal-title{font-family:'Unbounded',sans-serif;font-size:14px;font-weight:700;margin-bottom:8px}
+.modal-sub{font-size:12px;color:var(--text2);margin-bottom:20px;line-height:1.7}
+.modal-steps{background:var(--bg2);border-radius:10px;padding:14px;margin-bottom:18px;font-size:11px;color:var(--text2);line-height:2.2;font-family:'Space Mono',monospace;border:1px solid var(--border)}
+.modal-steps a{color:var(--g1);text-decoration:none}
+.modal-foot{display:flex;gap:8px;margin-top:18px}
+.btn-cancel{flex:1;padding:11px;border-radius:10px;background:var(--bg2);border:1px solid var(--border);color:var(--text2);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;transition:all .2s}
+.btn-cancel:hover{border-color:var(--border2);color:var(--text)}
+.btn-confirm{flex:2;padding:11px;border-radius:10px;background:linear-gradient(135deg,var(--g1),#00e6a0);border:none;color:#000;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all .2s}
+.btn-confirm:hover{transform:translateY(-1px);box-shadow:0 4px 20px rgba(0,255,179,.3)}
+.price-grid{display:flex;flex-direction:column;gap:8px;margin-bottom:18px}
+.price-card{padding:14px 16px;border:1px solid var(--border);border-radius:12px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
+.price-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(180deg,var(--g1),var(--g2));opacity:0;transition:opacity .2s}
+.price-card:hover,.price-card.sel{border-color:var(--g1)}
+.price-card.sel::before,.price-card:hover::before{opacity:1}
+.price-card.sel{background:rgba(0,255,179,.03)}
+.price-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
 .price-name{font-size:13px;font-weight:700}
-.price-amount{font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:700;color:var(--accent)}
-.price-desc{font-size:11px;color:var(--muted);margin-top:3px}
+.price-amt{font-family:'Space Mono',monospace;font-size:15px;font-weight:700;color:var(--g1)}
+.price-desc{font-size:11px;color:var(--muted)}
+.price-badge{display:inline-block;padding:1px 7px;border-radius:3px;font-size:9px;font-weight:700;margin-left:6px;background:rgba(0,255,179,.1);color:var(--g1);font-family:'Space Mono',monospace}
 
 /* FOOTER */
-footer{
-  position:relative;z-index:1;
-  text-align:center;padding:24px;
-  color:var(--muted);font-size:10px;
-  font-family:'JetBrains Mono',monospace;
-  border-top:1px solid var(--border);
-  margin-top:20px;
-}
-footer a{color:var(--accent2);text-decoration:none}
+footer{position:relative;z-index:1;border-top:1px solid var(--border);padding:24px;text-align:center;font-size:11px;color:var(--muted);font-family:'Space Mono',monospace}
+footer a{color:var(--g2);text-decoration:none}
+footer a:hover{color:var(--g1)}
 
-@media(max-width:600px){
+@media(max-width:580px){
   .row2{grid-template-columns:1fr}
-  .hero{padding:50px 16px 30px}
-  .main{padding:0 16px}
-  .stats{margin:0 16px 24px;border-radius:10px}
-  .stat-num{font-size:18px}
+  .stats-row{grid-template-columns:repeat(2,1fr)}
+  .hero{padding:40px 16px 32px}
+  .app,.stats-row{padding-left:16px;padding-right:16px;margin-left:16px;margin-right:16px}
+  .stats-row{margin:0 16px 24px}
 }
 </style>
 </head>
 <body>
 
-<div class="glow-1"></div>
-<div class="glow-2"></div>
+<div class="bg-canvas">
+  <div class="bg-orb bg-orb-1"></div>
+  <div class="bg-orb bg-orb-2"></div>
+  <div class="bg-orb bg-orb-3"></div>
+</div>
+<div class="bg-grid"></div>
+
+<!-- TOP AD -->
+<div class="ad-ribbon" id="adRibbon">
+  <span class="ad-label-sm">AD</span>
+  <div class="ad-ribbon-inner">
+    <ins class="adsbygoogle" style="display:block;height:50px;" data-ad-client="ca-pub-XXXXXXXXXXXXXXXX" data-ad-slot="XXXXXXXXXX" data-ad-format="horizontal" data-full-width-responsive="true"></ins>
+    <script>(adsbygoogle=window.adsbygoogle||[]).push({})</script>
+  </div>
+  <button class="ad-close-btn" onclick="showPayModal()">Remove Ads ✕</button>
+</div>
 
 <!-- NAV -->
 <nav>
   <a class="logo" href="#">
-    <div class="logo-mark">R2</div>
-    <span class="logo-text">Repo2APK</span>
+    <div class="logo-icon">R2</div>
+    <span class="logo-name">Repo2APK</span>
+    <span class="logo-ver">v2.0</span>
   </a>
   <div class="nav-right">
-    <span class="credits-pill" id="creditsPill" onclick="showPayModal()">⚡ 0 Credits</span>
-    <button class="nav-link" onclick="showTokenModal()">🔑 Token</button>
-    <a class="nav-link" href="https://github.com/lawalfataikola123/Repo2apk2/actions" target="_blank">Actions ↗</a>
+    <span class="nav-pill accent" id="creditsPill" onclick="showPayModal()">⚡ <span id="creditsNum">0</span> Credits</span>
+    <button class="nav-pill" onclick="showTokenModal()">🔑 Token</button>
+    <a class="nav-pill" href="https://github.com/lawalfataikola123/Repo2apk2/actions" target="_blank">⚙ Actions</a>
   </div>
 </nav>
 
 <!-- HERO -->
 <div class="hero">
-  <div class="hero-eyebrow">⚡ Powered by GitHub Actions — Always Free</div>
+  <div class="hero-badge"><span class="badge-dot"></span>GitHub Actions Powered · Always Free</div>
   <h1 class="hero-title">
-    <span class="line1">Convert Anything</span><br>
-    <span class="line2">to Android APK</span>
+    <span class="t1">Build Android APKs</span>
+    <span class="t2">Without a PC</span>
   </h1>
-  <p class="hero-sub">GitHub repos, websites, or HTML files — get a production-ready signed APK in minutes. No server needed.</p>
+  <p class="hero-sub">Turn any GitHub repo, website, or HTML file into a signed Android APK in minutes. No Android Studio. No local setup. Just results.</p>
+  <div class="feature-pills">
+    <div class="fpill"><span>✓</span> Auto-signed APK</div>
+    <div class="fpill"><span>✓</span> Flutter support</div>
+    <div class="fpill"><span>✓</span> React Native</div>
+    <div class="fpill"><span>✓</span> Custom icon upload</div>
+    <div class="fpill"><span>✓</span> URL → App</div>
+    <div class="fpill"><span>✓</span> HTML → App</div>
+  </div>
 </div>
 
 <!-- STATS -->
-<div class="stats">
-  <div class="stat"><span class="stat-num" id="totalBuilds">0</span><span class="stat-label">Builds</span></div>
-  <div class="stat"><span class="stat-num">3</span><span class="stat-label">Workflows</span></div>
-  <div class="stat"><span class="stat-num">∞</span><span class="stat-label">Free</span></div>
-  <div class="stat"><span class="stat-num">✓</span><span class="stat-label">Signed APK</span></div>
+<div class="stats-row">
+  <div class="stat-item"><span class="stat-num" id="totalStat">0</span><span class="stat-lbl">Builds</span></div>
+  <div class="stat-item"><span class="stat-num">3</span><span class="stat-lbl">Workflows</span></div>
+  <div class="stat-item"><span class="stat-num">∞</span><span class="stat-lbl">Free</span></div>
+  <div class="stat-item"><span class="stat-num">✓</span><span class="stat-lbl">Signed</span></div>
 </div>
 
-<!-- MAIN -->
-<div class="main">
+<!-- APP -->
+<div class="app">
 
-  <!-- NOTICES -->
-  <div class="notice warn">⚠ You need a GitHub Token with <strong>repo</strong> and <strong>workflow</strong> scopes. <span onclick="showTokenModal()" style="color:var(--accent2);cursor:pointer">Setup →</span></div>
+  <div class="alert warn">⚠ Requires a GitHub token with <strong>repo</strong> + <strong>workflow</strong> scopes. <a onclick="showTokenModal()">Setup in 2 min →</a></div>
+
+  <!-- MID AD -->
+  <div class="ad-box" id="adMid">
+    <div class="ad-box-top">
+      <span class="ad-box-label">Advertisement</span>
+      <span class="ad-remove" onclick="showPayModal()">⚡ Remove Ads</span>
+    </div>
+    <div class="ad-box-inner">
+      <ins class="adsbygoogle" style="display:block;min-height:90px;" data-ad-client="ca-pub-XXXXXXXXXXXXXXXX" data-ad-slot="XXXXXXXXXX" data-ad-format="rectangle" data-full-width-responsive="true"></ins>
+      <script>(adsbygoogle=window.adsbygoogle||[]).push({})</script>
+    </div>
+  </div>
 
   <!-- TABS -->
   <div class="tabs">
-    <div class="tab active" onclick="switchTab('repo',this)">📦 Repo → APK</div>
-    <div class="tab" onclick="switchTab('url',this)">🌐 URL → APK</div>
-    <div class="tab" onclick="switchTab('html',this)">📄 HTML → APK</div>
+    <div class="tab active" onclick="switchTab('repo',this)"><span class="tab-em">📦</span>Repo → APK</div>
+    <div class="tab" onclick="switchTab('url',this)"><span class="tab-em">🌐</span>URL → APK</div>
+    <div class="tab" onclick="switchTab('html',this)"><span class="tab-em">📄</span>HTML → APK</div>
   </div>
 
-  <!-- TAB: REPO -->
-  <div class="tab-content active" id="tab-repo">
+  <!-- TAB REPO -->
+  <div class="tab-pane active" id="tab-repo">
     <div class="card">
-      <div class="card-head">
-        <div class="card-icon green">📦</div>
-        <div><div class="card-title">GitHub Repo to APK</div><div class="card-sub">Flutter • Native Android • React Native</div></div>
+      <div class="card-header">
+        <div class="card-ico green">📦</div>
+        <div><div class="card-title">GitHub Repository → APK</div><div class="card-subtitle">Flutter • Native Android • React Native</div></div>
       </div>
       <div class="card-body">
         <div class="field">
-          <label>GitHub Repository URL</label>
-          <div class="inp-wrap">
-            <span class="inp-icon">⌥</span>
-            <input type="text" id="repoUrl" placeholder="https://github.com/username/android-app"/>
-          </div>
+          <div class="field-label">Repository URL <span class="req">*</span></div>
+          <div class="input-wrap"><span class="input-icon">🔗</span><input type="url" id="repoUrl" placeholder="https://github.com/username/my-android-app"/></div>
         </div>
         <div class="row2">
           <div class="field">
-            <label>Build Engine</label>
-            <select id="repoEngine">
-              <option value="auto">🔍 Auto Detect</option>
-              <option value="gradle">🤖 Native Android</option>
-              <option value="flutter">🐦 Flutter</option>
-              <option value="rn">⚛ React Native</option>
-            </select>
+            <div class="field-label">Build Type</div>
+            <select id="repoBuildType"><option value="debug">⚡ Debug (faster)</option><option value="release">🔒 Release</option></select>
           </div>
           <div class="field">
-            <label>Build Type</label>
-            <select id="repoBuildType">
-              <option value="debug">Debug (faster)</option>
-              <option value="release">Release</option>
-            </select>
+            <div class="field-label">Framework</div>
+            <select id="repoEngine"><option value="auto">🔍 Auto Detect</option><option value="gradle">🤖 Native Android</option><option value="flutter">🐦 Flutter</option><option value="rn">⚛ React Native</option></select>
           </div>
+        </div>
+        <div class="field-label">App Icon <span style="color:var(--muted);font-weight:400;font-size:9px">(optional)</span></div>
+        <div class="icon-zone" id="repoIconZone" onclick="document.getElementById('repoIconFile').click()">
+          <div class="icon-thumb" id="repoThumb"><span>📱</span><div class="thumb-overlay">✎</div></div>
+          <div class="icon-text"><div class="icon-text-title">Upload App Icon</div><div class="icon-text-sub">PNG/JPG · 512×512px recommended<br>Replaces the default Android launcher icon</div></div>
+          <div class="icon-actions">
+            <button class="btn-choose" onclick="event.stopPropagation();document.getElementById('repoIconFile').click()">Choose</button>
+            <button class="btn-clear" onclick="event.stopPropagation();clearIcon('repo')">Remove</button>
+          </div>
+          <input type="file" id="repoIconFile" accept="image/png,image/jpeg,image/webp" onchange="handleIcon('repo',this)">
         </div>
         <div class="field">
-          <label>GitHub Token *</label>
-          <div class="inp-wrap">
-            <span class="inp-icon">🔑</span>
-            <input type="password" id="repoToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"/>
-          </div>
+          <div class="field-label">GitHub Token <span class="req">*</span></div>
+          <div class="input-wrap"><span class="input-icon">🔑</span><input type="password" id="repoToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"/></div>
         </div>
-        <button class="btn-primary" id="repoBuildBtn" onclick="startBuild('repo')">▶ Start Build</button>
+        <button class="build-btn green" id="repoBuildBtn" onclick="startBuild('repo')">
+          <div class="btn-spinner"></div><span class="btn-label">▶ Start Build</span>
+        </button>
       </div>
-      <div class="progress" id="prog-repo">
-        <div class="step-track">
-          <div class="step-item" id="repo-s1"><span class="step-em">📥</span>CLONE</div>
-          <div class="step-item" id="repo-s2"><span class="step-em">🔍</span>DETECT</div>
-          <div class="step-item" id="repo-s3"><span class="step-em">📦</span>DEPS</div>
-          <div class="step-item" id="repo-s4"><span class="step-em">⚙</span>BUILD</div>
-          <div class="step-item" id="repo-s5"><span class="step-em">✍</span>SIGN</div>
-          <div class="step-item" id="repo-s6"><span class="step-em">✅</span>DONE</div>
+      <div class="prog-section" id="progRepo">
+        <div class="steps">
+          <div class="step" id="repo-s1"><span class="step-icon">📥</span>Clone</div>
+          <div class="step" id="repo-s2"><span class="step-icon">🔍</span>Detect</div>
+          <div class="step" id="repo-s3"><span class="step-icon">📦</span>Deps</div>
+          <div class="step" id="repo-s4"><span class="step-icon">⚙</span>Build</div>
+          <div class="step" id="repo-s5"><span class="step-icon">✍</span>Sign</div>
+          <div class="step" id="repo-s6"><span class="step-icon">✅</span>Done</div>
         </div>
-        <div class="pbar-track"><div class="pbar-fill" id="repo-pbar"></div></div>
+        <div class="pbar"><div class="pbar-fill" id="repo-pbar"></div></div>
         <div class="terminal">
-          <div class="term-head">
-            <div class="term-dots">
-              <div class="term-dot" style="background:#ff5f57"></div>
-              <div class="term-dot" style="background:#febc2e"></div>
-              <div class="term-dot" style="background:#28c840"></div>
-            </div>
-            <span>Build Console</span>
-            <span class="term-status building" id="repo-status">BUILDING</span>
+          <div class="term-bar">
+            <div class="term-dots"><div class="term-dot" style="background:#ff5f57"></div><div class="term-dot" style="background:#febc2e"></div><div class="term-dot" style="background:#28c840"></div></div>
+            <span class="term-title-lbl">build console</span>
+            <span class="badge idle" id="repo-badge">IDLE</span>
           </div>
           <div class="term-body" id="repo-log"></div>
         </div>
-        <div class="result" id="repo-result">
-          <div class="result-title" id="repo-result-title"></div>
-          <div id="repo-result-actions"></div>
-        </div>
+        <div class="result-box" id="repo-result"><div class="result-title" id="repo-rt"></div><div class="result-actions" id="repo-ra"></div></div>
       </div>
     </div>
   </div>
 
-  <!-- TAB: URL -->
-  <div class="tab-content" id="tab-url">
+  <!-- TAB URL -->
+  <div class="tab-pane" id="tab-url">
     <div class="card">
-      <div class="card-head">
-        <div class="card-icon blue">🌐</div>
-        <div><div class="card-title">Website URL to APK</div><div class="card-sub">Wraps any website in a WebView Android app</div></div>
+      <div class="card-header">
+        <div class="card-ico purple">🌐</div>
+        <div><div class="card-title">Website URL → APK</div><div class="card-subtitle">Wraps any website in a native WebView app</div></div>
       </div>
       <div class="card-body">
         <div class="field">
-          <label>Website URL</label>
-          <div class="inp-wrap">
-            <span class="inp-icon">🔗</span>
-            <input type="text" id="urlInput" placeholder="https://yourwebsite.com"/>
-          </div>
+          <div class="field-label">Website URL <span class="req">*</span></div>
+          <div class="input-wrap"><span class="input-icon">🌐</span><input type="url" id="urlInput" placeholder="https://yourwebsite.com"/></div>
         </div>
         <div class="row2">
           <div class="field">
-            <label>App Name</label>
-            <div class="inp-wrap">
-              <span class="inp-icon">📱</span>
-              <input type="text" id="urlAppName" placeholder="My Web App"/>
-            </div>
+            <div class="field-label">App Name <span class="req">*</span></div>
+            <div class="input-wrap"><span class="input-icon">📱</span><input type="text" id="urlAppName" placeholder="My Web App"/></div>
           </div>
           <div class="field">
-            <label>Package Name</label>
-            <div class="inp-wrap">
-              <span class="inp-icon">📦</span>
-              <input type="text" id="urlPkg" placeholder="com.myapp.web"/>
+            <div class="field-label">Package Name <span class="req">*</span></div>
+            <div class="input-wrap"><span class="input-icon">📦</span><input type="text" id="urlPkg" placeholder="com.myapp.web"/></div>
+          </div>
+        </div>
+        <div class="field">
+          <div class="field-label">Theme Color</div>
+          <div class="color-row">
+            <div class="input-wrap color-input"><span class="input-icon">🎨</span><input type="text" id="urlColor" placeholder="7b61ff" value="7b61ff"/></div>
+            <div class="swatches">
+              <div class="swatch on" style="background:#7b61ff" onclick="setSwatch('url','7b61ff',this)"></div>
+              <div class="swatch" style="background:#00ffb3" onclick="setSwatch('url','00ffb3',this)"></div>
+              <div class="swatch" style="background:#ff6b6b" onclick="setSwatch('url','ff6b6b',this)"></div>
+              <div class="swatch" style="background:#ffd93d" onclick="setSwatch('url','ffd93d',this)"></div>
+              <div class="swatch" style="background:#2196F3" onclick="setSwatch('url','2196F3',this)"></div>
             </div>
           </div>
         </div>
-        <div class="row2">
-          <div class="field">
-            <label>Theme Color</label>
-            <div class="inp-wrap">
-              <span class="inp-icon">🎨</span>
-              <input type="text" id="urlColor" placeholder="2196F3" value="00ff88"/>
-            </div>
+        <div class="field-label">App Icon <span style="color:var(--muted);font-weight:400;font-size:9px">(optional)</span></div>
+        <div class="icon-zone" id="urlIconZone" onclick="document.getElementById('urlIconFile').click()">
+          <div class="icon-thumb" id="urlThumb"><span>🌐</span><div class="thumb-overlay">✎</div></div>
+          <div class="icon-text"><div class="icon-text-title">Upload App Icon</div><div class="icon-text-sub">PNG/JPG · 512×512px recommended<br>Custom launcher icon for your app</div></div>
+          <div class="icon-actions">
+            <button class="btn-choose" onclick="event.stopPropagation();document.getElementById('urlIconFile').click()">Choose</button>
+            <button class="btn-clear" onclick="event.stopPropagation();clearIcon('url')">Remove</button>
           </div>
-          <div class="field">
-            <label>GitHub Token *</label>
-            <div class="inp-wrap">
-              <span class="inp-icon">🔑</span>
-              <input type="password" id="urlToken" placeholder="ghp_xxx"/>
-            </div>
-          </div>
+          <input type="file" id="urlIconFile" accept="image/png,image/jpeg,image/webp" onchange="handleIcon('url',this)">
         </div>
-        <button class="btn-primary" id="urlBuildBtn" onclick="startBuild('url')">🌐 Convert to APK</button>
+        <div class="field">
+          <div class="field-label">GitHub Token <span class="req">*</span></div>
+          <div class="input-wrap"><span class="input-icon">🔑</span><input type="password" id="urlToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"/></div>
+        </div>
+        <button class="build-btn purple" id="urlBuildBtn" onclick="startBuild('url')">
+          <div class="btn-spinner"></div><span class="btn-label">🌐 Convert to APK</span>
+        </button>
       </div>
-      <div class="progress" id="prog-url">
-        <div class="step-track">
-          <div class="step-item" id="url-s1"><span class="step-em">🌐</span>FETCH</div>
-          <div class="step-item" id="url-s2"><span class="step-em">📝</span>CREATE</div>
-          <div class="step-item" id="url-s3"><span class="step-em">⚙</span>BUILD</div>
-          <div class="step-item" id="url-s4"><span class="step-em">✍</span>SIGN</div>
-          <div class="step-item" id="url-s5"><span class="step-em">✅</span>DONE</div>
+      <div class="prog-section" id="progUrl">
+        <div class="steps">
+          <div class="step" id="url-s1"><span class="step-icon">🌐</span>Fetch</div>
+          <div class="step" id="url-s2"><span class="step-icon">📝</span>Create</div>
+          <div class="step" id="url-s3"><span class="step-icon">⚙</span>Build</div>
+          <div class="step" id="url-s4"><span class="step-icon">✍</span>Sign</div>
+          <div class="step" id="url-s5"><span class="step-icon">✅</span>Done</div>
         </div>
-        <div class="pbar-track"><div class="pbar-fill" id="url-pbar"></div></div>
+        <div class="pbar"><div class="pbar-fill" id="url-pbar"></div></div>
         <div class="terminal">
-          <div class="term-head">
-            <div class="term-dots">
-              <div class="term-dot" style="background:#ff5f57"></div>
-              <div class="term-dot" style="background:#febc2e"></div>
-              <div class="term-dot" style="background:#28c840"></div>
-            </div>
-            <span>Build Console</span>
-            <span class="term-status building" id="url-status">BUILDING</span>
+          <div class="term-bar">
+            <div class="term-dots"><div class="term-dot" style="background:#ff5f57"></div><div class="term-dot" style="background:#febc2e"></div><div class="term-dot" style="background:#28c840"></div></div>
+            <span class="term-title-lbl">build console</span>
+            <span class="badge idle" id="url-badge">IDLE</span>
           </div>
           <div class="term-body" id="url-log"></div>
         </div>
-        <div class="result" id="url-result">
-          <div class="result-title" id="url-result-title"></div>
-          <div id="url-result-actions"></div>
-        </div>
+        <div class="result-box" id="url-result"><div class="result-title" id="url-rt"></div><div class="result-actions" id="url-ra"></div></div>
       </div>
     </div>
   </div>
 
-  <!-- TAB: HTML -->
-  <div class="tab-content" id="tab-html">
+  <!-- TAB HTML -->
+  <div class="tab-pane" id="tab-html">
     <div class="card">
-      <div class="card-head">
-        <div class="card-icon orange">📄</div>
-        <div><div class="card-title">HTML File to APK</div><div class="card-sub">Convert HTML games, tools & apps to Android</div></div>
+      <div class="card-header">
+        <div class="card-ico red">📄</div>
+        <div><div class="card-title">HTML File → APK</div><div class="card-subtitle">Convert HTML games, tools & offline apps</div></div>
       </div>
       <div class="card-body">
         <div class="field">
-          <label>Raw HTML URL</label>
-          <div class="inp-wrap">
-            <span class="inp-icon">🔗</span>
-            <input type="text" id="htmlUrl" placeholder="https://raw.githubusercontent.com/user/repo/main/index.html"/>
-          </div>
+          <div class="field-label">Raw HTML URL <span class="req">*</span></div>
+          <div class="input-wrap"><span class="input-icon">🔗</span><input type="url" id="htmlUrl" placeholder="https://raw.githubusercontent.com/user/repo/main/index.html"/></div>
         </div>
         <div class="row2">
           <div class="field">
-            <label>App Name</label>
-            <div class="inp-wrap">
-              <span class="inp-icon">📱</span>
-              <input type="text" id="htmlAppName" placeholder="My HTML App"/>
-            </div>
+            <div class="field-label">App Name <span class="req">*</span></div>
+            <div class="input-wrap"><span class="input-icon">📱</span><input type="text" id="htmlAppName" placeholder="My HTML App"/></div>
           </div>
           <div class="field">
-            <label>Package Name</label>
-            <div class="inp-wrap">
-              <span class="inp-icon">📦</span>
-              <input type="text" id="htmlPkg" placeholder="com.myapp.html"/>
-            </div>
+            <div class="field-label">Package Name <span class="req">*</span></div>
+            <div class="input-wrap"><span class="input-icon">📦</span><input type="text" id="htmlPkg" placeholder="com.myapp.html"/></div>
           </div>
+        </div>
+        <div class="field-label">App Icon <span style="color:var(--muted);font-weight:400;font-size:9px">(optional)</span></div>
+        <div class="icon-zone" id="htmlIconZone" onclick="document.getElementById('htmlIconFile').click()">
+          <div class="icon-thumb" id="htmlThumb"><span>📄</span><div class="thumb-overlay">✎</div></div>
+          <div class="icon-text"><div class="icon-text-title">Upload App Icon</div><div class="icon-text-sub">PNG/JPG · 512×512px recommended<br>Custom launcher icon for your app</div></div>
+          <div class="icon-actions">
+            <button class="btn-choose" onclick="event.stopPropagation();document.getElementById('htmlIconFile').click()">Choose</button>
+            <button class="btn-clear" onclick="event.stopPropagation();clearIcon('html')">Remove</button>
+          </div>
+          <input type="file" id="htmlIconFile" accept="image/png,image/jpeg,image/webp" onchange="handleIcon('html',this)">
         </div>
         <div class="field">
-          <label>GitHub Token *</label>
-          <div class="inp-wrap">
-            <span class="inp-icon">🔑</span>
-            <input type="password" id="htmlToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"/>
-          </div>
+          <div class="field-label">GitHub Token <span class="req">*</span></div>
+          <div class="input-wrap"><span class="input-icon">🔑</span><input type="password" id="htmlToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"/></div>
         </div>
-        <button class="btn-primary" id="htmlBuildBtn" onclick="startBuild('html')">📄 Convert to APK</button>
+        <button class="build-btn red" id="htmlBuildBtn" onclick="startBuild('html')">
+          <div class="btn-spinner"></div><span class="btn-label">📄 Convert to APK</span>
+        </button>
       </div>
-      <div class="progress" id="prog-html">
-        <div class="step-track">
-          <div class="step-item" id="html-s1"><span class="step-em">📥</span>FETCH</div>
-          <div class="step-item" id="html-s2"><span class="step-em">📝</span>WRAP</div>
-          <div class="step-item" id="html-s3"><span class="step-em">⚙</span>BUILD</div>
-          <div class="step-item" id="html-s4"><span class="step-em">✍</span>SIGN</div>
-          <div class="step-item" id="html-s5"><span class="step-em">✅</span>DONE</div>
+      <div class="prog-section" id="progHtml">
+        <div class="steps">
+          <div class="step" id="html-s1"><span class="step-icon">📥</span>Fetch</div>
+          <div class="step" id="html-s2"><span class="step-icon">📝</span>Wrap</div>
+          <div class="step" id="html-s3"><span class="step-icon">⚙</span>Build</div>
+          <div class="step" id="html-s4"><span class="step-icon">✍</span>Sign</div>
+          <div class="step" id="html-s5"><span class="step-icon">✅</span>Done</div>
         </div>
-        <div class="pbar-track"><div class="pbar-fill" id="html-pbar"></div></div>
+        <div class="pbar"><div class="pbar-fill" id="html-pbar"></div></div>
         <div class="terminal">
-          <div class="term-head">
-            <div class="term-dots">
-              <div class="term-dot" style="background:#ff5f57"></div>
-              <div class="term-dot" style="background:#febc2e"></div>
-              <div class="term-dot" style="background:#28c840"></div>
-            </div>
-            <span>Build Console</span>
-            <span class="term-status building" id="html-status">BUILDING</span>
+          <div class="term-bar">
+            <div class="term-dots"><div class="term-dot" style="background:#ff5f57"></div><div class="term-dot" style="background:#febc2e"></div><div class="term-dot" style="background:#28c840"></div></div>
+            <span class="term-title-lbl">build console</span>
+            <span class="badge idle" id="html-badge">IDLE</span>
           </div>
           <div class="term-body" id="html-log"></div>
         </div>
-        <div class="result" id="html-result">
-          <div class="result-title" id="html-result-title"></div>
-          <div id="html-result-actions"></div>
-        </div>
+        <div class="result-box" id="html-result"><div class="result-title" id="html-rt"></div><div class="result-actions" id="html-ra"></div></div>
       </div>
     </div>
   </div>
 
   <!-- HISTORY -->
-  <div class="hist-section">
-    <div class="sect-head">
-      <span>↻ Recent Builds</span>
-      <a class="sect-link" href="https://github.com/lawalfataikola123/Repo2apk2/actions" target="_blank">View All →</a>
-    </div>
-    <div class="hist-list" id="histList"></div>
+  <div class="section-head">
+    <span class="section-title">↻ Build History</span>
+    <a class="section-link" href="https://github.com/lawalfataikola123/Repo2apk2/actions" target="_blank">All runs →</a>
   </div>
+  <div class="hist-list" id="histList"></div>
 
-</div><!-- /main -->
+</div>
 
 <!-- TOKEN MODAL -->
 <div class="overlay" id="tokenModal" onclick="if(event.target===this)closeModal('tokenModal')">
   <div class="modal">
-    <h3>🔑 Setup GitHub Token</h3>
-    <p>Create a free Personal Access Token to trigger builds. Takes under 2 minutes!</p>
+    <div class="modal-title">🔑 GitHub Token Setup</div>
+    <div class="modal-sub">Create a free Personal Access Token to trigger builds. Takes under 2 minutes!</div>
     <div class="modal-steps">
       1. Go to <a href="https://github.com/settings/tokens/new" target="_blank">github.com/settings/tokens/new</a><br>
       2. Note: <strong style="color:var(--text)">Repo2APK Builder</strong><br>
-      3. Check: <strong style="color:var(--accent)">repo</strong> and <strong style="color:var(--accent)">workflow</strong><br>
-      4. Tap <strong style="color:var(--text)">Generate token</strong> and copy
+      3. Expiration: <strong style="color:var(--text)">No expiration</strong><br>
+      4. Check: <strong style="color:var(--g1)">✓ repo</strong> and <strong style="color:var(--g1)">✓ workflow</strong><br>
+      5. Click <strong style="color:var(--text)">Generate token</strong> then copy it
     </div>
     <div class="field">
-      <label>Paste Token Here</label>
-      <div class="inp-wrap">
-        <span class="inp-icon">🔑</span>
-        <input type="password" id="modalTokenInput" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"/>
-      </div>
+      <div class="field-label">Paste Your Token</div>
+      <div class="input-wrap"><span class="input-icon">🔑</span><input type="password" id="modalToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"/></div>
     </div>
     <div class="modal-foot">
-      <button class="btn-secondary" onclick="closeModal('tokenModal')">Cancel</button>
-      <button class="btn-pay" onclick="saveToken()" style="background:var(--accent);color:#000">Save Token</button>
+      <button class="btn-cancel" onclick="closeModal('tokenModal')">Cancel</button>
+      <button class="btn-confirm" onclick="saveToken()">Save Token ✓</button>
     </div>
   </div>
 </div>
 
-<!-- PAYMENT MODAL -->
+<!-- PAY MODAL -->
 <div class="overlay" id="payModal" onclick="if(event.target===this)closeModal('payModal')">
   <div class="modal">
-    <h3>⚡ Buy Build Credits</h3>
-    <p>Get build credits to unlock priority builds and unlimited usage. Powered by Paystack.</p>
-    <div class="price-cards">
-      <div class="price-card" onclick="selectPrice(this,200,5)">
-        <div class="price-card-top"><span class="price-name">🔥 Starter Pack</span><span class="price-amount">₦200</span></div>
-        <div class="price-desc">5 build credits · No expiry</div>
+    <div class="modal-title">⚡ Buy Credits · Remove Ads</div>
+    <div class="modal-sub">All paid plans <strong style="color:var(--g1)">permanently remove ads</strong> and unlock priority builds. Powered by Paystack.</div>
+    <div class="price-grid">
+      <div class="price-card" onclick="selPlan(this,3,10)">
+        <div class="price-top"><span class="price-name">🔥 Starter</span><span class="price-amt">$3</span></div>
+        <div class="price-desc">10 credits · No ads · No expiry</div>
       </div>
-      <div class="price-card selected" onclick="selectPrice(this,500,20)">
-        <div class="price-card-top"><span class="price-name">⚡ Popular Pack</span><span class="price-amount">₦500</span></div>
-        <div class="price-desc">20 build credits · Priority queue · Signed APKs</div>
+      <div class="price-card sel" onclick="selPlan(this,10,50)">
+        <div class="price-top"><span class="price-name">⚡ Popular <span class="price-badge">BEST</span></span><span class="price-amt">$10</span></div>
+        <div class="price-desc">50 credits · No ads · Priority queue · Signed APKs</div>
       </div>
-      <div class="price-card" onclick="selectPrice(this,1500,100)">
-        <div class="price-card-top"><span class="price-name">👑 Pro Pack</span><span class="price-amount">₦1,500</span></div>
-        <div class="price-desc">100 build credits · All features · API access</div>
+      <div class="price-card" onclick="selPlan(this,25,200)">
+        <div class="price-top"><span class="price-name">👑 Pro</span><span class="price-amt">$25</span></div>
+        <div class="price-desc">200 credits · No ads · All features · API access</div>
       </div>
     </div>
     <div class="field">
-      <label>Your Email</label>
-      <div class="inp-wrap">
-        <span class="inp-icon">✉</span>
-        <input type="email" id="payEmail" placeholder="your@email.com"/>
-      </div>
+      <div class="field-label">Email Address</div>
+      <div class="input-wrap"><span class="input-icon">✉</span><input type="email" id="payEmail" placeholder="your@email.com"/></div>
     </div>
     <div class="modal-foot">
-      <button class="btn-secondary" onclick="closeModal('payModal')">Cancel</button>
-      <button class="btn-pay" onclick="processPayment()">💳 Pay with Paystack</button>
+      <button class="btn-cancel" onclick="closeModal('payModal')">Cancel</button>
+      <button class="btn-confirm" onclick="pay()" style="background:linear-gradient(135deg,#ffd93d,#ffb700);color:#000">💳 Pay with Paystack</button>
     </div>
   </div>
 </div>
 
 <footer>
-  © 2026 Repo2APK &nbsp;·&nbsp; Built with GitHub Actions &nbsp;·&nbsp;
-  <a href="https://github.com/lawalfataikola123/Repo2apk2" target="_blank">View on GitHub</a>
+  © 2026 Repo2APK &nbsp;·&nbsp; Built with ❤ on GitHub Actions &nbsp;·&nbsp;
+  <a href="https://github.com/lawalfataikola123/Repo2apk2" target="_blank">GitHub</a> &nbsp;·&nbsp;
+  <a href="#" onclick="showTokenModal()">Setup Token</a> &nbsp;·&nbsp;
+  <a href="#" onclick="showPayModal()">Remove Ads</a>
 </footer>
 
 <script src="https://js.paystack.co/v1/inline.js"></script>
 <script>
-// ===== CONFIG =====
-const OWNER = 'lawalfataikola123';
-const REPO = 'Repo2apk2';
-const PAYSTACK_KEY = 'pk_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx';
-const WF = {
-  repo: 'build-apk.yml',
-  url: 'url-to-apk.yml',
-  html: 'html-to-apk.yml'
-};
-const PROXY = 'https://corsproxy.io/?';
-const GH_API = 'https://api.github.com';
+const OWNER='lawalfataikola123',REPO='Repo2apk2';
+const PAYSTACK_KEY='pk_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx';
+const WF={repo:'build-apk.yml',url:'url-to-apk.yml',html:'html-to-apk.yml'};
+const GH='https://api.github.com',PROXY='https://corsproxy.io/?url=';
+let credits=+localStorage.getItem('r2apk_credits')||0;
+let history=JSON.parse(localStorage.getItem('r2apk_history')||'[]');
+let iconData={repo:null,url:null,html:null};
+let logNums={repo:1,url:1,html:1};
+let polls={};
+let plan={amount:10,credits:50};
+const noAds=()=>localStorage.getItem('r2apk_noads')==='true';
 
-async function ghFetch(url, options={}){
-  // Clean headers to ensure ASCII only
-  if(options.headers){
-    const cleanHeaders = {};
-    for(const [k,v] of Object.entries(options.headers)){
-      cleanHeaders[k] = String(v).replace(/[^\x00-\x7F]/g, '');
-    }
-    options = {...options, headers: cleanHeaders};
-  }
-  try {
-    const r = await fetch(GH_API + url, options);
-    return r;
-  } catch(e) {
-    // Fallback to CORS proxy
-    const r = await fetch(PROXY + encodeURIComponent(GH_API + url), options);
-    return r;
-  }
-}
+// INIT
+(function(){
+  const t=localStorage.getItem('r2apk_token');
+  if(t)['repoToken','urlToken','htmlToken'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=t;});
+  updateUI();renderHistory();applyAds();
+})();
 
-// ===== STATE =====
-let history = JSON.parse(localStorage.getItem('r2apk_history') || '[]');
-let credits = parseInt(localStorage.getItem('r2apk_credits') || '0');
-let selectedPrice = {amount: 500, credits: 20};
-let logCounters = {repo:1, url:1, html:1};
-let polls = {};
-
-// ===== INIT =====
-const savedToken = localStorage.getItem('r2apk_token');
-if(savedToken){
-  ['repoToken','urlToken','htmlToken'].forEach(id => {
-    const el = document.getElementById(id);
-    if(el) el.value = savedToken;
-  });
-}
-updateUI();
-renderHistory();
-
-// ===== UI UPDATES =====
 function updateUI(){
-  credits = parseInt(localStorage.getItem('r2apk_credits') || '0');
-  document.getElementById('creditsPill').textContent = '⚡ ' + credits + ' Credits';
-  document.getElementById('totalBuilds').textContent = history.length;
+  credits=+localStorage.getItem('r2apk_credits')||0;
+  document.getElementById('creditsNum').textContent=credits;
+  document.getElementById('totalStat').textContent=history.length;
 }
-
-// ===== TABS =====
-function switchTab(tab, el){
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+function applyAds(){
+  ['adRibbon','adMid'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el)el.classList.toggle('hidden',noAds());
+  });
+}
+function switchTab(name,el){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
   el.classList.add('active');
-  document.getElementById('tab-' + tab).classList.add('active');
+  document.getElementById('tab-'+name).classList.add('active');
 }
-
-// ===== MODALS =====
-function showTokenModal(){
-  const t = localStorage.getItem('r2apk_token');
-  if(t) document.getElementById('modalTokenInput').value = t;
-  document.getElementById('tokenModal').classList.add('show');
+function handleIcon(type,input){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    iconData[type]=e.target.result;
+    const thumb=document.getElementById(type+'Thumb');
+    thumb.innerHTML=`<img src="${e.target.result}" alt="icon"><div class="thumb-overlay">✎</div>`;
+    document.getElementById(type+'IconZone').classList.add('has-icon');
+  };
+  reader.readAsDataURL(file);
 }
-function showPayModal(){
-  document.getElementById('payModal').classList.add('show');
+function clearIcon(type){
+  iconData[type]=null;
+  const def={repo:'📱',url:'🌐',html:'📄'};
+  document.getElementById(type+'Thumb').innerHTML=`<span>${def[type]}</span><div class="thumb-overlay">✎</div>`;
+  document.getElementById(type+'IconZone').classList.remove('has-icon');
+  document.getElementById(type+'IconFile').value='';
 }
-function closeModal(id){
-  document.getElementById(id).classList.remove('show');
+function setSwatch(type,hex,el){
+  document.getElementById(type+'Color').value=hex;
+  el.closest('.swatches').querySelectorAll('.swatch').forEach(s=>s.classList.remove('on'));
+  el.classList.add('on');
 }
+function showTokenModal(){document.getElementById('tokenModal').classList.add('show')}
+function showPayModal(){document.getElementById('payModal').classList.add('show')}
+function closeModal(id){document.getElementById(id).classList.remove('show')}
 function saveToken(){
-  const raw = document.getElementById('modalTokenInput').value.trim();
-  const t = raw.replace(/[^\x20-\x7E]/g, ''); // Keep only printable ASCII
-  if(!t){alert('Please enter your token!');return}
-  localStorage.setItem('r2apk_token', t);
-  ['repoToken','urlToken','htmlToken'].forEach(id => {
-    const el = document.getElementById(id);
-    if(el) el.value = t;
-  });
+  const t=document.getElementById('modalToken').value.trim().replace(/[^\x20-\x7E]/g,'');
+  if(!t){alert('Please paste your token!');return}
+  localStorage.setItem('r2apk_token',t);
+  ['repoToken','urlToken','htmlToken'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=t;});
   closeModal('tokenModal');
-  log('repo', '✅ Token saved!', 'g');
+  addLog('repo','✅ Token saved!','g');
 }
-
-// ===== PAYMENT =====
-function selectPrice(el, amount, creds){
-  document.querySelectorAll('.price-card').forEach(c => c.classList.remove('selected'));
-  el.classList.add('selected');
-  selectedPrice = {amount, credits: creds};
-}
-function processPayment(){
-  const email = document.getElementById('payEmail').value.trim();
-  if(!email){alert('Please enter your email!');return}
-  const handler = PaystackPop.setup({
-    key: PAYSTACK_KEY,
-    email,
-    amount: selectedPrice.amount * 100,
-    currency: 'NGN',
-    ref: 'r2apk_' + Date.now(),
-    callback: function(response){
-      credits += selectedPrice.credits;
-      localStorage.setItem('r2apk_credits', credits);
-      updateUI();
-      closeModal('payModal');
-      alert('✅ Payment successful! ' + selectedPrice.credits + ' credits added!');
-    },
-    onClose: function(){}
-  });
-  handler.openIframe();
-}
-
-// ===== BUILD =====
 function getToken(type){
-  const ids = {repo:'repoToken', url:'urlToken', html:'htmlToken'};
-  const raw = document.getElementById(ids[type]).value.trim();
-  const t = raw.replace(/[^\x20-\x7E]/g, ''); // ASCII only
-  if(t) localStorage.setItem('r2apk_token', t);
+  const ids={repo:'repoToken',url:'urlToken',html:'htmlToken'};
+  const t=document.getElementById(ids[type]).value.trim().replace(/[^\x20-\x7E]/g,'');
+  if(t)localStorage.setItem('r2apk_token',t);
   return t;
 }
-
-function getBuildParams(type){
-  if(type === 'repo'){
-    const url = document.getElementById('repoUrl').value.trim();
-    const bt = document.getElementById('repoBuildType').value;
-    if(!url){alert('Please enter a GitHub URL!');return null}
+function selPlan(el,amount,creds){
+  document.querySelectorAll('.price-card').forEach(c=>c.classList.remove('sel'));
+  el.classList.add('sel');plan={amount,credits:creds};
+}
+function pay(){
+  const email=document.getElementById('payEmail').value.trim();
+  if(!email){alert('Please enter your email!');return}
+  const h=PaystackPop.setup({
+    key:PAYSTACK_KEY,email,amount:plan.amount*100,currency:'USD',ref:'r2apk_'+Date.now(),
+    callback:()=>{
+      credits+=plan.credits;
+      localStorage.setItem('r2apk_credits',credits);
+      localStorage.setItem('r2apk_noads','true');
+      applyAds();updateUI();closeModal('payModal');
+      alert('✅ Payment successful!\n⚡ '+plan.credits+' credits added!\n🎉 Ads removed permanently!');
+    },onClose:()=>{}
+  });
+  h.openIframe();
+}
+async function ghFetch(path,opts={}){
+  const tk=opts.token||'';
+  const headers={'Accept':'application/vnd.github.v3+json'};
+  if(tk)headers['Authorization']='token '+tk;
+  if(opts.body)headers['Content-Type']='application/json';
+  const fo={method:opts.method||'GET',headers};
+  if(opts.body)fo.body=opts.body;
+  try{return await fetch(GH+path,fo);}
+  catch(e){return await fetch(PROXY+encodeURIComponent(GH+path),fo);}
+}
+function getParams(type){
+  if(type==='repo'){
+    const url=document.getElementById('repoUrl').value.trim();
+    const bt=document.getElementById('repoBuildType').value;
+    if(!url){alert('Please enter a GitHub repository URL!');return null}
     if(!url.includes('github.com')){alert('Please enter a valid GitHub URL!');return null}
-    return {wf: WF.repo, inputs:{repo_url:url, build_type:bt}, label:url};
+    return{wf:WF.repo,inputs:{repo_url:url,build_type:bt},label:url};
   }
-  if(type === 'url'){
-    const url = document.getElementById('urlInput').value.trim();
-    const name = document.getElementById('urlAppName').value.trim() || 'My App';
-    const pkg = document.getElementById('urlPkg').value.trim() || 'com.repo2apk.app';
-    const color = document.getElementById('urlColor').value.trim() || '2196F3';
+  if(type==='url'){
+    const url=document.getElementById('urlInput').value.trim();
+    const name=document.getElementById('urlAppName').value.trim()||'My App';
+    const pkg=document.getElementById('urlPkg').value.trim()||'com.repo2apk.app';
+    const col=document.getElementById('urlColor').value.trim()||'7b61ff';
     if(!url){alert('Please enter a website URL!');return null}
-    return {wf: WF.url, inputs:{website_url:url, app_name:name, package_name:pkg, app_color:color}, label:url};
+    return{wf:WF.url,inputs:{website_url:url,app_name:name,package_name:pkg,app_color:col},label:url};
   }
-  if(type === 'html'){
-    const url = document.getElementById('htmlUrl').value.trim();
-    const name = document.getElementById('htmlAppName').value.trim() || 'My HTML App';
-    const pkg = document.getElementById('htmlPkg').value.trim() || 'com.repo2apk.htmlapp';
+  if(type==='html'){
+    const url=document.getElementById('htmlUrl').value.trim();
+    const name=document.getElementById('htmlAppName').value.trim()||'My HTML App';
+    const pkg=document.getElementById('htmlPkg').value.trim()||'com.repo2apk.htmlapp';
     if(!url){alert('Please enter an HTML file URL!');return null}
-    return {wf: WF.html, inputs:{html_url:url, app_name:name, package_name:pkg}, label:url};
+    return{wf:WF.html,inputs:{html_url:url,app_name:name,package_name:pkg},label:url};
   }
 }
-
 async function startBuild(type){
-  const token = getToken(type);
+  const token=getToken(type);
   if(!token){showTokenModal();return}
-  const params = getBuildParams(type);
-  if(!params) return;
-  resetProgress(type);
-  document.getElementById('prog-' + type).classList.add('show');
-  setBtn(type, true);
-  log(type, 'Triggering GitHub Actions...', 'b');
-  log(type, 'Workflow: ' + params.wf);
-  setStep(type, 1, 'active');
-  setPbar(type, 5);
+  const params=getParams(type);
+  if(!params)return;
+  resetBuild(type);showProg(type);setBuildBtn(type,true);
+  setBadge(type,'building','BUILDING');
+  addLog(type,'Connecting to GitHub Actions...','b');
+  addLog(type,'Workflow: '+params.wf,'d');
+  if(iconData[type])addLog(type,'📸 Custom icon will be used','g');
+  setStep(type,1,'active');setPbar(type,5);
   try{
-    const r = await ghFetch(
-      `/repos/${OWNER}/${REPO}/actions/workflows/${params.wf}/dispatches`,
-      {
-        method:'POST',
-        headers:{'Authorization':'token '+token,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json'},
-        body:JSON.stringify({ref:'main',inputs:params.inputs})
-      }
-    );
-    if(r.status === 204){
-      log(type, '✅ Workflow triggered!', 'g');
-      setStep(type, 1, 'done');
-      setStep(type, 2, 'active');
-      setPbar(type, 15);
-      setTimeout(()=>findRun(type, token, params), 6000);
-    } else if(r.status === 401){
-      throw new Error('Invalid token! Check repo & workflow scopes.');
-    } else if(r.status === 404){
-      throw new Error('Workflow not found! Check the workflow file exists.');
+    const r=await ghFetch(`/repos/${OWNER}/${REPO}/actions/workflows/${params.wf}/dispatches`,{method:'POST',token,body:JSON.stringify({ref:'main',inputs:params.inputs})});
+    if(r.status===204||r.ok){
+      addLog(type,'✅ Build triggered!','g');
+      setStep(type,1,'done');setStep(type,2,'active');setPbar(type,12);
+      setTimeout(()=>findRun(type,token,params),7000);
+    } else if(r.status===401){
+      throw new Error('Invalid token! Make sure it has repo + workflow scopes.');
+    } else if(r.status===404){
+      throw new Error('Workflow not found! Check '+params.wf+' exists in your repo.');
     } else {
-      throw new Error('HTTP ' + r.status);
+      throw new Error('GitHub returned HTTP '+r.status);
     }
-  }catch(e){
-    log(type, '❌ ' + e.message, 'r');
-    showErr(type, e.message);
-  }
+  }catch(e){addLog(type,'❌ '+e.message,'r');showError(type,e.message);}
 }
-
-async function findRun(type, token, params){
+async function findRun(type,token,params){
   try{
-    log(type, 'Finding run...', '');
-    const r = await ghFetch(
-      `/repos/${OWNER}/${REPO}/actions/runs?per_page=5`,
-      {headers:{'Authorization':'token '+token,'Accept':'application/vnd.github.v3+json'}}
-    );
-    const d = await r.json();
-    if(d.workflow_runs && d.workflow_runs.length > 0){
-      const run = d.workflow_runs[0];
-      log(type, 'Run #' + run.run_number + ' found', 'b');
-      setPbar(type, 25);
-      poll(type, token, run.id, params);
+    addLog(type,'Searching for run...','d');
+    const r=await ghFetch(`/repos/${OWNER}/${REPO}/actions/runs?per_page=5`,{token});
+    const d=await r.json();
+    if(d.workflow_runs?.length){
+      const run=d.workflow_runs[0];
+      addLog(type,'Run #'+run.run_number+' found!','b');
+      setStep(type,2,'done');setStep(type,3,'active');setPbar(type,25);
+      pollRun(type,token,run.id,params);
     } else {
-      log(type, 'Waiting for run...', 'y');
-      setTimeout(()=>findRun(type, token, params), 5000);
+      addLog(type,'Waiting for run...','y');
+      setTimeout(()=>findRun(type,token,params),6000);
     }
-  }catch(e){setTimeout(()=>findRun(type, token, params), 8000)}
+  }catch(e){setTimeout(()=>findRun(type,token,params),8000);}
 }
-
-function poll(type, token, runId, params){
-  let p = 25;
-  const maxSteps = type === 'repo' ? 4 : 3;
-  let si = 2;
-  polls[type] = setInterval(async()=>{
+function pollRun(type,token,runId,params){
+  let pct=25;let si=3;const maxS=type==='repo'?5:4;
+  polls[type]=setInterval(async()=>{
     try{
-      const r = await ghFetch(
-        `/repos/${OWNER}/${REPO}/actions/runs/${runId}`,
-        {headers:{'Authorization':'token '+token,'Accept':'application/vnd.github.v3+json'}}
-      );
-      const run = await r.json();
-      if(p < 85){
-        p += 6; setPbar(type, p);
-        if(si <= maxSteps){
-          setStep(type, si-1, 'done');
-          setStep(type, si, 'active');
-          si++;
-        }
-      }
-      log(type, run.status + ' · ' + (run.conclusion || 'pending'));
-      if(run.status === 'completed'){
-        clearInterval(polls[type]);
-        setPbar(type, 100);
-        for(let i=1;i<=6;i++) setStep(type, i, 'done');
-        if(run.conclusion === 'success'){
-          log(type, '✅ Build successful!', 'g');
-          setStatus(type, 'success', 'SUCCESS');
-          await getArtifact(type, token, runId, run.html_url);
-          saveHist(params.label, 'success', run.html_url);
+      const r=await ghFetch(`/repos/${OWNER}/${REPO}/actions/runs/${runId}`,{token});
+      const run=await r.json();
+      pct=Math.min(pct+5,88);setPbar(type,pct);
+      if(si<=maxS){setStep(type,si-1,'done');setStep(type,si,'active');si++;}
+      addLog(type,'Status: '+run.status+(run.conclusion?' · '+run.conclusion:''),'d');
+      if(run.status==='completed'){
+        clearInterval(polls[type]);setPbar(type,100);
+        for(let i=1;i<=6;i++)setStep(type,i,'done');
+        if(run.conclusion==='success'){
+          addLog(type,'✅ Build complete!','g');setBadge(type,'success','SUCCESS');
+          await getArtifacts(type,token,runId,run.html_url);
+          saveHist(params.label,'success',run.html_url);
         } else {
-          log(type, '❌ Build failed!', 'r');
-          setStatus(type, 'failed', 'FAILED');
-          showErr(type, 'Build failed. <a href="'+run.html_url+'" target="_blank" style="color:var(--accent2)">View logs →</a>');
-          saveHist(params.label, 'failed', run.html_url);
+          addLog(type,'❌ Build failed','r');setBadge(type,'failed','FAILED');
+          showError(type,'Build failed. <a href="'+run.html_url+'" target="_blank" style="color:var(--g2)">View logs →</a>');
+          saveHist(params.label,'failed',run.html_url);
         }
-        setBtn(type, false);
+        setBuildBtn(type,false);
       }
-    }catch(e){log(type,'Polling...','y')}
-  }, 10000);
+    }catch(e){addLog(type,'Polling...','d');}
+  },10000);
 }
-
-async function getArtifact(type, token, runId, runUrl){
+async function getArtifacts(type,token,runId,runUrl){
   try{
-    log(type, 'Fetching artifacts...', 'b');
-    const r = await ghFetch(
-      `/repos/${OWNER}/${REPO}/actions/runs/${runId}/artifacts`,
-      {headers:{'Authorization':'token '+token,'Accept':'application/vnd.github.v3+json'}}
-    );
-    const d = await r.json();
-    if(d.artifacts && d.artifacts.length > 0){
-      const a = d.artifacts[0];
-      const mb = (a.size_in_bytes/1024/1024).toFixed(1);
-      log(type, '✅ APK ready! ' + a.name + ' (' + mb + 'MB)', 'g');
-      log(type, '📥 Preparing direct download...', 'b');
-
-      // Try direct download via API
-      try {
-        const dlRes = await ghFetch(
-          `/repos/${OWNER}/${REPO}/actions/artifacts/${a.id}/zip`,
-          {headers:{'Authorization':'token '+token,'Accept':'application/vnd.github.v3+json'}}
-        );
-        if(dlRes.ok){
-          const blob = await dlRes.blob();
-          const url = URL.createObjectURL(blob);
-          log(type, '✅ Direct download ready!', 'g');
-          document.getElementById(type+'-result').className = 'result ok';
-          document.getElementById(type+'-result-title').innerHTML = '✅ APK Ready! <span style="font-size:10px;color:var(--muted)">'+mb+' MB · Signed</span>';
-          document.getElementById(type+'-result-actions').innerHTML =
-            '<a href="'+url+'" download="'+a.name+'.zip" class="dl-btn" style="font-size:14px;padding:12px 24px">⬇ Download APK Now</a>' +
-            '<a href="'+runUrl+'" target="_blank" class="gh-btn">View on GitHub</a>' +
-            '<p style="margin-top:10px;font-size:10px;color:var(--muted);line-height:1.6">✅ Direct download! Unzip the file to get your <strong>.apk</strong></p>';
-          return;
-        }
-      } catch(dlErr) {
-        log(type, 'Direct download fallback to GitHub...', 'y');
-      }
-
-      // Fallback: open GitHub artifacts page
-      document.getElementById(type+'-result').className = 'result ok';
-      document.getElementById(type+'-result-title').innerHTML = '✅ APK Built! <span style="font-size:10px;color:var(--muted)">'+mb+' MB</span>';
-      document.getElementById(type+'-result-actions').innerHTML =
-        '<a href="https://github.com/'+OWNER+'/'+REPO+'/actions/runs/'+runId+'" target="_blank" class="dl-btn">⬇ Download APK</a>' +
-        '<a href="'+runUrl+'" target="_blank" class="gh-btn">GitHub →</a>' +
-        '<p style="margin-top:10px;font-size:10px;color:var(--muted);line-height:1.6">Tap Download APK → scroll to <strong>Artifacts</strong> → tap <strong>'+a.name+'</strong></p>';
+    addLog(type,'Fetching APK...','b');
+    const r=await ghFetch(`/repos/${OWNER}/${REPO}/actions/runs/${runId}/artifacts`,{token});
+    const d=await r.json();
+    if(d.artifacts?.length){
+      const a=d.artifacts[0];
+      const mb=(a.size_in_bytes/1024/1024).toFixed(1);
+      const ghUrl=`https://github.com/${OWNER}/${REPO}/actions/runs/${runId}`;
+      addLog(type,'📦 '+a.name+' ('+mb+'MB) ready!','g');
+      document.getElementById(type+'-result').className='result-box ok';
+      document.getElementById(type+'-rt').innerHTML='✅ APK Ready! <span style="font-size:10px;color:var(--text2);font-weight:400;font-family:Space Mono,monospace">'+mb+' MB · Signed · '+a.name+'</span>';
+      document.getElementById(type+'-ra').innerHTML=
+        `<a href="${ghUrl}" target="_blank" onclick="openDesktop(event,'${ghUrl}')" class="dl-primary">⬇ Download APK</a>`+
+        `<a href="${runUrl}" target="_blank" class="dl-secondary">🖥 View on GitHub</a>`+
+        `<div class="result-hint">`+
+        `→ Tap <strong>Download APK</strong> — opens GitHub in desktop view<br>`+
+        `→ Scroll to <strong>Artifacts</strong> section at the bottom of the page<br>`+
+        `→ Tap <strong>${a.name}</strong> to download the ZIP file<br>`+
+        `→ Unzip → install the <strong>.apk</strong> file on your Android device`+
+        `</div>`;
     }
   }catch(e){
-    document.getElementById(type+'-result').className = 'result ok';
-    document.getElementById(type+'-result-title').innerHTML = '✅ Build Successful!';
-    document.getElementById(type+'-result-actions').innerHTML =
-      '<a href="https://github.com/'+OWNER+'/'+REPO+'/actions/runs/'+runId+'" target="_blank" class="dl-btn">⬇ Download APK</a>';
+    const ghUrl=`https://github.com/${OWNER}/${REPO}/actions/runs/${runId}`;
+    document.getElementById(type+'-result').className='result-box ok';
+    document.getElementById(type+'-rt').innerHTML='✅ Build Successful!';
+    document.getElementById(type+'-ra').innerHTML=`<a href="${ghUrl}" target="_blank" onclick="openDesktop(event,'${ghUrl}')" class="dl-primary">⬇ Download APK from GitHub</a>`;
   }
 }
-
-// ===== HELPERS =====
-function log(type, txt, c=''){
-  const b = document.getElementById(type+'-log');
-  const d = document.createElement('div');
-  d.className = 'log-line';
-  const ts = new Date().toISOString().substr(11,8);
-  d.innerHTML = '<span class="log-n">'+String(logCounters[type]++).padStart(3,'0')+'</span><span class="log-t '+c+'">['+ts+'] '+txt+'</span>';
-  b.appendChild(d);
-  b.scrollTop = b.scrollHeight;
+function openDesktop(e,url){
+  e.preventDefault();
+  const w=window.open('about:blank','_blank');
+  if(w){
+    w.document.write('<html><head><meta name="viewport" content="width=1280"><script>window.location.href="'+url+'";<\/script></head><body style="background:#000;color:#fff;font-family:monospace;padding:20px">Loading in desktop view...</body></html>');
+    w.document.close();
+  }else window.open(url,'_blank');
 }
-function setStep(type, n, state){
-  const el = document.getElementById(type+'-s'+n);
-  if(el) el.className = 'step-item ' + state;
+function addLog(type,msg,cls=''){
+  const b=document.getElementById(type+'-log');
+  const d=document.createElement('div');d.className='log';
+  const ts=new Date().toISOString().substr(11,8);
+  d.innerHTML=`<span class="log-n">${String(logNums[type]++).padStart(3,'0')}</span><span class="log-m ${cls}">[${ts}] ${msg}</span>`;
+  b.appendChild(d);b.scrollTop=b.scrollHeight;
 }
-function setPbar(type, p){
-  document.getElementById(type+'-pbar').style.width = p + '%';
+function setStep(type,n,state){const el=document.getElementById(type+'-s'+n);if(el)el.className='step '+state;}
+function setPbar(type,p){document.getElementById(type+'-pbar').style.width=p+'%';}
+function setBadge(type,cls,txt){const el=document.getElementById(type+'-badge');el.className='badge '+cls;el.textContent=txt;}
+function setBuildBtn(type,loading){
+  const ids={repo:'repoBuildBtn',url:'urlBuildBtn',html:'htmlBuildBtn'};
+  const btn=document.getElementById(ids[type]);
+  btn.disabled=loading;btn.classList.toggle('loading',loading);
 }
-function setStatus(type, cls, txt){
-  const el = document.getElementById(type+'-status');
-  el.className = 'term-status ' + cls;
-  el.textContent = txt;
+function showProg(type){const ids={repo:'progRepo',url:'progUrl',html:'progHtml'};document.getElementById(ids[type]).classList.add('show');}
+function resetBuild(type){
+  logNums[type]=1;
+  document.getElementById(type+'-log').innerHTML='';
+  document.getElementById(type+'-result').className='result-box';
+  document.getElementById(type+'-pbar').style.width='0%';
+  setBadge(type,'idle','IDLE');
+  for(let i=1;i<=6;i++)setStep(type,i,'');
 }
-function setBtn(type, disabled){
-  const ids = {repo:'repoBuildBtn', url:'urlBuildBtn', html:'htmlBuildBtn'};
-  const labels = {repo:'▶ Start Build', url:'🌐 Convert to APK', html:'📄 Convert to APK'};
-  const btn = document.getElementById(ids[type]);
-  btn.disabled = disabled;
-  btn.textContent = disabled ? '⏳ Building...' : labels[type];
+function showError(type,msg){
+  setBuildBtn(type,false);
+  document.getElementById(type+'-result').className='result-box fail';
+  document.getElementById(type+'-rt').innerHTML='❌ Build Failed';
+  document.getElementById(type+'-ra').innerHTML=
+    `<p style="font-size:11px;color:var(--error);line-height:1.6;margin-bottom:10px">${msg}</p>`+
+    `<a href="https://github.com/${OWNER}/${REPO}/actions" target="_blank" class="dl-secondary">View All Logs →</a>`;
 }
-function resetProgress(type){
-  logCounters[type] = 1;
-  document.getElementById(type+'-log').innerHTML = '';
-  document.getElementById(type+'-result').className = 'result';
-  document.getElementById(type+'-pbar').style.width = '0%';
-  setStatus(type, 'building', 'BUILDING');
-  for(let i=1;i<=6;i++) setStep(type,i,'');
-}
-function showErr(type, msg){
-  document.getElementById(type+'-result').className = 'result fail';
-  document.getElementById(type+'-result-title').innerHTML = '❌ Build Failed';
-  document.getElementById(type+'-result-actions').innerHTML =
-    '<p style="font-size:11px;color:var(--error);line-height:1.5;margin-bottom:10px">'+msg+'</p>' +
-    '<a href="https://github.com/'+OWNER+'/'+REPO+'/actions" target="_blank" class="gh-btn">View Logs →</a>';
-  setBtn(type, false);
-}
-function saveHist(label, status, runUrl){
-  const name = label.split('/').slice(-2).join('/') || label;
-  history.unshift({name, label, status, runUrl, time: new Date().toISOString()});
-  if(history.length > 20) history.pop();
-  localStorage.setItem('r2apk_history', JSON.stringify(history));
-  updateUI();
-  renderHistory();
+function saveHist(label,status,runUrl){
+  const name=label.split('/').slice(-2).join('/')||label;
+  history.unshift({name,status,runUrl,time:new Date().toISOString()});
+  if(history.length>30)history.pop();
+  localStorage.setItem('r2apk_history',JSON.stringify(history));
+  updateUI();renderHistory();
 }
 function renderHistory(){
-  const l = document.getElementById('histList');
+  const l=document.getElementById('histList');
   if(!history.length){
-    l.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted);font-size:11px;background:var(--card);border:1px solid var(--border);border-radius:10px;font-family:JetBrains Mono,monospace">No builds yet. Start your first build above!</div>';
+    l.innerHTML='<div class="empty-hist"><span class="empty-icon">🔨</span>No builds yet.<br>Start your first build above!</div>';
     return;
   }
-  l.innerHTML = history.map(b =>
-    '<div class="hist-item" onclick="window.open(\''+b.runUrl+'\',\'_blank\')">' +
-    '<div class="hist-dot '+b.status+'"></div>' +
-    '<div class="hist-info"><div class="hist-name">'+b.name+'</div><div class="hist-meta">'+new Date(b.time).toLocaleString()+'</div></div>' +
-    '<span class="hist-badge '+b.status+'">'+b.status.toUpperCase()+'</span>' +
-    '</div>'
+  l.innerHTML=history.map(b=>
+    `<div class="hist-item" onclick="window.open('${b.runUrl}','_blank')">
+      <div class="h-dot ${b.status}"></div>
+      <div class="h-info"><div class="h-name">${b.name}</div><div class="h-meta">${new Date(b.time).toLocaleString()}</div></div>
+      <span class="h-chip ${b.status}">${b.status.toUpperCase()}</span>
+    </div>`
   ).join('');
 }
 </script>
