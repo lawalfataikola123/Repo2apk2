@@ -159,8 +159,7 @@ jobs:
         with:
           name: repo2apk-build-${{ github.run_number }}
           path: /tmp/signed-app.apk
-          retention-days: 7
-          
+          retention-days: 7 
       - name: Build Summary
         run: |
           SIZE=$(du -sh /tmp/signed-app.apk 2>/dev/null | cut -f1 || echo "N/A")
