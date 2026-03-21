@@ -83,28 +83,38 @@ jobs:
         run: |
           cd /tmp/target
 
-          # Use Gradle 8.9 - supports settings.gradle.kts android block
-          find . -name "gradle-wrapper.properties" -exec sed -i 's|distributionUrl=.*|distributionUrl=https\://services.gradle.org/distributions/gradle-8.9-bin.zip|' {} \;
+          # Read existing Gradle version from wrapper
+          EXISTING_GRADLE=$(grep -o 'gradle-[0-9.]*-' gradle/wrapper/gradle-wrapper.properties 2>/dev/null | grep -o '[0-9.]*' | head -1 || echo "0")
+          echo "Existing Gradle: $EXISTING_GRADLE"
 
-          # Upgrade AGP to 8.5.2 in all build.gradle and build.gradle.kts
-          find . -name "build.gradle" -exec sed -i 's|com.android.tools.build:gradle:[0-9.]*|com.android.tools.build:gradle:8.5.2|g' {} \; 2>/dev/null || true
-          find . -name "build.gradle.kts" -exec sed -i 's|com.android.tools.build:gradle:[0-9.]*|com.android.tools.build:gradle:8.5.2|g' {} \; 2>/dev/null || true
+          # Read existing AGP version from libs.versions.toml
+          EXISTING_AGP=$(grep 'agp' gradle/libs.versions.toml 2>/dev/null | grep -o '[0-9][0-9.]*' | head -1 || echo "0")
+          echo "Existing AGP: $EXISTING_AGP"
 
-          # Fix compileSdk and targetSdk
-          find . -name "build.gradle" -exec sed -i 's/compileSdkVersion [0-9][0-9]*/compileSdkVersion 34/g' {} \; 2>/dev/null || true
-          find . -name "build.gradle" -exec sed -i 's/targetSdkVersion [0-9][0-9]*/targetSdkVersion 34/g' {} \; 2>/dev/null || true
-          find . -name "build.gradle.kts" -exec sed -i 's/compileSdk = [0-9][0-9]*/compileSdk = 34/g' {} \; 2>/dev/null || true
-          find . -name "build.gradle.kts" -exec sed -i 's/targetSdk = [0-9][0-9]*/targetSdk = 34/g' {} \; 2>/dev/null || true
-
-          # Fix libs.versions.toml AGP version if present
-          if [ -f "gradle/libs.versions.toml" ]; then
-            sed -i 's/agp = "[0-9.]*"/agp = "8.5.2"/g' gradle/libs.versions.toml
-            sed -i 's/gradle = "[0-9.]*"/gradle = "8.9"/g' gradle/libs.versions.toml
-            echo "✅ Fixed libs.versions.toml"
-            cat gradle/libs.versions.toml | grep -E "agp|gradle"
+          # Only upgrade Gradle if below 8.9
+          GRADLE_MAJOR=$(echo $EXISTING_GRADLE | cut -d. -f1)
+          GRADLE_MINOR=$(echo $EXISTING_GRADLE | cut -d. -f2)
+          if [ "$GRADLE_MAJOR" -lt 8 ] || ([ "$GRADLE_MAJOR" -eq 8 ] && [ "$GRADLE_MINOR" -lt 9 ]); then
+            find . -name "gradle-wrapper.properties" -exec sed -i 's|distributionUrl=.*|distributionUrl=https\://services.gradle.org/distributions/gradle-8.9-bin.zip|' {} \;
+            echo "✅ Upgraded Gradle to 8.9"
+          else
+            echo "✅ Gradle $EXISTING_GRADLE is fine, keeping it"
           fi
 
-          echo "✅ Gradle versions fixed!"
+          # Only touch AGP if it is below 8.0 (too old)
+          AGP_MAJOR=$(echo $EXISTING_AGP | cut -d. -f1)
+          if [ "$AGP_MAJOR" -lt 8 ]; then
+            if [ -f "gradle/libs.versions.toml" ]; then
+              sed -i 's/agp = "[0-9.]*"/agp = "8.5.2"/g' gradle/libs.versions.toml
+              echo "✅ Upgraded AGP to 8.5.2"
+            fi
+            find . -name "build.gradle" -exec sed -i 's|com.android.tools.build:gradle:[0-7][0-9.]*|com.android.tools.build:gradle:8.5.2|g' {} \; 2>/dev/null || true
+            find . -name "build.gradle.kts" -exec sed -i 's|com.android.tools.build:gradle:[0-7][0-9.]*|com.android.tools.build:gradle:8.5.2|g' {} \; 2>/dev/null || true
+          else
+            echo "✅ AGP $EXISTING_AGP is fine, keeping it"
+          fi
+
+          echo "✅ Gradle fix done!"
       - name: Apply Custom Icon
         run: |
           ICON_URL="${{ github.event.inputs.icon_url }}"
