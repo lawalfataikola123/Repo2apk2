@@ -10,13 +10,13 @@ on:
         required: true
         default: 'My App'
       package_name:
-      icon_url:
-        description: "Custom app icon URL"
-        required: false
-        default: ""
         description: 'Package Name'
         required: true
         default: 'com.repo2apk.app'
+      icon_url:
+        description: 'Custom app icon URL'
+        required: false
+        default: ''
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -41,45 +41,50 @@ jobs:
           wget -q "${{ github.event.inputs.html_url }}" -O /tmp/index.html
           head -3 /tmp/index.html
       - name: Build APK
-        env:
-          ANDROID_SDK_ROOT: ""
         run: |
+          unset ANDROID_SDK_ROOT
           export ANDROID_HOME=$HOME/android-sdk
           PKG="${{ github.event.inputs.package_name }}"
           APP="${{ github.event.inputs.app_name }}"
+          ICON_URL="${{ github.event.inputs.icon_url }}"
           PKG_PATH=$(echo $PKG | tr '.' '/')
+          for res in mipmap-mdpi mipmap-hdpi mipmap-xhdpi mipmap-xxhdpi mipmap-xxxhdpi; do
+            mkdir -p /tmp/app/app/src/main/res/$res
+          done
           mkdir -p /tmp/app/app/src/main/java/$PKG_PATH
           mkdir -p /tmp/app/app/src/main/assets
           mkdir -p /tmp/app/app/src/main/res/values
           mkdir -p /tmp/app/gradle/wrapper
           cp /tmp/index.html /tmp/app/app/src/main/assets/
           echo "sdk.dir=$HOME/android-sdk" > /tmp/app/local.properties
+          if [ -n "$ICON_URL" ]; then
+            wget -q "$ICON_URL" -O /tmp/icon.png || true
+          fi
+          if [ -f "/tmp/icon.png" ] && [ -s "/tmp/icon.png" ]; then
+            for res in mipmap-mdpi mipmap-hdpi mipmap-xhdpi mipmap-xxhdpi mipmap-xxxhdpi; do
+              cp /tmp/icon.png /tmp/app/app/src/main/res/$res/ic_launcher.png
+              cp /tmp/icon.png /tmp/app/app/src/main/res/$res/ic_launcher_round.png
+            done
+            echo "Custom icon applied"
+          else
+            for res in mipmap-mdpi mipmap-hdpi mipmap-xhdpi mipmap-xxhdpi mipmap-xxxhdpi; do
+              wget -q "https://placehold.co/192x192/2196F3/ffffff.png" -O /tmp/app/app/src/main/res/$res/ic_launcher.png 2>/dev/null || true
+              cp /tmp/app/app/src/main/res/$res/ic_launcher.png /tmp/app/app/src/main/res/$res/ic_launcher_round.png 2>/dev/null || true
+            done
+            echo "Default icon used"
+          fi
           printf 'rootProject.name = "App"\ninclude ":app"\n' > /tmp/app/settings.gradle
           printf 'buildscript {\n    repositories { google(); mavenCentral() }\n    dependencies { classpath "com.android.tools.build:gradle:8.1.0" }\n}\nallprojects { repositories { google(); mavenCentral() } }\n' > /tmp/app/build.gradle
           printf 'distributionUrl=https\\://services.gradle.org/distributions/gradle-8.5-bin.zip\n' > /tmp/app/gradle/wrapper/gradle-wrapper.properties
           printf 'plugins { id "com.android.application" }\nandroid {\n    namespace "%s"\n    compileSdk 34\n    defaultConfig { applicationId "%s"; minSdk 21; targetSdk 34; versionCode 1; versionName "1.0" }\n}\ndependencies {}\n' $PKG $PKG > /tmp/app/app/build.gradle
-          printf '<?xml version="1.0" encoding="utf-8"?>\n<manifest xmlns:android="http://schemas.android.com/apk/res/android">\n<uses-permission android:name="android.permission.INTERNET"/>\n<application android:label="%s" android:usesCleartextTraffic="true" android:theme="@android:style/Theme.NoTitleBar">\n<activity android:name=".MainActivity" android:exported="true">\n<intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter>\n</activity></application></manifest>\n' "$APP" > /tmp/app/app/src/main/AndroidManifest.xml
-          printf 'package %s;\nimport android.app.*;\nimport android.os.*;\nimport android.webkit.*;\npublic class MainActivity extends Activity {\n    protected void onCreate(Bundle s) {\n        super.onCreate(s);\n        WebView w = new WebView(this); setContentView(w);\n        w.getSettings().setJavaScriptEnabled(true);\n        w.getSettings().setDomStorageEnabled(true);\n        w.setWebViewClient(new WebViewClient());\n        w.loadUrl("file:///android_asset/index.html");\n    }\n}\n' $PKG > /tmp/app/app/src/main/java/$PKG_PATH/MainActivity.java
-          if [ -n "${{ github.event.inputs.icon_url }}" ]; then
-            wget -q "${{ github.event.inputs.icon_url }}" -O /tmp/custom-icon.png 2>/dev/null || true
-            if [ -f "/tmp/custom-icon.png" ] && [ -s "/tmp/custom-icon.png" ]; then
-              for res in mipmap-mdpi mipmap-hdpi mipmap-xhdpi mipmap-xxhdpi mipmap-xxxhdpi; do
-                mkdir -p /tmp/app/app/src/main/res/$res
-                cp /tmp/custom-icon.png /tmp/app/app/src/main/res/$res/ic_launcher.png
-                cp /tmp/custom-icon.png /tmp/app/app/src/main/res/$res/ic_launcher_round.png
-              done
-              echo "✅ Icon applied to all mipmap folders!"
-              # Add icon to manifest
-              sed -i 's/android:label="[^"]*"/& android:icon="@mipmap\/ic_launcher" android:roundIcon="@mipmap\/ic_launcher_round"/' /tmp/app/app/src/main/AndroidManifest.xml
-            else
-              echo "⚠ Icon download failed"
-            fi
-          fi
+          printf '<?xml version="1.0" encoding="utf-8"?>\n<manifest xmlns:android="http://schemas.android.com/apk/res/android">\n<uses-permission android:name="android.permission.INTERNET"/>\n<application android:label="%s" android:icon="@mipmap/ic_launcher" android:roundIcon="@mipmap/ic_launcher_round" android:usesCleartextTraffic="true" android:theme="@android:style/Theme.NoTitleBar">\n<activity android:name=".MainActivity" android:exported="true">\n<intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter>\n</activity></application></manifest>\n' "$APP" > /tmp/app/app/src/main/AndroidManifest.xml
+          printf 'package %s;\nimport android.app.*;\nimport android.os.*;\nimport android.webkit.*;\npublic class MainActivity extends Activity {\n    protected void onCreate(Bundle s) {\n        super.onCreate(s);\n        WebView w=new WebView(this);setContentView(w);\n        w.getSettings().setJavaScriptEnabled(true);\n        w.getSettings().setDomStorageEnabled(true);\n        w.setWebViewClient(new WebViewClient());\n        w.loadUrl("file:///android_asset/index.html");\n    }\n}\n' $PKG > /tmp/app/app/src/main/java/$PKG_PATH/MainActivity.java
           wget -q https://services.gradle.org/distributions/gradle-8.5-bin.zip -O /tmp/gradle.zip
           unzip -q /tmp/gradle.zip -d /tmp/gradle-dist
           export PATH="/tmp/gradle-dist/gradle-8.5/bin:$PATH"
           cd /tmp/app && gradle assembleDebug --no-daemon
           find . -name "*.apk" -exec cp {} /tmp/output.apk \;
+          echo "Size: $(du -sh /tmp/output.apk | cut -f1)"
       - name: Sign APK
         run: |
           keytool -genkey -v -keystore /tmp/ks.keystore -alias app \
@@ -94,4 +99,4 @@ jobs:
         with:
           name: ${{ github.event.inputs.app_name }}-html-apk
           path: /tmp/final.apk
-          retention-days: 7 
+          retention-days: 7
