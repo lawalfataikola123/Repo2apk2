@@ -99,6 +99,8 @@ jobs:
                 cp /tmp/icon.png "$dir/ic_launcher.png" 2>/dev/null || true
                 cp /tmp/icon.png "$dir/ic_launcher_round.png" 2>/dev/null || true
               done
+              find /tmp/target -path "*/mipmap-anydpi*/*.png" -delete 2>/dev/null || true
+              echo "Cleaned anydpi PNG conflicts" 
               echo "✅ Custom icon applied!"
             fi
           fi
