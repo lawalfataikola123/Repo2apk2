@@ -590,7 +590,12 @@ function getParams(type){
 }
 async function uploadIcon(type,token){
   if(!iconData[type])return null;
-  try{addLog(type,'📸 Uploading icon...','b');const base64=iconData[type].split(',')[1];if(!base64)return null;const path=`icons/icon_${Date.now()}.png`;const r=await fetch(`${GH}/repos/${OWNER}/${REPO}/contents/${path}`,{method:'PUT',headers:{'Authorization':'token '+token,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json'},body:JSON.stringify({message:'add icon',content:base64,branch:'main'})});if(r.status===201||r.status===200){await new Promise(res=>setTimeout(res,2000));addLog(type,'✅ Icon uploaded!','g');return`https://raw.githubusercontent.com/${OWNER}/${REPO}/main/${path}`;}addLog(type,'⚠ Icon failed - check token has repo scope','y');return null;}catch(e){addLog(type,'⚠ '+e.message,'y');return null;}
+  try{addLog(type,'📸 Uploading icon...','b');const base64=iconData[type].split(',')[1];if(!base64)return null;const path=`icons/icon_${Date.now()}.png`;const r=await fetch(`${GH}/repos/${OWNER}/${REPO}/contents/${path}`,{method:'PUT',headers:{'Authorization':'token '+token,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json'},body:JSON.stringify({message:'add icon',content:base64,branch:'main'})});if(r.status===201||r.status===200){await new Promise(res=>setTimeout(res,2000));addLog(type,'✅ Icon uploaded!','g');return`https://raw.githubusercontent.com/${OWNER}/${REPO}/main/${path}`;}
+    const errBody=await r.json().catch(()=>({}));
+    const errMsg=errBody.message||'unknown error';
+    addLog(type,`⚠ Icon upload failed (${r.status}): ${errMsg}`,'y');
+    addLog(type,'Continuing build without icon...','y');
+    return null;}catch(e){addLog(type,'⚠ '+e.message,'y');return null;}
 }
 async function startBuild(type){
   const token=getToken(type);if(!token){showTokenModal();return}const params=getParams(type);if(!params)return;
