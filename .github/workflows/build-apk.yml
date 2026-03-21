@@ -7,10 +7,6 @@ on:
         required: true
         default: 'https://github.com/skydoves/Pokedex'
       build_type:
-      icon_url:
-        description: "Custom app icon URL"
-        required: false
-        default: ""
         description: 'Build Type'
         required: true
         default: 'debug'
@@ -18,6 +14,10 @@ on:
         options:
           - debug
           - release
+      icon_url:
+        description: 'Custom app icon URL'
+        required: false
+        default: ''
 jobs:
   build-apk:
     runs-on: ubuntu-latest
@@ -86,7 +86,7 @@ jobs:
           find . -name "gradle-wrapper.properties" -exec sed -i 's|gradle-[0-9]*\.[0-9]*\.*[0-9]*-all|gradle-9.3.1-bin|g' {} \;
           find . -name "build.gradle" -exec sed -i 's/compileSdkVersion [0-9]*/compileSdkVersion 34/g' {} \; 2>/dev/null || true
           find . -name "build.gradle" -exec sed -i 's/targetSdkVersion [12][0-9]/targetSdkVersion 34/g' {} \; 2>/dev/null || true
-          find . -name "build.gradle.kts" -exec sed -i 's/compileSdk = [0-9][0-9]\b/compileSdk = 34/g' {} \; 2>/dev/null || true
+          find . -name "build.gradle.kts" -exec sed -i 's/compileSdk = [0-9][0-9] /compileSdk = 34/g' {} \; 2>/dev/null || true
           find . -name "build.gradle.kts" -exec sed -i 's/targetSdk = [12][0-9]/targetSdk = 34/g' {} \; 2>/dev/null || true
           echo "Gradle versions fixed!"
       - name: Apply Custom Icon
@@ -95,12 +95,11 @@ jobs:
           if [ -n "$ICON_URL" ]; then
             wget -q "$ICON_URL" -O /tmp/icon.png || true
             if [ -f "/tmp/icon.png" ] && [ -s "/tmp/icon.png" ]; then
-              echo "✅ Custom icon downloaded"
-              for dir in $(find /tmp/target -type d -name "mipmap-*" 2>/dev/null); do
-                cp /tmp/icon.png "$dir/ic_launcher.png" || true
-                cp /tmp/icon.png "$dir/ic_launcher_round.png" || true
+              find /tmp/target -type d -name "mipmap-*" | while read dir; do
+                cp /tmp/icon.png "$dir/ic_launcher.png" 2>/dev/null || true
+                cp /tmp/icon.png "$dir/ic_launcher_round.png" 2>/dev/null || true
               done
-              echo "✅ Icon applied!"
+              echo "✅ Custom icon applied!"
             fi
           fi
       - name: Build Flutter APK
@@ -173,7 +172,7 @@ jobs:
         with:
           name: repo2apk-build-${{ github.run_number }}
           path: /tmp/signed-app.apk
-          retention-days: 7 
+          retention-days: 7
       - name: Build Summary
         run: |
           SIZE=$(du -sh /tmp/signed-app.apk 2>/dev/null | cut -f1 || echo "N/A")
