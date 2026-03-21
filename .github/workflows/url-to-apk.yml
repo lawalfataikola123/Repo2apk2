@@ -152,4 +152,4 @@ JAVA
         with:
           name: ${{ github.event.inputs.app_name }}-url-apk
           path: /tmp/final.apk
-          retention-days: 7
+          retention-days: 7 
