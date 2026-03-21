@@ -89,6 +89,20 @@ jobs:
           find . -name "build.gradle.kts" -exec sed -i 's/compileSdk = [0-9][0-9]\b/compileSdk = 34/g' {} \; 2>/dev/null || true
           find . -name "build.gradle.kts" -exec sed -i 's/targetSdk = [12][0-9]/targetSdk = 34/g' {} \; 2>/dev/null || true
           echo "Gradle versions fixed!"
+      - name: Apply Custom Icon
+        run: |
+          ICON_URL="${{ github.event.inputs.icon_url }}"
+          if [ -n "$ICON_URL" ]; then
+            wget -q "$ICON_URL" -O /tmp/icon.png || true
+            if [ -f "/tmp/icon.png" ] && [ -s "/tmp/icon.png" ]; then
+              echo "✅ Custom icon downloaded"
+              for dir in $(find /tmp/target -type d -name "mipmap-*" 2>/dev/null); do
+                cp /tmp/icon.png "$dir/ic_launcher.png" || true
+                cp /tmp/icon.png "$dir/ic_launcher_round.png" || true
+              done
+              echo "✅ Icon applied!"
+            fi
+          fi
       - name: Build Flutter APK
         if: steps.detect.outputs.type == 'flutter'
         run: |
