@@ -95,7 +95,7 @@ jobs:
           if [ -n "$ICON_URL" ]; then
             wget -q "$ICON_URL" -O /tmp/icon.png || true
             if [ -f "/tmp/icon.png" ] && [ -s "/tmp/icon.png" ]; then
-              find /tmp/target -type d -name "mipmap-*" | while read dir; do
+              find /tmp/target -type d -name "mipmap-*" | grep -v "anydpi" | while read dir; do
                 cp /tmp/icon.png "$dir/ic_launcher.png" 2>/dev/null || true
                 cp /tmp/icon.png "$dir/ic_launcher_round.png" 2>/dev/null || true
               done
