@@ -1112,25 +1112,6 @@
   document.getElementById('tokenModal').addEventListener('click', function(e) {
     if (e.target === this) closeTokenModal();
   });
-
-function handleIcon(type,input){
-  const file=input.files[0];if(!file)return;
-  const reader=new FileReader();
-  reader.onload=e=>{
-    iconData[type]=e.target.result;
-    const t=document.getElementById(type+'IT');
-    t.innerHTML='<img src="'+e.target.result+'" style="width:100%;height:100%;object-fit:cover;border-radius:10px;">';
-    document.getElementById(type+'IZ').style.borderColor='#00e5ff';
-  };
-  reader.readAsDataURL(file);
-}
-function clearIcon(type){
-  iconData[type]=null;
-  const emojis={repo:'📱',url:'🌐',html:'📄'};
-  document.getElementById(type+'IT').innerHTML=emojis[type];
-  document.getElementById(type+'IZ').style.borderColor='#333';
-  document.getElementById(type+'IF').value='';
-}
 </script>
 </body>
 </html>
