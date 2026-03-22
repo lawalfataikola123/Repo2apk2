@@ -3,655 +3,1115 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Repo2APK — GitHub to Android APK</title>
-<meta name="description" content="Convert any GitHub repo, website URL, or HTML file into a signed Android APK.">
-<meta name="theme-color" content="#06060c">
-<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Unbounded:wght@400;700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<title>Repo2APK — Build Android Apps from GitHub</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
-*{margin:0;padding:0;box-sizing:border-box}
-:root{
-  --bg:#06060c;--bg2:#09090f;--card:#0d0d18;--card2:#111122;
-  --border:#1a1a30;--border2:#242440;
-  --g1:#00ffb3;--g2:#7b61ff;--g3:#ff6b6b;--g4:#ffd93d;
-  --text:#e8e8f0;--text2:#9090b0;--muted:#404060;
-  --error:#ff4466;--warn:#ffd93d;
-}
-html{scroll-behavior:smooth}
-body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;overflow-x:hidden}
-::-webkit-scrollbar{width:4px}
-::-webkit-scrollbar-track{background:var(--bg)}
-::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+  :root {
+    --bg: #070b0f;
+    --surface: #0d1117;
+    --border: #1c2a3a;
+    --accent: #00ff88;
+    --accent2: #00d4ff;
+    --warn: #ffaa00;
+    --error: #ff4455;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --card: #0f1923;
+  }
 
-/* BG */
-.bg-canvas{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
-.bg-orb{position:absolute;border-radius:50%;filter:blur(100px);opacity:.08;animation:orbFloat 10s ease-in-out infinite}
-.o1{width:500px;height:500px;background:var(--g1);top:-150px;right:-100px}
-.o2{width:400px;height:400px;background:var(--g2);bottom:-150px;left:-100px;animation-delay:4s}
-@keyframes orbFloat{0%,100%{transform:translate(0,0)}50%{transform:translate(20px,-30px)}}
-.bg-grid{position:fixed;inset:0;background-image:linear-gradient(rgba(255,255,255,.01) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.01) 1px,transparent 1px);background-size:60px 60px;pointer-events:none;z-index:0}
+  * { margin: 0; padding: 0; box-sizing: border-box; }
 
-/* AD TOP */
-.ad-top{position:sticky;top:0;z-index:200;background:rgba(6,6,12,.95);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:4px 16px;display:flex;align-items:center;gap:10px}
-.ad-top.hidden{display:none}
-.ad-lbl{font-size:9px;font-family:'Space Mono',monospace;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;white-space:nowrap;flex-shrink:0}
-.ad-inner{flex:1;min-height:50px;display:flex;align-items:center;justify-content:center}
-.ad-x{background:none;border:1px solid var(--border);border-radius:4px;color:var(--muted);padding:3px 8px;font-size:10px;cursor:pointer;white-space:nowrap;font-family:'Space Mono',monospace;flex-shrink:0}
-.ad-x:hover{color:var(--warn);border-color:var(--warn)}
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
 
-/* NAVBAR */
-.navbar{position:sticky;top:0;z-index:150;background:rgba(9,9,15,.95);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:0 14px;height:54px;display:flex;align-items:center;justify-content:space-between}
-.navbar-logo{display:flex;align-items:center;gap:10px;text-decoration:none}
-.logo-mark{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,var(--g1),var(--g2));display:flex;align-items:center;justify-content:center;font-family:'Unbounded',sans-serif;font-size:12px;font-weight:900;color:#000;box-shadow:0 0 16px rgba(0,255,179,.2);flex-shrink:0}
-.logo-name{font-family:'Unbounded',sans-serif;font-size:14px;font-weight:700;background:linear-gradient(90deg,var(--g1),var(--g2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.navbar-right{display:flex;align-items:center;gap:6px}
-.nb-pill{padding:7px 13px;border-radius:16px;font-size:12px;font-weight:600;border:1px solid var(--border);background:var(--card);color:var(--text2);cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:4px;white-space:nowrap}
-.nb-pill:hover{border-color:var(--border2);color:var(--text)}
-.nb-pill.accent{background:rgba(0,255,179,.08);border-color:rgba(0,255,179,.2);color:var(--g1)}
+  /* Grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,255,136,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,255,136,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
 
-/* TAB BAR */
-.tabbar{background:rgba(9,9,15,.9);border-bottom:1px solid var(--border);overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
-.tabbar::-webkit-scrollbar{display:none}
-.tabbar-inner{display:flex;min-width:max-content;padding:0 12px}
-.tab{padding:13px 18px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;display:flex;align-items:center;gap:6px;transition:all .2s;font-family:'DM Sans',sans-serif}
-.tab:hover{color:var(--text2)}
-.tab.active{color:var(--g1);border-bottom-color:var(--g1)}
-.tab-em{font-size:14px}
+  /* Glow orbs */
+  body::after {
+    content: '';
+    position: fixed;
+    top: -200px;
+    right: -200px;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(0,212,255,0.06) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
 
-/* CONTENT */
-.page{position:relative;z-index:1;max-width:1200px;margin:0 auto;padding:20px 16px calc(40px + env(safe-area-inset-bottom))}
+  /* NAV */
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(7,11,15,0.9);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 60px;
+  }
 
-/* DESKTOP LAYOUT */
-@media(min-width:900px){
-  .page{padding:28px 24px 48px}
-  .desktop-layout{display:grid;grid-template-columns:1fr 360px;gap:24px;align-items:start}
-}
-.desktop-right{display:none}
-@media(min-width:900px){
-  .desktop-right{display:flex;flex-direction:column;gap:16px}
-}
+  .logo {
+    font-family: 'Space Mono', monospace;
+    font-weight: 700;
+    font-size: 18px;
+    color: var(--accent);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
 
-/* HERO - only show on mobile */
-.hero{text-align:center;padding:24px 0 8px}
-.hero-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:20px;background:rgba(123,97,255,.1);border:1px solid rgba(123,97,255,.2);font-size:11px;color:var(--g2);margin-bottom:16px;font-family:'Space Mono',monospace}
-.badge-dot{width:5px;height:5px;border-radius:50%;background:var(--g1);animation:pulse 2s infinite}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
-.hero-title{font-family:'Unbounded',sans-serif;font-size:clamp(22px,5vw,42px);font-weight:900;line-height:1.15;margin-bottom:12px}
-.hero-t1{color:var(--text)}
-.hero-t2{background:linear-gradient(90deg,var(--g1),var(--g2),var(--g3));background-size:200%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:grad 4s linear infinite}
-@keyframes grad{0%{background-position:0%}100%{background-position:200%}}
-.hero-sub{font-size:13px;color:var(--text2);line-height:1.7;max-width:400px;margin:0 auto 20px}
-@media(min-width:900px){.hero{display:none}}
+  .logo-icon {
+    width: 28px;
+    height: 28px;
+    background: var(--accent);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #000;
+    font-size: 14px;
+  }
 
-/* STATS */
-.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:16px}
-.stat{background:var(--card);padding:14px 8px;text-align:center}
-.stat-n{font-family:'Unbounded',sans-serif;font-size:16px;font-weight:900;background:linear-gradient(135deg,var(--g1),var(--g2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;display:block;margin-bottom:2px}
-.stat-l{font-size:9px;color:var(--muted);font-family:'Space Mono',monospace;text-transform:uppercase;letter-spacing:.06em}
+  .nav-links {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
 
-/* ALERT */
-.alert{padding:10px 14px;border-radius:10px;font-size:12px;display:flex;align-items:center;gap:8px;margin-bottom:16px;line-height:1.5}
-.alert.warn{background:rgba(255,217,61,.06);border:1px solid rgba(255,217,61,.15);color:var(--warn)}
-.alert a{color:var(--g1);cursor:pointer;text-decoration:underline}
+  .nav-btn {
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    text-decoration: none;
+    transition: all 0.2s;
+  }
 
-/* CARD */
-.card{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:16px}
-.card-head{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-wrap:nowrap}
-.card-ico{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
-.card-ico.g{background:rgba(0,255,179,.08);border:1px solid rgba(0,255,179,.15)}
-.card-ico.p{background:rgba(123,97,255,.08);border:1px solid rgba(123,97,255,.15)}
-.card-ico.r{background:rgba(255,107,107,.08);border:1px solid rgba(255,107,107,.15)}
-.card-ico.y{background:rgba(255,217,61,.08);border:1px solid rgba(255,217,61,.15)}
-.card-title{font-family:'Unbounded',sans-serif;font-size:11px;font-weight:700}
-.card-sub{font-size:10px;color:var(--muted);margin-top:2px;font-family:'Space Mono',monospace}
-.card-body{padding:18px 16px}
+  .nav-btn:hover { color: var(--text); border-color: var(--accent2); }
+  .nav-btn.active { color: var(--accent); border-color: var(--accent); background: rgba(0,255,136,0.06); }
 
-/* FORM */
-.field{margin-bottom:12px}
-.fl{font-size:10px;font-family:'Space Mono',monospace;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px;display:flex;align-items:center;gap:5px}
-.req{color:var(--g3)}
-.iw{position:relative}
-.ii{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:15px;pointer-events:none;line-height:1}
-input,select,textarea{width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:13px 12px 13px 36px;color:var(--text);font-size:16px;outline:none;font-family:'DM Sans',sans-serif;transition:border-color .2s,box-shadow .2s;-webkit-appearance:none;appearance:none}
-select,textarea{padding-left:12px;font-size:16px}
-input:focus,select:focus,textarea:focus{border-color:var(--g2);box-shadow:0 0 0 3px rgba(123,97,255,.1)}
-input::placeholder{color:var(--muted)}
-.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-@media(max-width:480px){.row2{grid-template-columns:1fr}}
-@media(max-width:360px){
-  .logo-name{font-size:12px}
-  .nb-pill{padding:6px 10px;font-size:11px}
-  .card-body{padding:14px 12px}
-  .stats{grid-template-columns:repeat(2,1fr)}
-  .stat{padding:12px 6px}
-}
+  /* HERO */
+  .hero {
+    position: relative;
+    z-index: 1;
+    padding: 80px 24px 60px;
+    text-align: center;
+    max-width: 800px;
+    margin: 0 auto;
+  }
 
-/* COLOR SWATCHES */
-.color-row{display:flex;align-items:center;gap:8px}
-.ci{flex:1}
-.swatches{display:flex;gap:5px;flex-shrink:0}
-.sw{width:24px;height:24px;border-radius:6px;cursor:pointer;border:2px solid transparent;transition:all .15s}
-.sw:hover,.sw.on{border-color:var(--text);transform:scale(1.1)}
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    background: rgba(0,255,136,0.08);
+    border: 1px solid rgba(0,255,136,0.2);
+    border-radius: 20px;
+    font-size: 12px;
+    font-family: 'Space Mono', monospace;
+    color: var(--accent);
+    margin-bottom: 24px;
+    animation: fadeDown 0.6s ease;
+  }
 
-/* ICON ZONE */
-.iz{border:1.5px dashed var(--border2);border-radius:12px;padding:12px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:all .25s;margin-bottom:14px;background:var(--bg2)}
-.iz:hover{border-color:var(--g2);background:rgba(123,97,255,.03)}
-.iz.on{border-color:var(--g1);border-style:solid;background:rgba(0,255,179,.03)}
-.ith{width:54px;height:54px;border-radius:12px;background:var(--card2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;overflow:hidden;position:relative}
-.ith img{width:100%;height:100%;object-fit:cover;border-radius:11px}
-.ito{position:absolute;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;font-size:16px;border-radius:11px}
-.iz:hover .ito{display:flex}
-.itext{flex:1;min-width:0}
-.itext-t{font-size:12px;font-weight:600;margin-bottom:3px}
-.itext-s{font-size:10px;color:var(--muted);line-height:1.5}
-.iact{display:flex;flex-direction:column;gap:4px;flex-shrink:0}
-.ibtn{padding:5px 11px;border-radius:7px;background:rgba(123,97,255,.1);border:1px solid rgba(123,97,255,.2);color:var(--g2);font-size:10px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap}
-.iclr{padding:5px 11px;border-radius:7px;background:rgba(255,68,102,.08);border:1px solid rgba(255,68,102,.15);color:var(--error);font-size:10px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;display:none}
-.iz.on .iclr{display:block}
-input[type=file]{display:none}
+  .hero h1 {
+    font-size: clamp(36px, 8vw, 64px);
+    font-weight: 800;
+    line-height: 1.1;
+    margin-bottom: 20px;
+    animation: fadeDown 0.6s ease 0.1s both;
+  }
 
-/* BUILD BUTTON */
-.bb{width:100%;padding:16px;border:none;border-radius:14px;font-family:'Unbounded',sans-serif;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .25s;margin-top:6px;position:relative;overflow:hidden}
-.bb::before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.1),transparent);transform:translateX(-100%);transition:transform .5s}
-.bb:hover::before{transform:translateX(100%)}
-.bb.g{background:linear-gradient(135deg,#00e6a0,#00ffb3);color:#000;box-shadow:0 4px 20px rgba(0,255,179,.2)}
-.bb.g:hover{transform:translateY(-1px);box-shadow:0 6px 28px rgba(0,255,179,.3)}
-.bb.p{background:linear-gradient(135deg,#6b4fff,#7b61ff);color:#fff;box-shadow:0 4px 20px rgba(123,97,255,.25)}
-.bb.p:hover{transform:translateY(-1px)}
-.bb.r{background:linear-gradient(135deg,#ff4466,#ff6b8a);color:#fff;box-shadow:0 4px 20px rgba(255,68,102,.2)}
-.bb.r:hover{transform:translateY(-1px)}
-.bb:disabled{background:var(--card2)!important;color:var(--muted)!important;cursor:not-allowed;transform:none!important;box-shadow:none!important}
-.bsp{width:14px;height:14px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;animation:spin .7s linear infinite;display:none}
-.bb.loading .bsp{display:block}
-.bb.loading .blbl{opacity:.7}
-@keyframes spin{to{transform:rotate(360deg)}}
-@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+  .hero h1 span {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
 
-/* PROGRESS */
-.ps{display:none;padding:0 16px 16px;animation:fadeUp .3s ease}
-.ps.show{display:block}
-.steps{display:flex;background:var(--bg2);border:1px solid var(--border);border-radius:9px;overflow:hidden;margin-bottom:10px}
-.step{flex:1;padding:8px 3px;text-align:center;font-size:8px;font-family:'Space Mono',monospace;color:var(--muted);border-right:1px solid var(--border);transition:all .3s;text-transform:uppercase}
-.step:last-child{border-right:none}
-.step-i{font-size:12px;display:block;margin-bottom:2px}
-.step.active{color:var(--g2);background:rgba(123,97,255,.06)}
-.step.done{color:var(--g1);background:rgba(0,255,179,.04)}
-.step.fail{color:var(--error);background:rgba(255,68,102,.06)}
-.pb{height:2px;background:var(--border);border-radius:1px;margin-bottom:12px;overflow:hidden}
-.pbf{height:100%;border-radius:1px;width:0%;transition:width .6s cubic-bezier(.4,0,.2,1);background:linear-gradient(90deg,var(--g1),var(--g2),var(--g3));background-size:200%;animation:pbAnim 2s linear infinite}
-@keyframes pbAnim{0%{background-position:0%}100%{background-position:200%}}
-.terminal{border-radius:10px;overflow:hidden;border:1px solid var(--border)}
-.tbar{background:var(--card2);padding:8px 12px;display:flex;align-items:center;gap:7px;border-bottom:1px solid var(--border)}
-.tdots{display:flex;gap:4px}
-.tdot{width:9px;height:9px;border-radius:50%}
-.ttitle{font-size:10px;color:var(--muted);font-family:'Space Mono',monospace;margin-left:3px}
-.tbadge{margin-left:auto;padding:2px 8px;border-radius:3px;font-size:9px;font-family:'Space Mono',monospace;font-weight:700;text-transform:uppercase}
-.tbadge.building{background:rgba(123,97,255,.12);color:var(--g2)}
-.tbadge.success{background:rgba(0,255,179,.12);color:var(--g1)}
-.tbadge.failed{background:rgba(255,68,102,.12);color:var(--error)}
-.tbadge.idle{background:rgba(255,255,255,.04);color:var(--muted)}
-.tbody{background:#04040a;padding:12px;height:200px;overflow-y:auto;font-family:'Space Mono',monospace;font-size:11px;line-height:1.8;-webkit-overflow-scrolling:touch}
-.tbody::-webkit-scrollbar{width:2px}
-.tbody::-webkit-scrollbar-thumb{background:var(--border2)}
-.log{display:flex;gap:8px}
-.log-n{color:var(--muted);min-width:26px;user-select:none;font-size:10px}
-.log-m{flex:1;word-break:break-all}
-.log-m.g{color:#00e6a0}.log-m.b{color:#7b91ff}.log-m.r{color:#ff6680}.log-m.y{color:#ffd93d}.log-m.d{color:var(--muted)}
-.rb{margin-top:12px;border-radius:12px;padding:16px;display:none;animation:fadeUp .3s ease}
-.rb.ok{display:block;background:rgba(0,255,179,.04);border:1px solid rgba(0,255,179,.15)}
-.rb.fail{display:block;background:rgba(255,68,102,.04);border:1px solid rgba(255,68,102,.15)}
-.rt{font-size:13px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:8px}
-.ra{display:flex;flex-direction:column;gap:8px}
-.dlp{display:flex;align-items:center;justify-content:center;gap:8px;padding:13px 20px;border-radius:10px;background:linear-gradient(135deg,var(--g1),#00e6a0);color:#000;font-weight:700;font-size:13px;text-decoration:none;transition:all .2s;font-family:'DM Sans',sans-serif}
-.dlp:hover{transform:translateY(-1px);box-shadow:0 6px 24px rgba(0,255,179,.3)}
-.dls{display:flex;align-items:center;justify-content:center;gap:6px;padding:10px 16px;border-radius:10px;border:1px solid var(--border2);color:var(--text2);font-size:12px;text-decoration:none;transition:all .2s;background:var(--card2);cursor:pointer}
-.dls:hover{border-color:var(--g2);color:var(--text)}
-.rhint{font-size:11px;color:var(--muted);line-height:1.9;padding:10px 12px;background:var(--bg2);border-radius:9px;font-family:'Space Mono',monospace}
+  .hero p {
+    font-size: 17px;
+    color: var(--muted);
+    max-width: 500px;
+    margin: 0 auto 40px;
+    line-height: 1.7;
+    animation: fadeDown 0.6s ease 0.2s both;
+  }
 
-/* HISTORY */
-.sh{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
-.stitle{font-size:9px;font-family:'Space Mono',monospace;color:var(--muted);text-transform:uppercase;letter-spacing:.12em}
-.slink{font-size:10px;color:var(--error);cursor:pointer}
-.hl{display:flex;flex-direction:column;gap:6px}
-.hi{background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:all .2s}
-.hi:hover{border-color:var(--border2)}
-.hd{width:7px;height:7px;border-radius:50%;flex-shrink:0}
-.hd.success{background:var(--g1);box-shadow:0 0 6px rgba(0,255,179,.5)}
-.hd.failed{background:var(--error)}
-.hd.building{background:var(--g2);animation:pulse 1.5s infinite}
-.hi-info{flex:1;min-width:0}
-.hi-name{font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.hi-meta{font-size:10px;color:var(--muted);margin-top:2px;font-family:'Space Mono',monospace}
-.hchip{padding:3px 8px;border-radius:4px;font-size:9px;font-family:'Space Mono',monospace;font-weight:700;text-transform:uppercase}
-.hchip.success{background:rgba(0,255,179,.08);color:var(--g1)}
-.hchip.failed{background:rgba(255,68,102,.08);color:var(--error)}
-.empty-h{padding:28px;text-align:center;background:var(--card2);border:1px dashed var(--border);border-radius:10px;color:var(--muted);font-size:11px;font-family:'Space Mono',monospace}
+  @keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
 
-/* AD BOX */
-.adb{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden}
-.adb.hidden{display:none}
-.adb-top{padding:7px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
-.adb-lbl{font-size:9px;color:var(--muted);font-family:'Space Mono',monospace;text-transform:uppercase;letter-spacing:.1em}
-.adb-rm{font-size:9px;color:var(--warn);cursor:pointer;font-family:'Space Mono',monospace;padding:2px 8px;border:1px solid rgba(255,217,61,.2);border-radius:3px}
-.adb-inner{padding:12px;min-height:90px;display:flex;align-items:center;justify-content:center}
+  /* NOTICE */
+  .notice {
+    position: relative;
+    z-index: 1;
+    max-width: 760px;
+    margin: 0 auto 8px;
+    padding: 0 24px;
+    animation: fadeDown 0.6s ease 0.3s both;
+  }
 
-/* MODALS */
-.overlay{display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.8);backdrop-filter:blur(12px);align-items:center;justify-content:center;padding:16px}
-.overlay.show{display:flex}
-.modal{background:var(--card);border:1px solid var(--border2);border-radius:20px;padding:24px;max-width:440px;width:100%;animation:modalIn .3s cubic-bezier(.34,1.56,.64,1);max-height:90vh;overflow-y:auto}
-@keyframes modalIn{from{opacity:0;transform:scale(.92) translateY(16px)}to{opacity:1;transform:scale(1) translateY(0)}}
-.modal-title{font-family:'Unbounded',sans-serif;font-size:14px;font-weight:700;margin-bottom:8px}
-.modal-sub{font-size:12px;color:var(--text2);margin-bottom:18px;line-height:1.7}
-.modal-steps{background:var(--bg2);border-radius:10px;padding:14px;margin-bottom:16px;font-size:11px;color:var(--text2);line-height:2.2;font-family:'Space Mono',monospace;border:1px solid var(--border)}
-.modal-steps a{color:var(--g1);text-decoration:none}
-.mfoot{display:flex;gap:8px;margin-top:16px}
-.mcancel{flex:1;padding:11px;border-radius:10px;background:var(--bg2);border:1px solid var(--border);color:var(--text2);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer}
-.mok{flex:2;padding:11px;border-radius:10px;background:linear-gradient(135deg,var(--g1),#00e6a0);border:none;color:#000;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all .2s}
-.mok:hover{transform:translateY(-1px)}
-.price-grid{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
-.pc{padding:14px 16px;border:1px solid var(--border);border-radius:12px;cursor:pointer;transition:all .2s;position:relative}
-.pc::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(180deg,var(--g1),var(--g2));border-radius:12px 0 0 12px;opacity:0;transition:opacity .2s}
-.pc:hover,.pc.sel{border-color:var(--g1)}
-.pc.sel::before,.pc:hover::before{opacity:1}
-.pc.sel{background:rgba(0,255,179,.03)}
-.ptop{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
-.pname{font-size:13px;font-weight:700}
-.pamt{font-family:'Space Mono',monospace;font-size:15px;font-weight:700;color:var(--g1)}
-.pdesc{font-size:11px;color:var(--muted)}
-.pbadge{display:inline-block;padding:1px 7px;border-radius:3px;font-size:9px;font-weight:700;margin-left:6px;background:rgba(0,255,179,.1);color:var(--g1);font-family:'Space Mono',monospace}
+  .notice-box {
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    line-height: 1.5;
+  }
 
-/* VIEW CONTENT */
-.view-content{display:none}
-.view-content.active{display:block}
+  .notice-box.warn {
+    background: rgba(255,170,0,0.08);
+    border: 1px solid rgba(255,170,0,0.2);
+    color: var(--warn);
+  }
+
+  .notice-box.info {
+    background: rgba(0,212,255,0.06);
+    border: 1px solid rgba(0,212,255,0.15);
+    color: var(--accent2);
+  }
+
+  /* BUILD CARD */
+  .build-section {
+    position: relative;
+    z-index: 1;
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 16px 24px 40px;
+    animation: fadeDown 0.6s ease 0.4s both;
+  }
+
+  .build-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+
+  .build-card-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: between;
+    gap: 12px;
+  }
+
+  .build-card-header h2 {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+    flex: 1;
+  }
+
+  .build-card-body { padding: 24px; }
+
+  label {
+    display: block;
+    font-size: 12px;
+    font-family: 'Space Mono', monospace;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 8px;
+  }
+
+  .input-wrap {
+    position: relative;
+    margin-bottom: 16px;
+  }
+
+  .input-wrap svg {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+    width: 16px;
+    height: 16px;
+  }
+
+  input[type="text"], input[type="password"] {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px 12px 40px;
+    color: var(--text);
+    font-size: 14px;
+    font-family: 'Space Mono', monospace;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  input:focus { border-color: var(--accent2); }
+  input::placeholder { color: var(--muted); }
+
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+
+  select {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    color: var(--text);
+    font-size: 14px;
+    font-family: 'Syne', sans-serif;
+    outline: none;
+    cursor: pointer;
+    appearance: none;
+    transition: border-color 0.2s;
+  }
+
+  select:focus { border-color: var(--accent2); }
+
+  .build-btn {
+    width: 100%;
+    padding: 14px;
+    background: var(--accent);
+    color: #000;
+    border: none;
+    border-radius: 8px;
+    font-family: 'Syne', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s;
+    margin-top: 8px;
+  }
+
+  .build-btn:hover { background: #00e87a; transform: translateY(-1px); }
+  .build-btn:active { transform: translateY(0); }
+  .build-btn:disabled { background: var(--border); color: var(--muted); cursor: not-allowed; transform: none; }
+
+  /* PROGRESS */
+  .progress-section { display: none; padding: 0 24px 24px; }
+  .progress-section.show { display: block; }
+
+  .steps {
+    display: flex;
+    gap: 0;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+
+  .step {
+    flex: 1;
+    padding: 10px 4px;
+    text-align: center;
+    font-size: 11px;
+    font-family: 'Space Mono', monospace;
+    color: var(--muted);
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    transition: all 0.3s;
+    position: relative;
+  }
+
+  .step:last-child { border-right: none; }
+  .step.active { color: var(--accent2); background: rgba(0,212,255,0.06); }
+  .step.done { color: var(--accent); background: rgba(0,255,136,0.06); }
+  .step.error { color: var(--error); background: rgba(255,68,85,0.06); }
+
+  .step-icon { font-size: 16px; display: block; margin-bottom: 4px; }
+
+  .progress-bar-wrap {
+    background: var(--surface);
+    border-radius: 4px;
+    height: 6px;
+    overflow: hidden;
+    margin-bottom: 16px;
+    border: 1px solid var(--border);
+  }
+
+  .progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: 4px;
+    transition: width 0.5s ease;
+    width: 0%;
+  }
+
+  /* CONSOLE */
+  .console {
+    background: #020608;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .console-header {
+    padding: 10px 14px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .console-dots { display: flex; gap: 5px; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; }
+  .dot-r { background: #ff5f57; }
+  .dot-y { background: #febc2e; }
+  .dot-g { background: #28c840; }
+
+  .console-status {
+    margin-left: auto;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  .console-status.building { background: rgba(0,212,255,0.15); color: var(--accent2); }
+  .console-status.success { background: rgba(0,255,136,0.15); color: var(--accent); }
+  .console-status.failed { background: rgba(255,68,85,0.15); color: var(--error); }
+
+  .console-body {
+    padding: 14px;
+    height: 240px;
+    overflow-y: auto;
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    line-height: 1.7;
+  }
+
+  .console-body::-webkit-scrollbar { width: 4px; }
+  .console-body::-webkit-scrollbar-track { background: transparent; }
+  .console-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .log-line { display: flex; gap: 10px; margin-bottom: 2px; }
+  .log-num { color: #2a3a4a; min-width: 28px; }
+  .log-text { color: #8899aa; }
+  .log-text.green { color: var(--accent); }
+  .log-text.blue { color: var(--accent2); }
+  .log-text.red { color: var(--error); }
+  .log-text.yellow { color: var(--warn); }
+
+  /* RESULT */
+  .result-box {
+    margin-top: 16px;
+    padding: 16px;
+    border-radius: 8px;
+    display: none;
+  }
+
+  .result-box.success {
+    display: block;
+    background: rgba(0,255,136,0.06);
+    border: 1px solid rgba(0,255,136,0.2);
+  }
+
+  .result-box.error {
+    display: block;
+    background: rgba(255,68,85,0.06);
+    border: 1px solid rgba(255,68,85,0.2);
+  }
+
+  .result-title {
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .download-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: var(--accent);
+    color: #000;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 14px;
+    transition: all 0.2s;
+  }
+
+  .download-btn:hover { background: #00e87a; }
+
+  .github-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 16px;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 13px;
+    margin-left: 8px;
+    transition: all 0.2s;
+  }
+
+  .github-link:hover { color: var(--text); border-color: var(--accent2); }
+
+  /* HISTORY */
+  .history-section {
+    position: relative;
+    z-index: 1;
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 0 24px 60px;
+    animation: fadeDown 0.6s ease 0.5s both;
+  }
+
+  .section-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .view-all {
+    font-size: 12px;
+    color: var(--accent2);
+    text-decoration: none;
+    cursor: pointer;
+  }
+
+  .history-list { display: flex; flex-direction: column; gap: 8px; }
+
+  .history-item {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: border-color 0.2s;
+  }
+
+  .history-item:hover { border-color: var(--accent2); }
+
+  .history-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .history-dot.success { background: var(--accent); box-shadow: 0 0 6px var(--accent); }
+  .history-dot.building { background: var(--accent2); box-shadow: 0 0 6px var(--accent2); animation: pulse 1.5s infinite; }
+  .history-dot.failed { background: var(--error); }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  .history-info { flex: 1; min-width: 0; }
+  .history-name { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .history-meta { font-size: 12px; color: var(--muted); margin-top: 2px; font-family: 'Space Mono', monospace; }
+
+  .history-badge {
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-family: 'Space Mono', monospace;
+    font-weight: 700;
+  }
+
+  .history-badge.success { background: rgba(0,255,136,0.12); color: var(--accent); }
+  .history-badge.building { background: rgba(0,212,255,0.12); color: var(--accent2); }
+  .history-badge.failed { background: rgba(255,68,85,0.12); color: var(--error); }
+
+  /* TOKEN MODAL */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.8);
+    backdrop-filter: blur(4px);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  .modal-overlay.show { display: flex; }
+
+  .modal {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+    max-width: 480px;
+    width: 100%;
+    animation: fadeDown 0.3s ease;
+  }
+
+  .modal h3 { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+  .modal p { font-size: 13px; color: var(--muted); margin-bottom: 20px; line-height: 1.6; }
+
+  .modal-steps {
+    background: var(--surface);
+    border-radius: 8px;
+    padding: 14px;
+    margin-bottom: 20px;
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 2;
+    font-family: 'Space Mono', monospace;
+  }
+
+  .modal-steps a { color: var(--accent2); }
+
+  .modal-footer { display: flex; gap: 10px; }
+
+  .btn-secondary {
+    flex: 1;
+    padding: 10px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--muted);
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-secondary:hover { color: var(--text); border-color: var(--text); }
+
+  .btn-primary {
+    flex: 2;
+    padding: 10px;
+    background: var(--accent);
+    border: none;
+    border-radius: 8px;
+    color: #000;
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-primary:hover { background: #00e87a; }
+
+  /* FOOTER */
+  footer {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    padding: 24px;
+    color: var(--muted);
+    font-size: 12px;
+    font-family: 'Space Mono', monospace;
+    border-top: 1px solid var(--border);
+  }
+
+  footer a { color: var(--accent2); text-decoration: none; }
+
+  @media (max-width: 600px) {
+    .row { grid-template-columns: 1fr; }
+    .hero { padding: 50px 16px 40px; }
+    .build-section, .history-section, .notice { padding-left: 16px; padding-right: 16px; }
+  }
 </style>
 </head>
 <body>
 
-<div class="bg-canvas"><div class="bg-orb o1"></div><div class="bg-orb o2"></div></div>
-<div class="bg-grid"></div>
-
-<!-- TOP AD -->
-<div class="ad-top" id="adTop">
-  <span class="ad-lbl">AD</span>
-  <div class="ad-inner">
-    <ins class="adsbygoogle" style="display:block;height:50px;" data-ad-client="ca-pub-XXXXXXXXXXXXXXXX" data-ad-slot="XXXXXXXXXX" data-ad-format="horizontal" data-full-width-responsive="true"></ins>
-    <script>(adsbygoogle=window.adsbygoogle||[]).push({})</script>
-  </div>
-  <button class="ad-x" onclick="showPayModal()">✕ Ads</button>
-</div>
-
-<!-- NAVBAR -->
-<nav class="navbar">
-  <div class="navbar-logo">
-    <div class="logo-mark">R2</div>
-    <span class="logo-name">Repo2APK</span>
-  </div>
-  <div class="navbar-right">
-    <span class="nb-pill accent" onclick="showPayModal()">⚡ <span id="creditsNum">0</span></span>
-    <span class="nb-pill" onclick="showTokenModal()">🔑 Token</span>
+<!-- NAV -->
+<nav>
+  <a class="logo" href="#">
+    <div class="logo-icon">⚡</div>
+    Repo2APK
+  </a>
+  <div class="nav-links">
+    <a class="nav-btn active" href="#">Build</a>
+    <a class="nav-btn" href="https://github.com/lawalfataikola123/Repo2apk2/actions" target="_blank">GitHub Actions</a>
+    <button class="nav-btn" onclick="showTokenModal()">⚙ Token</button>
   </div>
 </nav>
 
-<!-- TAB BAR -->
-<div class="tabbar">
-  <div class="tabbar-inner">
-    <div class="tab active" onclick="switchTab('repo',this)"><span class="tab-em">📦</span>Repo → APK</div>
-    <div class="tab" onclick="switchTab('url',this)"><span class="tab-em">🌐</span>URL → APK</div>
-    <div class="tab" onclick="switchTab('html',this)"><span class="tab-em">📄</span>HTML → APK</div>
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-badge">
+    <span>⚡</span> Powered by GitHub Actions — 100% Free
+  </div>
+  <h1>Build Android Apps<br><span>Directly from GitHub</span></h1>
+  <p>Paste any GitHub repository URL and get a ready-to-install APK in minutes. Supports Flutter, Native Android & React Native.</p>
+</div>
+
+<!-- NOTICES -->
+<div class="notice">
+  <div class="notice-box warn">
+    <span>⚠</span>
+    <span>Builds run on GitHub Actions (free). You need a GitHub Personal Access Token with <strong>repo</strong> and <strong>workflow</strong> scopes to trigger builds.</span>
+  </div>
+</div>
+<div class="notice" style="margin-top:8px;margin-bottom:0">
+  <div class="notice-box info">
+    <span>ℹ</span>
+    <span>iOS builds (IPA) require macOS runners and are not supported on this free plan.</span>
   </div>
 </div>
 
-<!-- PAGE -->
-<div class="page">
+<!-- BUILD CARD -->
+<div class="build-section">
+  <div class="build-card">
+    <div class="build-card-header">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--accent)"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      <h2>New Build</h2>
+    </div>
 
-  <!-- HERO (mobile only) -->
-  <div class="hero">
-    <div class="hero-badge"><span class="badge-dot"></span>GitHub Actions · Always Free</div>
-    <h1 class="hero-title">
-      <span class="hero-t1">Build APKs</span><br>
-      <span class="hero-t2">Without a PC</span>
-    </h1>
-    <p class="hero-sub">Convert GitHub repos, websites or HTML into signed Android APKs in minutes.</p>
-  </div>
+    <div class="build-card-body">
+      <div class="input-wrap">
+        <label>GitHub Repository URL</label>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
+        <input type="text" id="repoUrl" placeholder="https://github.com/username/android-app" />
+      </div>
 
-  <!-- STATS -->
-  <div class="stats">
-    <div class="stat"><span class="stat-n" id="s-builds">0</span><span class="stat-l">Builds</span></div>
-    <div class="stat"><span class="stat-n">3</span><span class="stat-l">Workflows</span></div>
-    <div class="stat"><span class="stat-n">∞</span><span class="stat-l">Free</span></div>
-    <div class="stat"><span class="stat-n">✓</span><span class="stat-l">Signed</span></div>
-  </div>
-
-  <div class="alert warn">⚠ Requires GitHub token with <strong>repo</strong> + <strong>workflow</strong> scopes. <a onclick="showTokenModal()">Setup →</a></div>
-
-  <!-- REPO TAB -->
-  <div class="view-content active" id="tab-repo">
-    <div class="desktop-layout">
-      <div>
-        <div class="card">
-          <div class="card-head">
-            <div class="card-ico g">📦</div>
-            <div><div class="card-title">GitHub Repository → APK</div><div class="card-sub">Flutter • Native Android • React Native</div></div>
-          </div>
-          <div class="card-body">
-            <div class="field"><div class="fl">Repository URL <span class="req">*</span></div><div class="iw"><span class="ii">🔗</span><input type="url" id="repoUrl" placeholder="https://github.com/username/app"/></div></div>
-            <div class="row2">
-              <div class="field"><div class="fl">Build Type</div><select id="repoBuildType"><option value="debug">⚡ Debug</option><option value="release">🔒 Release</option></select></div>
-              <div class="field"><div class="fl">Framework</div><select id="repoEngine"><option value="auto">🔍 Auto Detect</option><option value="gradle">🤖 Native</option><option value="flutter">🐦 Flutter</option><option value="rn">⚛ React Native</option></select></div>
-            </div>
-            <div class="fl">App Icon <span style="color:var(--muted)">(optional)</span></div>
-            <label for="repoIF" style="display:block;cursor:pointer;"><div class="iz" id="repoIZ">
-              <div class="ith" id="repoIT"><span>📱</span><div class="ito">✎</div></div>
-              <div class="itext"><div class="itext-t">Upload App Icon</div><div class="itext-s">PNG/JPG · 512×512px recommended</div></div>
-              <div class="iact"><button class="ibtn" onclick="event.stopPropagation();document.getElementById('repoIF').click()">Choose</button><button class="iclr" onclick="event.stopPropagation();clearIcon('repo')">Remove</button></div>
-              
-            </div></label>
-            <input type="file" id="repoIF" accept="image/*" onchange="handleIcon('repo',this)" style="display:none;position:absolute;left:-9999px;">
-            <div class="field"><div class="fl">GitHub Token <span class="req">*</span></div><div class="iw"><span class="ii">🔑</span><input type="password" id="repoToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"/></div></div>
-            <button class="bb g" id="repoBB" onclick="startBuild('repo')"><div class="bsp"></div><span class="blbl">▶ Start Build</span></button>
-          </div>
-          <div class="ps" id="psRepo">
-            <div class="steps"><div class="step" id="repo-s1"><span class="step-i">📥</span>Clone</div><div class="step" id="repo-s2"><span class="step-i">🔍</span>Detect</div><div class="step" id="repo-s3"><span class="step-i">📦</span>Deps</div><div class="step" id="repo-s4"><span class="step-i">⚙</span>Build</div><div class="step" id="repo-s5"><span class="step-i">✍</span>Sign</div><div class="step" id="repo-s6"><span class="step-i">✅</span>Done</div></div>
-            <div class="pb"><div class="pbf" id="repo-pb"></div></div>
-            <div class="terminal"><div class="tbar"><div class="tdots"><div class="tdot" style="background:#ff5f57"></div><div class="tdot" style="background:#febc2e"></div><div class="tdot" style="background:#28c840"></div></div><span class="ttitle">build console</span><span class="tbadge idle" id="repo-badge">IDLE</span></div><div class="tbody" id="repo-log"></div></div>
-            <div class="rb" id="repo-result"><div class="rt" id="repo-rt"></div><div class="ra" id="repo-ra"></div></div>
-          </div>
+      <div class="row">
+        <div>
+          <label>Build Engine</label>
+          <select id="buildEngine">
+            <option value="auto">🔍 Auto Detect</option>
+            <option value="gradle">🤖 Native Android (Gradle)</option>
+            <option value="flutter">🐦 Flutter</option>
+            <option value="react-native">⚛ React Native</option>
+          </select>
+        </div>
+        <div>
+          <label>Build Type</label>
+          <select id="buildType">
+            <option value="debug">Debug APK (faster)</option>
+            <option value="release">Release APK</option>
+          </select>
         </div>
       </div>
-      <div class="desktop-right" id="repoRight"></div>
-    </div>
-  </div>
 
-  <!-- URL TAB -->
-  <div class="view-content" id="tab-url">
-    <div class="desktop-layout">
-      <div>
-        <div class="card">
-          <div class="card-head">
-            <div class="card-ico p">🌐</div>
-            <div><div class="card-title">Website URL → APK</div><div class="card-sub">Wraps any website in a WebView app</div></div>
-          </div>
-          <div class="card-body">
-            <div class="field"><div class="fl">Website URL <span class="req">*</span></div><div class="iw"><span class="ii">🌐</span><input type="url" id="urlInput" placeholder="https://yourwebsite.com"/></div></div>
-            <div class="row2">
-              <div class="field"><div class="fl">App Name <span class="req">*</span></div><div class="iw"><span class="ii">📱</span><input type="text" id="urlAppName" placeholder="My Web App"/></div></div>
-              <div class="field"><div class="fl">Package <span class="req">*</span></div><div class="iw"><span class="ii">📦</span><input type="text" id="urlPkg" placeholder="com.myapp.web"/></div></div>
-            </div>
-            <div class="field"><div class="fl">Theme Color</div><div class="color-row"><div class="iw ci"><span class="ii">🎨</span><input type="text" id="urlColor" value="7b61ff"/></div><div class="swatches"><div class="sw on" style="background:#7b61ff" onclick="setSwatch('url','7b61ff',this)"></div><div class="sw" style="background:#00ffb3" onclick="setSwatch('url','00ffb3',this)"></div><div class="sw" style="background:#ff6b6b" onclick="setSwatch('url','ff6b6b',this)"></div><div class="sw" style="background:#ffd93d" onclick="setSwatch('url','ffd93d',this)"></div><div class="sw" style="background:#2196F3" onclick="setSwatch('url','2196F3',this)"></div></div></div></div>
-            <div class="fl">App Icon <span style="color:var(--muted)">(optional)</span></div>
-            <label for="urlIF" style="display:block;cursor:pointer;"><div class="iz" id="urlIZ">
-              <div class="ith" id="urlIT"><span>🌐</span><div class="ito">✎</div></div>
-              <div class="itext"><div class="itext-t">Upload App Icon</div><div class="itext-s">PNG/JPG · 512×512px recommended</div></div>
-              <div class="iact"><button class="ibtn" onclick="event.stopPropagation();document.getElementById('urlIF').click()">Choose</button><button class="iclr" onclick="event.stopPropagation();clearIcon('url')">Remove</button></div>
-              
-            </div></label>
-            <input type="file" id="urlIF" accept="image/*" onchange="handleIcon('url',this)" style="display:none;position:absolute;left:-9999px;">
-            <div class="field"><div class="fl">GitHub Token <span class="req">*</span></div><div class="iw"><span class="ii">🔑</span><input type="password" id="urlToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"/></div></div>
-            <button class="bb p" id="urlBB" onclick="startBuild('url')"><div class="bsp"></div><span class="blbl">🌐 Convert to APK</span></button>
-          </div>
-          <div class="ps" id="psUrl">
-            <div class="steps"><div class="step" id="url-s1"><span class="step-i">🌐</span>Fetch</div><div class="step" id="url-s2"><span class="step-i">📝</span>Create</div><div class="step" id="url-s3"><span class="step-i">⚙</span>Build</div><div class="step" id="url-s4"><span class="step-i">✍</span>Sign</div><div class="step" id="url-s5"><span class="step-i">✅</span>Done</div></div>
-            <div class="pb"><div class="pbf" id="url-pb"></div></div>
-            <div class="terminal"><div class="tbar"><div class="tdots"><div class="tdot" style="background:#ff5f57"></div><div class="tdot" style="background:#febc2e"></div><div class="tdot" style="background:#28c840"></div></div><span class="ttitle">build console</span><span class="tbadge idle" id="url-badge">IDLE</span></div><div class="tbody" id="url-log"></div></div>
-            <div class="rb" id="url-result"><div class="rt" id="url-rt"></div><div class="ra" id="url-ra"></div></div>
-          </div>
-        </div>
+      <div class="input-wrap" id="tokenWrap">
+        <label>GitHub Token <span style="color:var(--error)">*</span></label>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <input type="password" id="ghToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" />
       </div>
-      <div class="desktop-right" id="urlRight"></div>
-    </div>
-  </div>
 
-  <!-- HTML TAB -->
-  <div class="view-content" id="tab-html">
-    <div class="desktop-layout">
-      <div>
-        <div class="card">
-          <div class="card-head">
-            <div class="card-ico r">📄</div>
-            <div><div class="card-title">HTML File → APK</div><div class="card-sub">Convert HTML games, tools & offline apps</div></div>
-          </div>
-          <div class="card-body">
-            <div class="field"><div class="fl">Raw HTML URL <span class="req">*</span></div><div class="iw"><span class="ii">🔗</span><input type="url" id="htmlUrl" placeholder="https://raw.githubusercontent.com/user/repo/main/index.html"/></div></div>
-            <div class="row2">
-              <div class="field"><div class="fl">App Name <span class="req">*</span></div><div class="iw"><span class="ii">📱</span><input type="text" id="htmlAppName" placeholder="My HTML App"/></div></div>
-              <div class="field"><div class="fl">Package <span class="req">*</span></div><div class="iw"><span class="ii">📦</span><input type="text" id="htmlPkg" placeholder="com.myapp.html"/></div></div>
-            </div>
-            <div class="fl">App Icon <span style="color:var(--muted)">(optional)</span></div>
-            <label for="htmlIF" style="display:block;cursor:pointer;"><div class="iz" id="htmlIZ">
-              <div class="ith" id="htmlIT"><span>📄</span><div class="ito">✎</div></div>
-              <div class="itext"><div class="itext-t">Upload App Icon</div><div class="itext-s">PNG/JPG · 512×512px recommended</div></div>
-              <div class="iact"><button class="ibtn" onclick="event.stopPropagation();document.getElementById('htmlIF').click()">Choose</button><button class="iclr" onclick="event.stopPropagation();clearIcon('html')">Remove</button></div>
-              
-            </div></label>
-            <input type="file" id="htmlIF" accept="image/*" onchange="handleIcon('html',this)" style="display:none;position:absolute;left:-9999px;">
-            <div class="field"><div class="fl">GitHub Token <span class="req">*</span></div><div class="iw"><span class="ii">🔑</span><input type="password" id="htmlToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"/></div></div>
-            <button class="bb r" id="htmlBB" onclick="startBuild('html')"><div class="bsp"></div><span class="blbl">📄 Convert to APK</span></button>
-          </div>
-          <div class="ps" id="psHtml">
-            <div class="steps"><div class="step" id="html-s1"><span class="step-i">📥</span>Fetch</div><div class="step" id="html-s2"><span class="step-i">📝</span>Wrap</div><div class="step" id="html-s3"><span class="step-i">⚙</span>Build</div><div class="step" id="html-s4"><span class="step-i">✍</span>Sign</div><div class="step" id="html-s5"><span class="step-i">✅</span>Done</div></div>
-            <div class="pb"><div class="pbf" id="html-pb"></div></div>
-            <div class="terminal"><div class="tbar"><div class="tdots"><div class="tdot" style="background:#ff5f57"></div><div class="tdot" style="background:#febc2e"></div><div class="tdot" style="background:#28c840"></div></div><span class="ttitle">build console</span><span class="tbadge idle" id="html-badge">IDLE</span></div><div class="tbody" id="html-log"></div></div>
-            <div class="rb" id="html-result"><div class="rt" id="html-rt"></div><div class="ra" id="html-ra"></div></div>
-          </div>
-        </div>
+      <button class="build-btn" id="buildBtn" onclick="startBuild()">
+        <span>▶</span> Start Build
+      </button>
+    </div>
+
+    <!-- PROGRESS -->
+    <div class="progress-section" id="progressSection">
+      <div class="steps" id="buildSteps">
+        <div class="step" id="step-clone"><span class="step-icon">📥</span>CLONE</div>
+        <div class="step" id="step-detect"><span class="step-icon">🔍</span>DETECT</div>
+        <div class="step" id="step-install"><span class="step-icon">📦</span>INSTALL</div>
+        <div class="step" id="step-compile"><span class="step-icon">⚙</span>COMPILE</div>
+        <div class="step" id="step-sign"><span class="step-icon">✍</span>SIGN</div>
+        <div class="step" id="step-finish"><span class="step-icon">✅</span>FINISH</div>
       </div>
-      <div class="desktop-right" id="htmlRight"></div>
+
+      <div class="progress-bar-wrap">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+
+      <div class="console">
+        <div class="console-header">
+          <div class="console-dots">
+            <div class="dot dot-r"></div>
+            <div class="dot dot-y"></div>
+            <div class="dot dot-g"></div>
+          </div>
+          <span>Build Console — Real-time logs</span>
+          <span class="console-status building" id="consoleStatus">BUILDING</span>
+        </div>
+        <div class="console-body" id="consoleBody"></div>
+      </div>
+
+      <div class="result-box" id="resultBox">
+        <div class="result-title" id="resultTitle"></div>
+        <div id="resultActions"></div>
+      </div>
     </div>
   </div>
+</div>
 
-  <!-- HISTORY (mobile - always visible below) -->
-  <div style="margin-top:8px">
-    <div class="sh">
-      <span class="stitle">↻ Build History</span>
-      <span class="slink" onclick="clearHistory()">Clear ✕</span>
+<!-- HISTORY -->
+<div class="history-section">
+  <div class="section-title">
+    <span>↻ Recent Builds</span>
+    <a class="view-all" href="https://github.com/lawalfataikola123/Repo2apk2/actions" target="_blank">View All →</a>
+  </div>
+  <div class="history-list" id="historyList">
+    <div style="text-align:center;padding:30px;color:var(--muted);font-size:13px;background:var(--card);border:1px solid var(--border);border-radius:10px;font-family:'Space Mono',monospace">
+      No build history yet. Start your first build above!
     </div>
-    <div class="hl" id="histList"></div>
   </div>
-
-  <!-- MID AD -->
-  <div class="adb" id="adMid" style="margin-top:16px">
-    <div class="adb-top"><span class="adb-lbl">Advertisement</span><span class="adb-rm" onclick="showPayModal()">⚡ Remove Ads</span></div>
-    <div class="adb-inner"><ins class="adsbygoogle" style="display:block;min-height:90px;" data-ad-client="ca-pub-XXXXXXXXXXXXXXXX" data-ad-slot="XXXXXXXXXX" data-ad-format="rectangle" data-full-width-responsive="true"></ins><script>(adsbygoogle=window.adsbygoogle||[]).push({})</script></div>
-  </div>
-
 </div>
 
 <!-- TOKEN MODAL -->
-<div class="overlay" id="tokenModal" onclick="if(event.target===this)closeModal('tokenModal')">
+<div class="modal-overlay" id="tokenModal">
   <div class="modal">
-    <div class="modal-title">🔑 GitHub Token Setup</div>
-    <div class="modal-sub">Create a free Personal Access Token. Takes under 2 minutes!</div>
-    <div class="modal-steps">1. Go to <a href="https://github.com/settings/tokens/new" target="_blank">github.com/settings/tokens/new</a><br>2. Note: <strong style="color:var(--text)">Repo2APK Builder</strong><br>3. Expiration: <strong style="color:var(--text)">No expiration</strong><br>4. Check: <strong style="color:var(--g1)">✓ repo</strong> and <strong style="color:var(--g1)">✓ workflow</strong><br>5. Generate and copy token</div>
-    <div class="field"><div class="fl">Paste Your Token</div><div class="iw"><span class="ii">🔑</span><input type="password" id="modalToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"/></div></div>
-    <div class="mfoot"><button class="mcancel" onclick="closeModal('tokenModal')">Cancel</button><button class="mok" onclick="saveToken()">Save Token ✓</button></div>
-  </div>
-</div>
-
-<!-- PAY MODAL -->
-<div class="overlay" id="payModal" onclick="if(event.target===this)closeModal('payModal')">
-  <div class="modal">
-    <div class="modal-title">⚡ Buy Credits · Remove Ads</div>
-    <div class="modal-sub">All paid plans <strong style="color:var(--g1)">permanently remove ads</strong>. Powered by Paystack.</div>
-    <div class="price-grid">
-      <div class="pc" onclick="selPlan(this,3,10)"><div class="ptop"><span class="pname">🔥 Starter</span><span class="pamt">$3</span></div><div class="pdesc">10 credits · No ads · No expiry</div></div>
-      <div class="pc sel" onclick="selPlan(this,10,50)"><div class="ptop"><span class="pname">⚡ Popular <span class="pbadge">BEST</span></span><span class="pamt">$10</span></div><div class="pdesc">50 credits · No ads · Priority queue</div></div>
-      <div class="pc" onclick="selPlan(this,25,200)"><div class="ptop"><span class="pname">👑 Pro</span><span class="pamt">$25</span></div><div class="pdesc">200 credits · No ads · All features</div></div>
+    <h3>🔑 Setup GitHub Token</h3>
+    <p>You need a GitHub Personal Access Token to trigger builds. It's free and takes 1 minute to create.</p>
+    <div class="modal-steps">
+      1. Go to <a href="https://github.com/settings/tokens/new" target="_blank">github.com/settings/tokens/new</a><br>
+      2. Note: "Repo2APK Builder"<br>
+      3. Check: <strong style="color:var(--accent)">repo</strong> and <strong style="color:var(--accent)">workflow</strong><br>
+      4. Click "Generate token"<br>
+      5. Copy and paste it below
     </div>
-    <div class="field"><div class="fl">Email Address</div><div class="iw"><span class="ii">✉</span><input type="email" id="payEmail" placeholder="your@email.com"/></div></div>
-    <div class="mfoot"><button class="mcancel" onclick="closeModal('payModal')">Cancel</button><button class="mok" onclick="pay()" style="background:linear-gradient(135deg,#ffd93d,#ffb700);color:#000">💳 Pay with Paystack</button></div>
-  </div>
-</div>
-
-<!-- DOWNLOAD HELPER MODAL -->
-<div class="overlay" id="dlModal" onclick="if(event.target===this)closeModal('dlModal')">
-  <div class="modal">
-    <div class="modal-title">⬇ Download Your APK</div>
-    <div class="modal-sub">Your APK is ready! Follow these steps:</div>
-    <div class="modal-steps" style="line-height:2.4">
-      <strong style="color:var(--g1)">📱 Mobile (Chrome):</strong><br>
-      1. Tap <strong style="color:var(--text)">Open GitHub</strong> below<br>
-      2. Tap ⋮ menu → <strong style="color:var(--text)">Desktop site</strong><br>
-      3. Scroll to <strong style="color:var(--text)">Artifacts</strong> section<br>
-      4. Tap the APK ZIP to download<br>
-      5. Unzip → install .apk file<br><br>
-      <strong style="color:var(--g1)">🖥 Desktop:</strong><br>
-      Opens GitHub directly. Scroll to Artifacts.
+    <div class="input-wrap">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position:absolute;left:14px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:var(--muted)"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      <input type="password" id="modalToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" style="margin-bottom:0" />
     </div>
-    <a id="dlModalLink" href="#" target="_blank" class="dlp" style="margin-bottom:8px">🌐 Open GitHub Page</a>
-    <div style="display:flex;gap:8px">
-      <button id="dlCopyBtn" onclick="copyDlUrl()" class="dls" style="flex:1">📋 Copy Link</button>
-      <button onclick="closeModal('dlModal')" class="dls" style="flex:1">Close</button>
+    <div class="modal-footer" style="margin-top:16px">
+      <button class="btn-secondary" onclick="closeTokenModal()">Cancel</button>
+      <button class="btn-primary" onclick="saveToken()">Save Token</button>
     </div>
   </div>
 </div>
 
-<script src="https://js.paystack.co/v1/inline.js"></script>
+<footer>
+  © 2026 Repo2APK — Built with GitHub Actions &nbsp;|&nbsp;
+  <a href="https://github.com/lawalfataikola123/Repo2apk2" target="_blank">GitHub Repo</a>
+</footer>
+
 <script>
-const OWNER='lawalfataikola123',REPO='Repo2apk2';
-const PAYSTACK_KEY='pk_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx';
-const WF={repo:'build-apk.yml',url:'url-to-apk.yml',html:'html-to-apk.yml'};
-const GH='https://api.github.com',PROXY='https://corsproxy.io/?url=';
-let credits=+localStorage.getItem('r2apk_credits')||0;
-let history=JSON.parse(localStorage.getItem('r2apk_history')||'[]');
-let iconData={repo:null,url:null,html:null};
-let logNums={repo:1,url:1,html:1};
-let polls={};
-let plan={amount:10,credits:50};
-let currentDlUrl='';
-const noAds=()=>localStorage.getItem('r2apk_noads')==='true';
+  // Config - UPDATE THESE!
+  const GITHUB_OWNER = 'lawalfataikola123';
+  const GITHUB_REPO = 'Repo2apk2';
+  const WORKFLOW_FILE = 'build-apk.yml';
 
-(function init(){
-  const t=localStorage.getItem('r2apk_token');
-  if(t)['repoToken','urlToken','htmlToken'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=t;});
-  updateUI();renderHistory();applyAds();
-  // Populate desktop right columns
-  buildRightPanels();
-})();
+  let buildHistory = JSON.parse(localStorage.getItem('buildHistory') || '[]');
+  let currentRunId = null;
+  let pollInterval = null;
+  let logCounter = 1;
 
-function buildRightPanels(){
-  const html=`
-    <div class="adb" id="adMidD">
-      <div class="adb-top"><span class="adb-lbl">Advertisement</span><span class="adb-rm" onclick="showPayModal()">⚡ Remove</span></div>
-      <div class="adb-inner"><ins class="adsbygoogle" style="display:block;min-height:90px;" data-ad-client="ca-pub-XXXXXXXXXXXXXXXX" data-ad-slot="XXXXXXXXXX" data-ad-format="rectangle" data-full-width-responsive="true"></ins></div>
-    </div>
-    <div class="card">
-      <div class="card-head"><div class="card-ico y">📋</div><div><div class="card-title">Build History</div><div class="card-sub">Recent builds</div></div><span onclick="clearHistory()" style="margin-left:auto;font-size:10px;color:var(--error);cursor:pointer">Clear ✕</span></div>
-      <div class="card-body"><div class="hl" id="histD"></div></div>
-    </div>
-    <div class="card">
-      <div class="card-head"><div class="card-ico g">💡</div><div><div class="card-title">Quick Guide</div></div></div>
-      <div class="card-body" style="font-size:11px;color:var(--text2);line-height:2.2;font-family:Space Mono,monospace">
-        1. Setup GitHub token<br>2. Enter repo/URL/HTML<br>3. Upload custom icon (opt)<br>4. Click build button<br>5. Wait 5-10 minutes<br>6. Download signed APK ✅
+  // Load saved token
+  const savedToken = localStorage.getItem('ghToken');
+  if (savedToken) document.getElementById('ghToken').value = savedToken;
+
+  renderHistory();
+
+  function showTokenModal() {
+    const t = localStorage.getItem('ghToken');
+    if (t) document.getElementById('modalToken').value = t;
+    document.getElementById('tokenModal').classList.add('show');
+  }
+
+  function closeTokenModal() {
+    document.getElementById('tokenModal').classList.remove('show');
+  }
+
+  function saveToken() {
+    const t = document.getElementById('modalToken').value.trim();
+    if (!t) return alert('Please enter a token!');
+    localStorage.setItem('ghToken', t);
+    document.getElementById('ghToken').value = t;
+    closeTokenModal();
+    addLog('Token saved successfully!', 'green');
+  }
+
+  function addLog(text, color = '') {
+    const body = document.getElementById('consoleBody');
+    const line = document.createElement('div');
+    line.className = 'log-line';
+    const ts = new Date().toISOString().substr(11, 8);
+    line.innerHTML = `<span class="log-num">${String(logCounter++).padStart(3,'0')}</span><span class="log-text ${color}">[${ts}] ${text}</span>`;
+    body.appendChild(line);
+    body.scrollTop = body.scrollHeight;
+  }
+
+  function setStep(stepId, status) {
+    const el = document.getElementById('step-' + stepId);
+    if (el) {
+      el.className = 'step ' + status;
+    }
+  }
+
+  function setProgress(pct) {
+    document.getElementById('progressBar').style.width = pct + '%';
+  }
+
+  async function startBuild() {
+    const repoUrl = document.getElementById('repoUrl').value.trim();
+    const token = document.getElementById('ghToken').value.trim();
+    const buildType = document.getElementById('buildType').value;
+
+    if (!repoUrl) { alert('Please enter a GitHub repository URL!'); return; }
+    if (!token) { showTokenModal(); return; }
+    if (!repoUrl.includes('github.com')) { alert('Please enter a valid GitHub URL!'); return; }
+
+    // Save token
+    localStorage.setItem('ghToken', token);
+
+    // Reset UI
+    logCounter = 1;
+    document.getElementById('consoleBody').innerHTML = '';
+    document.getElementById('resultBox').className = 'result-box';
+    document.getElementById('progressBar').style.width = '0%';
+    document.getElementById('consoleStatus').className = 'console-status building';
+    document.getElementById('consoleStatus').textContent = 'BUILDING';
+    ['clone','detect','install','compile','sign','finish'].forEach(s => setStep(s, ''));
+
+    document.getElementById('progressSection').classList.add('show');
+    document.getElementById('buildBtn').disabled = true;
+    document.getElementById('buildBtn').innerHTML = '<span>⏳</span> Building...';
+
+    addLog('Triggering GitHub Actions workflow...', 'blue');
+    addLog(`Repository: ${repoUrl}`, '');
+    addLog(`Build type: ${buildType}`, '');
+
+    setStep('clone', 'active');
+    setProgress(5);
+
+    try {
+      // Trigger workflow
+      const triggerRes = await fetch(
+        `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/actions/workflows/${WORKFLOW_FILE}/dispatches`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `token ${token}`,
+            'Accept': 'application/vnd.github.v3+json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            ref: 'main',
+            inputs: { repo_url: repoUrl }
+          })
+        }
+      );
+
+      if (triggerRes.status === 204) {
+        addLog('✅ Workflow triggered successfully!', 'green');
+        addLog('Waiting for GitHub Actions to start...', 'blue');
+        setStep('clone', 'done');
+        setStep('detect', 'active');
+        setProgress(15);
+
+        // Wait a bit then find the run
+        setTimeout(() => pollForRun(token, repoUrl), 5000);
+
+      } else if (triggerRes.status === 401) {
+        throw new Error('Invalid token. Please check your GitHub token has repo and workflow scopes.');
+      } else if (triggerRes.status === 404) {
+        throw new Error('Workflow file not found. Make sure build-apk.yml exists in .github/workflows/');
+      } else {
+        const err = await triggerRes.json();
+        throw new Error(err.message || `HTTP ${triggerRes.status}`);
+      }
+
+    } catch (err) {
+      addLog('❌ Error: ' + err.message, 'red');
+      showError(err.message);
+    }
+  }
+
+  async function pollForRun(token, repoUrl) {
+    try {
+      addLog('Looking for workflow run...', '');
+      const runsRes = await fetch(
+        `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/actions/runs?per_page=5`,
+        { headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' } }
+      );
+
+      const runs = await runsRes.json();
+      if (runs.workflow_runs && runs.workflow_runs.length > 0) {
+        const run = runs.workflow_runs[0];
+        currentRunId = run.id;
+        addLog(`Found run #${run.run_number} (ID: ${run.id})`, 'blue');
+        addLog(`Status: ${run.status}`, '');
+        setProgress(25);
+        startPolling(token, run.id, repoUrl);
+      } else {
+        addLog('No runs found yet, retrying...', 'yellow');
+        setTimeout(() => pollForRun(token, repoUrl), 5000);
+      }
+    } catch (err) {
+      addLog('Error checking runs: ' + err.message, 'red');
+      setTimeout(() => pollForRun(token, repoUrl), 8000);
+    }
+  }
+
+  function startPolling(token, runId, repoUrl) {
+    let progress = 25;
+    const steps = ['detect', 'install', 'compile', 'sign'];
+    let stepIdx = 0;
+
+    pollInterval = setInterval(async () => {
+      try {
+        const res = await fetch(
+          `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/actions/runs/${runId}`,
+          { headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' } }
+        );
+        const run = await res.json();
+
+        // Advance progress
+        if (progress < 85) {
+          progress += 8;
+          setProgress(progress);
+          if (stepIdx < steps.length) {
+            if (stepIdx > 0) setStep(steps[stepIdx-1], 'done');
+            setStep(steps[stepIdx], 'active');
+            stepIdx++;
+          }
+        }
+
+        addLog(`Run status: ${run.status} | conclusion: ${run.conclusion || 'pending'}`, '');
+
+        if (run.status === 'completed') {
+          clearInterval(pollInterval);
+          setProgress(100);
+          steps.forEach(s => setStep(s, 'done'));
+          setStep('sign', 'done');
+          setStep('finish', run.conclusion === 'success' ? 'done' : 'error');
+
+          if (run.conclusion === 'success') {
+            addLog('✅ Build completed successfully!', 'green');
+            document.getElementById('consoleStatus').className = 'console-status success';
+            document.getElementById('consoleStatus').textContent = 'SUCCESS';
+            await getArtifact(token, runId, repoUrl, run.html_url);
+          } else {
+            addLog('❌ Build failed! Check GitHub Actions for details.', 'red');
+            document.getElementById('consoleStatus').className = 'console-status failed';
+            document.getElementById('consoleStatus').textContent = 'FAILED';
+            showError('Build failed. <a href="' + run.html_url + '" target="_blank" style="color:var(--accent2)">View logs on GitHub →</a>');
+          }
+
+          resetBuildBtn();
+          saveToHistory(repoUrl, run.conclusion === 'success' ? 'success' : 'failed', run.html_url);
+        }
+
+      } catch(err) {
+        addLog('Polling error: ' + err.message, 'yellow');
+      }
+    }, 10000);
+  }
+
+  async function getArtifact(token, runId, repoUrl, runUrl) {
+    try {
+      addLog('Fetching build artifacts...', 'blue');
+      const res = await fetch(
+        `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/actions/runs/${runId}/artifacts`,
+        { headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' } }
+      );
+      const data = await res.json();
+
+      if (data.artifacts && data.artifacts.length > 0) {
+        const artifact = data.artifacts[0];
+        addLog(`✅ APK ready: ${artifact.name} (${(artifact.size_in_bytes/1024/1024).toFixed(1)} MB)`, 'green');
+
+        const downloadUrl = `https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/actions/runs/${runId}`;
+        const repoName = repoUrl.split('/').pop();
+
+        document.getElementById('resultBox').className = 'result-box success';
+        document.getElementById('resultTitle').innerHTML = `✅ APK Built Successfully! &nbsp;<span style="font-size:12px;color:var(--muted);font-weight:400">${(artifact.size_in_bytes/1024/1024).toFixed(1)} MB</span>`;
+        document.getElementById('resultActions').innerHTML = `
+          <a href="${downloadUrl}" target="_blank" class="download-btn">⬇ Download APK</a>
+          <a href="${runUrl}" target="_blank" class="github-link">View on GitHub</a>
+          <p style="margin-top:12px;font-size:12px;color:var(--muted);line-height:1.6">
+            Click "Download APK" → scroll down to <strong>Artifacts</strong> → tap <strong>${artifact.name}</strong>
+          </p>
+        `;
+      }
+    } catch(err) {
+      addLog('Could not fetch artifact: ' + err.message, 'yellow');
+      document.getElementById('resultBox').className = 'result-box success';
+      document.getElementById('resultTitle').innerHTML = '✅ Build Successful!';
+      document.getElementById('resultActions').innerHTML = `<a href="https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/actions/runs/${runId}" target="_blank" class="download-btn">⬇ Download APK from GitHub</a>`;
+    }
+  }
+
+  function showError(msg) {
+    document.getElementById('resultBox').className = 'result-box error';
+    document.getElementById('resultTitle').innerHTML = `❌ Build Failed`;
+    document.getElementById('resultActions').innerHTML = `<p style="font-size:13px;color:var(--error);line-height:1.6">${msg}</p><a href="https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/actions" target="_blank" class="github-link" style="margin-top:10px;display:inline-flex">View Logs →</a>`;
+    resetBuildBtn();
+  }
+
+  function resetBuildBtn() {
+    document.getElementById('buildBtn').disabled = false;
+    document.getElementById('buildBtn').innerHTML = '<span>▶</span> Start Build';
+  }
+
+  function saveToHistory(repoUrl, status, runUrl) {
+    const name = repoUrl.split('/').slice(-2).join('/');
+    buildHistory.unshift({ name, repoUrl, status, runUrl, time: new Date().toISOString() });
+    if (buildHistory.length > 10) buildHistory.pop();
+    localStorage.setItem('buildHistory', JSON.stringify(buildHistory));
+    renderHistory();
+  }
+
+  function renderHistory() {
+    const list = document.getElementById('historyList');
+    if (buildHistory.length === 0) {
+      list.innerHTML = '<div style="text-align:center;padding:30px;color:var(--muted);font-size:13px;background:var(--card);border:1px solid var(--border);border-radius:10px;font-family:\'Space Mono\',monospace">No build history yet. Start your first build above!</div>';
+      return;
+    }
+    list.innerHTML = buildHistory.map(b => `
+      <div class="history-item" onclick="window.open('${b.runUrl}','_blank')">
+        <div class="history-dot ${b.status}"></div>
+        <div class="history-info">
+          <div class="history-name">${b.name}</div>
+          <div class="history-meta">${new Date(b.time).toLocaleString()}</div>
+        </div>
+        <span class="history-badge ${b.status}">${b.status.toUpperCase()}</span>
       </div>
-    </div>`;
-  ['repoRight','urlRight','htmlRight'].forEach(id=>{
-    const el=document.getElementById(id);
-    if(el)el.innerHTML=html;
-  });
-  // Push ads for desktop panels
-  setTimeout(()=>{
-    try{(adsbygoogle=window.adsbygoogle||[]).push({});}catch(e){}
-  },500);
-}
+    `).join('');
+  }
 
-function updateUI(){
-  credits=+localStorage.getItem('r2apk_credits')||0;
-  document.getElementById('creditsNum').textContent=credits;
-  document.getElementById('s-builds').textContent=history.length;
-}
-function applyAds(){
-  ['adTop','adMid'].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.toggle('hidden',noAds());});
-  document.querySelectorAll('.adb').forEach(el=>el.classList.toggle('hidden',noAds()));
-}
-function switchTab(name,el){
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  document.querySelectorAll('.view-content').forEach(v=>v.classList.remove('active'));
-  el.classList.add('active');
-  document.getElementById('tab-'+name).classList.add('active');
-}
-function handleIcon(type,input){
-  const file=input.files[0];if(!file)return;
-  const reader=new FileReader();
-  reader.onload=e=>{iconData[type]=e.target.result;const t=document.getElementById(type+'IT');t.innerHTML=`<img src="${e.target.result}" alt="i"><div class="ito">✎</div>`;document.getElementById(type+'IZ').classList.add('on');};
-  reader.readAsDataURL(file);
-}
-function clearIcon(type){iconData[type]=null;const def={repo:'📱',url:'🌐',html:'📄'};document.getElementById(type+'IT').innerHTML=`<span>${def[type]}</span><div class="ito">✎</div>`;document.getElementById(type+'IZ').classList.remove('on');document.getElementById(type+'IF').value='';}
-function setSwatch(type,hex,el){document.getElementById(type+'Color').value=hex;el.closest('.swatches').querySelectorAll('.sw').forEach(s=>s.classList.remove('on'));el.classList.add('on');}
-function showTokenModal(){document.getElementById('tokenModal').classList.add('show')}
-function showPayModal(){document.getElementById('payModal').classList.add('show')}
-function closeModal(id){document.getElementById(id).classList.remove('show')}
-function saveToken(){const t=document.getElementById('modalToken').value.trim().replace(/[^\x20-\x7E]/g,'');if(!t){alert('Please paste your token!');return}localStorage.setItem('r2apk_token',t);['repoToken','urlToken','htmlToken'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=t;});closeModal('tokenModal');addLog('repo','✅ Token saved!','g');}
-function getToken(type){const ids={repo:'repoToken',url:'urlToken',html:'htmlToken'};const t=document.getElementById(ids[type]).value.trim().replace(/[^\x20-\x7E]/g,'');if(t)localStorage.setItem('r2apk_token',t);return t;}
-function selPlan(el,amount,creds){document.querySelectorAll('.pc').forEach(c=>c.classList.remove('sel'));el.classList.add('sel');plan={amount,credits:creds};}
-function pay(){const email=document.getElementById('payEmail').value.trim();if(!email){alert('Please enter your email!');return}const h=PaystackPop.setup({key:PAYSTACK_KEY,email,amount:plan.amount*100,currency:'USD',ref:'r2apk_'+Date.now(),callback:()=>{credits+=plan.credits;localStorage.setItem('r2apk_credits',credits);localStorage.setItem('r2apk_noads','true');applyAds();updateUI();closeModal('payModal');alert('✅ '+plan.credits+' credits!\n🎉 Ads removed!');},onClose:()=>{}});h.openIframe();}
-async function ghFetch(path,opts={}){const tk=opts.token||'';const headers={'Accept':'application/vnd.github.v3+json'};if(tk)headers['Authorization']='token '+tk;if(opts.body)headers['Content-Type']='application/json';const fo={method:opts.method||'GET',headers};if(opts.body)fo.body=opts.body;try{return await fetch(GH+path,fo);}catch(e){return await fetch(PROXY+encodeURIComponent(GH+path),fo);}}
-function getParams(type){
-  if(type==='repo'){const url=document.getElementById('repoUrl').value.trim();const bt=document.getElementById('repoBuildType').value;if(!url){alert('Enter a GitHub URL!');return null}return{wf:WF.repo,inputs:{repo_url:url,build_type:bt},label:url};}
-  if(type==='url'){const url=document.getElementById('urlInput').value.trim();const name=document.getElementById('urlAppName').value.trim()||'My App';const pkg=(document.getElementById('urlPkg').value.trim()||'com.repo2apk.app').replace(/\s+/g,'').toLowerCase();const col=document.getElementById('urlColor').value.trim()||'7b61ff';if(!url){alert('Enter a website URL!');return null}return{wf:WF.url,inputs:{website_url:url,app_name:name,package_name:pkg,app_color:col},label:url};}
-  if(type==='html'){const url=document.getElementById('htmlUrl').value.trim();const name=document.getElementById('htmlAppName').value.trim()||'My HTML App';const pkg=(document.getElementById('htmlPkg').value.trim()||'com.repo2apk.htmlapp').replace(/\s+/g,'').toLowerCase();if(!url){alert('Enter an HTML URL!');return null}return{wf:WF.html,inputs:{html_url:url,app_name:name,package_name:pkg},label:url};}
-}
-async function uploadIcon(type,token){
-  if(!iconData[type])return null;
-  try{addLog(type,'📸 Uploading icon...','b');const base64=iconData[type].split(',')[1];if(!base64)return null;const path=`icons/icon_${Date.now()}.png`;const r=await fetch(`${GH}/repos/${OWNER}/${REPO}/contents/${path}`,{method:'PUT',headers:{'Authorization':'token '+token,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json'},body:JSON.stringify({message:'add icon',content:base64,branch:'main'})});if(r.status===201||r.status===200){await new Promise(res=>setTimeout(res,2000));addLog(type,'✅ Icon uploaded!','g');return`https://raw.githubusercontent.com/${OWNER}/${REPO}/main/${path}`;}
-    const errBody=await r.json().catch(()=>({}));
-    const errMsg=errBody.message||'unknown error';
-    addLog(type,`⚠ Icon upload failed (${r.status}): ${errMsg}`,'y');
-    addLog(type,'Continuing build without icon...','y');
-    return null;}catch(e){addLog(type,'⚠ '+e.message,'y');return null;}
-}
-async function startBuild(type){
-  const token=getToken(type);if(!token){showTokenModal();return}const params=getParams(type);if(!params)return;
-  resetBuild(type);showProg(type);setBB(type,true);setBadge(type,'building','BUILDING');
-  addLog(type,'Connecting to GitHub Actions...','b');addLog(type,'Workflow: '+params.wf,'d');setStep(type,1,'active');setPbar(type,5);
-  if(iconData[type]){const iconUrl=await uploadIcon(type,token);if(iconUrl)params.inputs.icon_url=iconUrl;}
-  setPbar(type,10);
-  try{const r=await ghFetch(`/repos/${OWNER}/${REPO}/actions/workflows/${params.wf}/dispatches`,{method:'POST',token,body:JSON.stringify({ref:'main',inputs:params.inputs})});
-    if(r.status===204||r.ok){addLog(type,'✅ Build triggered!','g');setStep(type,1,'done');setStep(type,2,'active');setPbar(type,15);setTimeout(()=>findRun(type,token,params),7000);}
-    else if(r.status===401){throw new Error('Invalid token!');}else if(r.status===404){throw new Error('Workflow not found!');}else{throw new Error('HTTP '+r.status);}
-  }catch(e){addLog(type,'❌ '+e.message,'r');showErr(type,e.message);}
-}
-async function findRun(type,token,params){
-  try{const r=await ghFetch(`/repos/${OWNER}/${REPO}/actions/runs?per_page=5`,{token});const d=await r.json();if(d.workflow_runs?.length){const run=d.workflow_runs[0];addLog(type,'Run #'+run.run_number+'!','b');setStep(type,2,'done');setStep(type,3,'active');setPbar(type,25);pollRun(type,token,run.id,params);}else{addLog(type,'Waiting...','y');setTimeout(()=>findRun(type,token,params),6000);}}catch(e){setTimeout(()=>findRun(type,token,params),8000);}
-}
-function pollRun(type,token,runId,params){
-  let pct=25;let si=3;const maxS=type==='repo'?5:4;
-  polls[type]=setInterval(async()=>{
-    try{const r=await ghFetch(`/repos/${OWNER}/${REPO}/actions/runs/${runId}`,{token});const run=await r.json();pct=Math.min(pct+5,88);setPbar(type,pct);if(si<=maxS){setStep(type,si-1,'done');setStep(type,si,'active');si++;}addLog(type,run.status+(run.conclusion?' · '+run.conclusion:''),'d');
-      if(run.status==='completed'){clearInterval(polls[type]);setPbar(type,100);for(let i=1;i<=6;i++)setStep(type,i,'done');
-        if(run.conclusion==='success'){addLog(type,'✅ Build complete!','g');setBadge(type,'success','SUCCESS');await getArtifacts(type,token,runId,run.html_url);saveHist(params.label,'success',run.html_url);}
-        else{addLog(type,'❌ Failed','r');setBadge(type,'failed','FAILED');showErr(type,'Build failed. <a href="'+run.html_url+'" target="_blank" style="color:var(--g2)">View logs →</a>');saveHist(params.label,'failed',run.html_url);}
-        setBB(type,false);}
-    }catch(e){addLog(type,'Polling...','d');}
-  },10000);
-}
-async function getArtifacts(type,token,runId,runUrl){
-  try{const r=await ghFetch(`/repos/${OWNER}/${REPO}/actions/runs/${runId}/artifacts`,{token});const d=await r.json();if(d.artifacts?.length){const a=d.artifacts[0];const mb=(a.size_in_bytes/1024/1024).toFixed(1);const ghUrl=`https://github.com/${OWNER}/${REPO}/actions/runs/${runId}`;addLog(type,'📦 '+a.name+' ('+mb+'MB)!','g');document.getElementById(type+'-result').className='rb ok';document.getElementById(type+'-rt').innerHTML='✅ APK Ready! <span style="font-size:10px;color:var(--text2)">'+mb+' MB · Signed</span>';document.getElementById(type+'-ra').innerHTML=
-      `<button class="dlp" onclick="showDlModal('${ghUrl}')">⬇ Download APK</button>`+
-      `<div class="rhint">📱 <strong>Mobile:</strong> Tap Download → Open GitHub → tap ⋮ menu → Desktop site → scroll to Artifacts → tap <strong>${a.name}</strong><br>🖥 <strong>Desktop:</strong> Opens GitHub → scroll to Artifacts → download ZIP → unzip → install .apk</div>`;
-  }}catch(e){const ghUrl=`https://github.com/${OWNER}/${REPO}/actions/runs/${runId}`;document.getElementById(type+'-result').className='rb ok';document.getElementById(type+'-rt').innerHTML='✅ Build Successful!';document.getElementById(type+'-ra').innerHTML=`<button class="dlp" onclick="showDlModal('${ghUrl}')">⬇ Download APK</button>`;}
-}
-function showDlModal(url){
-  currentDlUrl=url;
-  document.getElementById('dlModalLink').href=url;
-  document.getElementById('dlModal').classList.add('show');
-}
-function copyDlUrl(){navigator.clipboard.writeText(currentDlUrl).then(()=>alert('✅ Link copied! Paste in Chrome → enable Desktop site → scroll to Artifacts')).catch(()=>prompt('Copy this link:',currentDlUrl));}
-function addLog(type,msg,cls=''){const b=document.getElementById(type+'-log');const d=document.createElement('div');d.className='log';const ts=new Date().toISOString().substr(11,8);d.innerHTML=`<span class="log-n">${String(logNums[type]++).padStart(3,'0')}</span><span class="log-m ${cls}">[${ts}] ${msg}</span>`;b.appendChild(d);b.scrollTop=b.scrollHeight;}
-function setStep(type,n,state){const el=document.getElementById(type+'-s'+n);if(el)el.className='step '+state;}
-function setPbar(type,p){document.getElementById(type+'-pb').style.width=p+'%';}
-function setBadge(type,cls,txt){const el=document.getElementById(type+'-badge');el.className='tbadge '+cls;el.textContent=txt;}
-function setBB(type,loading){const ids={repo:'repoBB',url:'urlBB',html:'htmlBB'};const btn=document.getElementById(ids[type]);btn.disabled=loading;btn.classList.toggle('loading',loading);}
-function showProg(type){const ids={repo:'psRepo',url:'psUrl',html:'psHtml'};document.getElementById(ids[type]).classList.add('show');}
-function resetBuild(type){logNums[type]=1;document.getElementById(type+'-log').innerHTML='';document.getElementById(type+'-result').className='rb';document.getElementById(type+'-pb').style.width='0%';setBadge(type,'idle','IDLE');for(let i=1;i<=6;i++)setStep(type,i,'');}
-function showErr(type,msg){setBB(type,false);document.getElementById(type+'-result').className='rb fail';document.getElementById(type+'-rt').innerHTML='❌ Build Failed';document.getElementById(type+'-ra').innerHTML=`<p style="font-size:11px;color:var(--error);line-height:1.6;margin-bottom:8px">${msg}</p><a href="https://github.com/${OWNER}/${REPO}/actions" target="_blank" class="dls">View Logs →</a>`;}
-function clearHistory(){if(!confirm('Clear all history?'))return;history=[];localStorage.removeItem('r2apk_history');updateUI();renderHistory();}
-function saveHist(label,status,runUrl){const name=label.split('/').slice(-2).join('/')||label;history.unshift({name,status,runUrl,time:new Date().toISOString()});if(history.length>10)history=history.slice(0,10);localStorage.setItem('r2apk_history',JSON.stringify(history));updateUI();renderHistory();}
-function renderHistory(){
-  const html=history.slice(0,5).map(b=>`<div class="hi" onclick="window.open('${b.runUrl}','_blank')"><div class="hd ${b.status}"></div><div class="hi-info"><div class="hi-name">${b.name}</div><div class="hi-meta">${new Date(b.time).toLocaleString()}</div></div><span class="hchip ${b.status}">${b.status.toUpperCase()}</span></div>`).join('')||'<div class="empty-h">No builds yet</div>';
-  document.getElementById('histList').innerHTML=html;
-  ['histD'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=html;});
-}
+  // Close modal on overlay click
+  document.getElementById('tokenModal').addEventListener('click', function(e) {
+    if (e.target === this) closeTokenModal();
+  });
 </script>
 </body>
 </html>
