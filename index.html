@@ -341,11 +341,11 @@ input[type=file]{display:none}
               <div class="field"><div class="fl">Framework</div><select id="repoEngine"><option value="auto">🔍 Auto Detect</option><option value="gradle">🤖 Native</option><option value="flutter">🐦 Flutter</option><option value="rn">⚛ React Native</option></select></div>
             </div>
             <div class="fl">App Icon <span style="color:var(--muted)">(optional)</span></div>
-            <div class="iz" id="repoIZ" onclick="document.getElementById('repoIF').click()">
+            <div class="iz" id="repoIZ" style="position:relative;overflow:hidden;"><input type="file" id="repoIF" accept="image/png,image/jpeg,image/webp" onchange="handleIcon('repo',this)" style="position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;z-index:10;">
               <div class="ith" id="repoIT"><span>📱</span><div class="ito">✎</div></div>
               <div class="itext"><div class="itext-t">Upload App Icon</div><div class="itext-s">PNG/JPG · 512×512px recommended</div></div>
               <div class="iact"><button class="ibtn" onclick="event.stopPropagation();document.getElementById('repoIF').click()">Choose</button><button class="iclr" onclick="event.stopPropagation();clearIcon('repo')">Remove</button></div>
-              <input type="file" id="repoIF" accept="image/png,image/jpeg,image/webp" onchange="handleIcon('repo',this)">
+              
             </div>
             <div class="field"><div class="fl">GitHub Token <span class="req">*</span></div><div class="iw"><span class="ii">🔑</span><input type="password" id="repoToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"/></div></div>
             <button class="bb g" id="repoBB" onclick="startBuild('repo')"><div class="bsp"></div><span class="blbl">▶ Start Build</span></button>
@@ -379,11 +379,11 @@ input[type=file]{display:none}
             </div>
             <div class="field"><div class="fl">Theme Color</div><div class="color-row"><div class="iw ci"><span class="ii">🎨</span><input type="text" id="urlColor" value="7b61ff"/></div><div class="swatches"><div class="sw on" style="background:#7b61ff" onclick="setSwatch('url','7b61ff',this)"></div><div class="sw" style="background:#00ffb3" onclick="setSwatch('url','00ffb3',this)"></div><div class="sw" style="background:#ff6b6b" onclick="setSwatch('url','ff6b6b',this)"></div><div class="sw" style="background:#ffd93d" onclick="setSwatch('url','ffd93d',this)"></div><div class="sw" style="background:#2196F3" onclick="setSwatch('url','2196F3',this)"></div></div></div></div>
             <div class="fl">App Icon <span style="color:var(--muted)">(optional)</span></div>
-            <div class="iz" id="urlIZ" onclick="document.getElementById('urlIF').click()">
+            <div class="iz" id="urlIZ" style="position:relative;overflow:hidden;"><input type="file" id="urlIF" accept="image/png,image/jpeg,image/webp" onchange="handleIcon('url',this)" style="position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;z-index:10;">
               <div class="ith" id="urlIT"><span>🌐</span><div class="ito">✎</div></div>
               <div class="itext"><div class="itext-t">Upload App Icon</div><div class="itext-s">PNG/JPG · 512×512px recommended</div></div>
               <div class="iact"><button class="ibtn" onclick="event.stopPropagation();document.getElementById('urlIF').click()">Choose</button><button class="iclr" onclick="event.stopPropagation();clearIcon('url')">Remove</button></div>
-              <input type="file" id="urlIF" accept="image/png,image/jpeg,image/webp" onchange="handleIcon('url',this)">
+              
             </div>
             <div class="field"><div class="fl">GitHub Token <span class="req">*</span></div><div class="iw"><span class="ii">🔑</span><input type="password" id="urlToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"/></div></div>
             <button class="bb p" id="urlBB" onclick="startBuild('url')"><div class="bsp"></div><span class="blbl">🌐 Convert to APK</span></button>
@@ -416,11 +416,11 @@ input[type=file]{display:none}
               <div class="field"><div class="fl">Package <span class="req">*</span></div><div class="iw"><span class="ii">📦</span><input type="text" id="htmlPkg" placeholder="com.myapp.html"/></div></div>
             </div>
             <div class="fl">App Icon <span style="color:var(--muted)">(optional)</span></div>
-            <div class="iz" id="htmlIZ" onclick="document.getElementById('htmlIF').click()">
+            <div class="iz" id="htmlIZ" style="position:relative;overflow:hidden;"><input type="file" id="htmlIF" accept="image/png,image/jpeg,image/webp" onchange="handleIcon('html',this)" style="position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;z-index:10;">
               <div class="ith" id="htmlIT"><span>📄</span><div class="ito">✎</div></div>
               <div class="itext"><div class="itext-t">Upload App Icon</div><div class="itext-s">PNG/JPG · 512×512px recommended</div></div>
               <div class="iact"><button class="ibtn" onclick="event.stopPropagation();document.getElementById('htmlIF').click()">Choose</button><button class="iclr" onclick="event.stopPropagation();clearIcon('html')">Remove</button></div>
-              <input type="file" id="htmlIF" accept="image/png,image/jpeg,image/webp" onchange="handleIcon('html',this)">
+              
             </div>
             <div class="field"><div class="fl">GitHub Token <span class="req">*</span></div><div class="iw"><span class="ii">🔑</span><input type="password" id="htmlToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"/></div></div>
             <button class="bb r" id="htmlBB" onclick="startBuild('html')"><div class="bsp"></div><span class="blbl">📄 Convert to APK</span></button>
