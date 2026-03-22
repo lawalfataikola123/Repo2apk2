@@ -346,7 +346,8 @@ input[type=file]{display:none}
               <div class="itext"><div class="itext-t">Upload App Icon</div><div class="itext-s">PNG/JPG · 512×512px recommended</div></div>
               <div class="iact"><button class="ibtn" onclick="event.stopPropagation();document.getElementById('repoIF').click()">Choose</button><button class="iclr" onclick="event.stopPropagation();clearIcon('repo')">Remove</button></div>
               
-            </div>
+            </div></label>
+            <input type="file" id="repoIF" accept="image/png,image/jpeg,image/webp" onchange="handleIcon('repo',this)" style="display:none;">
             <div class="field"><div class="fl">GitHub Token <span class="req">*</span></div><div class="iw"><span class="ii">🔑</span><input type="password" id="repoToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"/></div></div>
             <button class="bb g" id="repoBB" onclick="startBuild('repo')"><div class="bsp"></div><span class="blbl">▶ Start Build</span></button>
           </div>
@@ -384,7 +385,8 @@ input[type=file]{display:none}
               <div class="itext"><div class="itext-t">Upload App Icon</div><div class="itext-s">PNG/JPG · 512×512px recommended</div></div>
               <div class="iact"><button class="ibtn" onclick="event.stopPropagation();document.getElementById('urlIF').click()">Choose</button><button class="iclr" onclick="event.stopPropagation();clearIcon('url')">Remove</button></div>
               
-            </div>
+            </div></label>
+            <input type="file" id="urlIF" accept="image/png,image/jpeg,image/webp" onchange="handleIcon('url',this)" style="display:none;">
             <div class="field"><div class="fl">GitHub Token <span class="req">*</span></div><div class="iw"><span class="ii">🔑</span><input type="password" id="urlToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"/></div></div>
             <button class="bb p" id="urlBB" onclick="startBuild('url')"><div class="bsp"></div><span class="blbl">🌐 Convert to APK</span></button>
           </div>
@@ -421,7 +423,8 @@ input[type=file]{display:none}
               <div class="itext"><div class="itext-t">Upload App Icon</div><div class="itext-s">PNG/JPG · 512×512px recommended</div></div>
               <div class="iact"><button class="ibtn" onclick="event.stopPropagation();document.getElementById('htmlIF').click()">Choose</button><button class="iclr" onclick="event.stopPropagation();clearIcon('html')">Remove</button></div>
               
-            </div>
+            </div></label>
+            <input type="file" id="htmlIF" accept="image/png,image/jpeg,image/webp" onchange="handleIcon('html',this)" style="display:none;">
             <div class="field"><div class="fl">GitHub Token <span class="req">*</span></div><div class="iw"><span class="ii">🔑</span><input type="password" id="htmlToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"/></div></div>
             <button class="bb r" id="htmlBB" onclick="startBuild('html')"><div class="bsp"></div><span class="blbl">📄 Convert to APK</span></button>
           </div>
