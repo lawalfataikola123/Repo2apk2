@@ -405,8 +405,29 @@ async function dlApk(type,runId){
   const btn=document.getElementById('dlbtn-'+type);
   const note=document.getElementById('dlnote-'+type);
   btn.disabled=true;btn.textContent='⏳ Fetching APK...';
+
+  // Detect WebView (Android app) - token not available, open in browser
+  const isWebView=/(wv|WebView)/i.test(navigator.userAgent)||
+    (window.Android!==undefined)||
+    (!window.chrome&&/Android/i.test(navigator.userAgent));
+
+  const token=localStorage.getItem('r2t');
+
+  // If in WebView or no token, open GitHub actions page in external browser
+  if(isWebView||!token){
+    btn.disabled=false;btn.textContent='📥 Download APK';
+    note.innerHTML='<b style="color:var(--g2)">Opening GitHub to download your APK...</b>';
+    // Open the specific run page
+    const runUrl='https://github.com/'+OWNER+'/'+REPO+'/actions/runs/'+runId;
+    window.open(runUrl,'_blank');
+    setTimeout(()=>{
+      note.innerHTML='<span style="color:var(--t2)">1. Scroll down to <b style="color:var(--g2)">Artifacts</b> section<br>2. Tap the APK file to download<br>3. Extract the ZIP to get your APK</span>';
+    },1000);
+    return;
+  }
+
+  // Browser with token - try direct download
   try{
-    const token=localStorage.getItem('r2t');
     const r=await fetch(GH+'/repos/'+OWNER+'/'+REPO+'/actions/runs/'+runId+'/artifacts',{headers:{'Authorization':'token '+token,'Accept':'application/vnd.github.v3+json'}});
     const d=await r.json();
     if(!d.artifacts||d.artifacts.length===0)throw new Error('No artifact found. Build may still be uploading.');
@@ -423,12 +444,9 @@ async function dlApk(type,runId){
     note.textContent='✅ Downloaded! Extract the ZIP to get your APK file.';
   }catch(e){
     btn.disabled=false;btn.textContent='📥 Download APK';
-    if(e.message==='CORS_FALLBACK'||e.message.includes('fetch')){
-      note.innerHTML='<span style="color:var(--o2)">⚠ Opening GitHub to download manually.</span>';
-      window.open('https://github.com/'+OWNER+'/'+REPO+'/actions','_blank');
-    }else{
-      note.textContent='⚠ '+e.message;
-    }
+    const runUrl='https://github.com/'+OWNER+'/'+REPO+'/actions/runs/'+runId;
+    window.open(runUrl,'_blank');
+    note.innerHTML='<span style="color:var(--t2)">Scroll to <b style="color:var(--g2)">Artifacts</b> and tap to download.</span>';
   }
 }
 function saveHist(label,status,url){hist.unshift({label,status,url,time:Date.now()});if(hist.length>10)hist=hist.slice(0,10);localStorage.setItem('r2h',JSON.stringify(hist));upUI();renHist();}
