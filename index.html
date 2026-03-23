@@ -408,61 +408,53 @@ async function dlApk(type,runId){
 
   let token=localStorage.getItem('r2t');
   if(!token){
-    token=prompt('Enter your GitHub token to download:\n(ghp_xxxxxxxxxxxxxxxx)');
-    if(!token){btn.disabled=false;btn.textContent='📥 Download APK';note.textContent='⚠ Token required. Tap 🔑 Token to save it.';return;}
+    token=prompt('Enter your GitHub token:\nghp_xxxxxxxxxxxxxxxx');
+    if(!token){btn.disabled=false;btn.textContent='📥 Download APK';note.textContent='⚠ Token required.';return;}
     localStorage.setItem('r2t',token);
     ['repoTok','urlTok','htmlTok'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=token;});
   }
 
   try{
-    // Step 1: Get artifact info
     note.textContent='Finding your APK...';
-    const r=await fetch('https://api.github.com/repos/'+OWNER+'/'+REPO+'/actions/runs/'+runId+'/artifacts',{
+    const r=await fetch(GH+'/repos/'+OWNER+'/'+REPO+'/actions/runs/'+runId+'/artifacts',{
       headers:{'Authorization':'token '+token,'Accept':'application/vnd.github.v3+json'}
     });
     const d=await r.json();
-    if(!d.artifacts||d.artifacts.length===0)throw new Error('No APK found. Build may still be uploading, wait 30 seconds and try again.');
+    if(!d.artifacts||d.artifacts.length===0)throw new Error('No APK found. Wait 30 seconds and try again.');
     const art=d.artifacts[0];
-    if(art.expired)throw new Error('APK expired (7 day limit). Please rebuild.');
+    if(art.expired)throw new Error('APK expired. Please rebuild.');
     const sizeMB=Math.round(art.size_in_bytes/1024/1024*10)/10;
     note.textContent='Found: '+art.name+' ('+sizeMB+' MB)';
 
-    // Step 2: Try Netlify proxy first
+    // Try direct blob download
     try{
-      note.textContent='Downloading via proxy...';
-      const PROXY='https://lawalfataikola123.github.io/Repo2apk2/.netlify/functions/download';
-      const dlUrl=PROXY+'?token='+encodeURIComponent(token)+'&runId='+runId;
-      const testRes=await fetch(PROXY+'?action=info&token='+encodeURIComponent(token)+'&runId='+runId);
-      const testData=await testRes.json();
-      if(testData.error)throw new Error(testData.error);
-      
-      const a=document.createElement('a');
-      a.href=dlUrl;a.download=art.name+'.zip';a.style.display='none';
-      document.body.appendChild(a);a.click();
-      setTimeout(()=>document.body.removeChild(a),1000);
-      btn.disabled=false;btn.textContent='📥 Download APK';
-      note.textContent='✅ Downloading! Extract the ZIP to get your APK.';
-    }catch(proxyErr){
-      // Step 3: Fallback - fetch blob directly with token
-      note.textContent='Downloading directly...';
-      const dlRes=await fetch('https://api.github.com/repos/'+OWNER+'/'+REPO+'/actions/artifacts/'+art.id+'/zip',{
+      note.textContent='Downloading '+art.name+'...';
+      const dlRes=await fetch(GH+'/repos/'+OWNER+'/'+REPO+'/actions/artifacts/'+art.id+'/zip',{
         headers:{'Authorization':'token '+token,'Accept':'application/vnd.github.v3+json'}
       });
-      if(dlRes.ok){
-        const blob=await dlRes.blob();
-        const blobUrl=URL.createObjectURL(blob);
-        const a=document.createElement('a');a.href=blobUrl;a.download=art.name+'.zip';a.style.display='none';
-        document.body.appendChild(a);a.click();
-        setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(blobUrl);},2000);
-        btn.disabled=false;btn.textContent='📥 Download APK';
-        note.textContent='✅ Downloaded! Extract the ZIP to get your APK.';
-      } else {
-        throw new Error('Download failed. Try rebuilding the APK.');
-      }
+      if(!dlRes.ok)throw new Error('blob_failed');
+      const blob=await dlRes.blob();
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement('a');
+      a.href=url;a.download=art.name+'.zip';a.style.display='none';
+      document.body.appendChild(a);a.click();
+      setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(url);},2000);
+      btn.disabled=false;btn.textContent='📥 Download APK';
+      note.textContent='✅ Downloaded! Extract ZIP to get your APK.';
+    }catch(blobErr){
+      // Blob failed (WebView CORS) - open artifact page in browser
+      btn.disabled=false;btn.textContent='📥 Download APK';
+      note.innerHTML='Tap to open download page:';
+      const link=document.createElement('a');
+      link.href='https://github.com/'+OWNER+'/'+REPO+'/actions/runs/'+runId;
+      link.target='_blank';
+      link.style.cssText='display:block;margin-top:8px;padding:10px 16px;background:#10b981;color:#000;border-radius:8px;text-decoration:none;font-weight:700;text-align:center;';
+      link.textContent='📥 Open Download Page';
+      document.getElementById('dlnote-'+type).appendChild(link);
     }
   }catch(e){
     btn.disabled=false;btn.textContent='📥 Download APK';
-    note.innerHTML='<span style="color:var(--r2)">⚠ '+e.message+'</span>';
+    note.textContent='⚠ '+e.message;
   }
 }
 
