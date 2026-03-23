@@ -405,53 +405,32 @@ async function dlApk(type,runId){
   const btn=document.getElementById('dlbtn-'+type);
   const note=document.getElementById('dlnote-'+type);
   btn.disabled=true;btn.textContent='⏳ Fetching APK...';
-
-  // Detect WebView (Android app) - token not available, open in browser
-  const isWebView=/(wv|WebView)/i.test(navigator.userAgent)||
-    (window.Android!==undefined)||
-    (!window.chrome&&/Android/i.test(navigator.userAgent));
-
   const token=localStorage.getItem('r2t');
-
-  // If in WebView or no token, open GitHub actions page in external browser
-  if(isWebView||!token){
-    btn.disabled=false;btn.textContent='📥 Download APK';
-    note.innerHTML='<b style="color:var(--g2)">Opening GitHub to download your APK...</b>';
-    // Open the specific run page
-    const runUrl='https://github.com/'+OWNER+'/'+REPO+'/actions/runs/'+runId;
-    window.open(runUrl,'_blank');
-    setTimeout(()=>{
-      note.innerHTML='<span style="color:var(--t2)">1. Scroll down to <b style="color:var(--g2)">Artifacts</b> section<br>2. Tap the APK file to download<br>3. Extract the ZIP to get your APK</span>';
-    },1000);
-    return;
-  }
-
-  // Browser with token - try direct download
+  if(!token){btn.disabled=false;btn.textContent='📥 Download APK';note.textContent='⚠ No token found. Enter your GitHub token first.';return;}
+  const PROXY='/.netlify/functions/download';
   try{
-    const r=await fetch(GH+'/repos/'+OWNER+'/'+REPO+'/actions/runs/'+runId+'/artifacts',{headers:{'Authorization':'token '+token,'Accept':'application/vnd.github.v3+json'}});
-    const d=await r.json();
-    if(!d.artifacts||d.artifacts.length===0)throw new Error('No artifact found. Build may still be uploading.');
-    const art=d.artifacts[0];
-    const sizeMB=Math.round(art.size_in_bytes/1024/1024*10)/10;
-    note.textContent='Found: '+art.name+' ('+sizeMB+' MB) — downloading...';
-    const dlRes=await fetch(GH+'/repos/'+OWNER+'/'+REPO+'/actions/artifacts/'+art.id+'/zip',{headers:{'Authorization':'token '+token,'Accept':'application/vnd.github.v3+json'}});
-    if(!dlRes.ok)throw new Error('CORS_FALLBACK');
-    const blob=await dlRes.blob();
-    const blobUrl=URL.createObjectURL(blob);
-    const a=document.createElement('a');a.href=blobUrl;a.download=art.name+'.zip';document.body.appendChild(a);a.click();
-    setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(blobUrl);},1000);
+    note.textContent='Finding your APK...';
+    const infoRes=await fetch(PROXY+'?action=info&token='+encodeURIComponent(token)+'&runId='+runId);
+    const info=await infoRes.json();
+    if(info.error)throw new Error(info.error);
+    if(info.expired)throw new Error('Artifact expired (7 days). Please rebuild.');
+    note.textContent='Found: '+info.name+' ('+info.sizeMB+' MB) — downloading...';
+    const dlUrl=PROXY+'?token='+encodeURIComponent(token)+'&runId='+runId;
+    const a=document.createElement('a');
+    a.href=dlUrl;
+    a.download=info.name+'.zip';
+    a.style.display='none';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(()=>document.body.removeChild(a),1000);
     btn.disabled=false;btn.textContent='📥 Download APK';
-    note.textContent='✅ Downloaded! Extract the ZIP to get your APK file.';
+    note.textContent='✅ Downloading! Extract the ZIP to get your APK.';
   }catch(e){
     btn.disabled=false;btn.textContent='📥 Download APK';
-    const runUrl='https://github.com/'+OWNER+'/'+REPO+'/actions/runs/'+runId;
-    window.open(runUrl,'_blank');
-    note.innerHTML='<span style="color:var(--t2)">Scroll to <b style="color:var(--g2)">Artifacts</b> and tap to download.</span>';
+    note.textContent='⚠ '+e.message;
   }
 }
-function saveHist(label,status,url){hist.unshift({label,status,url,time:Date.now()});if(hist.length>10)hist=hist.slice(0,10);localStorage.setItem('r2h',JSON.stringify(hist));upUI();renHist();}
-function renHist(){const h=hist.length?hist.map(h=>'<div class="hi"><div class="hdot '+h.status+'"></div><div style="flex:1;min-width:0"><div class="hlbl">'+h.label+'</div><div class="htime">'+new Date(h.time).toLocaleString()+'</div></div>'+(h.url?'<a href="'+h.url+'" target="_blank" class="hlink">logs</a>':'')+'</div>').join(''):'<div class="hempty">No builds yet</div>';['hl-desk','hl-mob'].forEach(id=>{const e=document.getElementById(id);if(e)e.innerHTML=h;});}
-function clrHist(){hist=[];localStorage.setItem('r2h','[]');upUI();renHist();}
+
 async function ghFetch(path,opts={}){const t=localStorage.getItem('r2t');return fetch(GH+path,{...opts,headers:{'Authorization':'token '+t,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json',...(opts.headers||{})}});}
 async function uploadIcon(type,tok){if(!icons[type])return null;try{log(type,'Uploading icon...','b');const b64=icons[type].split(',')[1];if(!b64)return null;const path='icons/icon_'+Date.now()+'.png';const r=await fetch(GH+'/repos/'+OWNER+'/'+REPO+'/contents/'+path,{method:'PUT',headers:{'Authorization':'token '+tok,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json'},body:JSON.stringify({message:'add icon',content:b64,branch:'main'})});if(r.status===200||r.status===201){await new Promise(res=>setTimeout(res,2000));log(type,'Icon uploaded ✓','g');return'https://raw.githubusercontent.com/'+OWNER+'/'+REPO+'/main/'+path;}const err=await r.json().catch(()=>({}));log(type,'Icon upload failed ('+r.status+'): '+(err.message||'?'),'y');return null;}catch(e){log(type,'Icon error: '+e.message,'y');return null;}}
 async function pollRun(type,runId){const steps=STEPS[type];let tick=0;return new Promise(resolve=>{polls[type]=setInterval(async()=>{try{const r=await ghFetch('/repos/'+OWNER+'/'+REPO+'/actions/runs/'+runId);const d=await r.json();tick++;setPb(type,Math.min(20+tick*8,90));const si=Math.min(Math.floor(tick/3),steps.length-2);for(let i=0;i<=si;i++)setStep(type,i,'done');if(si+1<steps.length)setStep(type,si+1,'act');log(type,'['+d.status+'] '+(d.conclusion||'running')+'...','w');if(d.status==='completed'){clearInterval(polls[type]);steps.forEach((_,i)=>setStep(type,i,d.conclusion==='success'?'done':'err'));setPb(type,100);resolve(d);}}catch(e){log(type,'Poll error: '+e.message,'r');}},6000);});}
