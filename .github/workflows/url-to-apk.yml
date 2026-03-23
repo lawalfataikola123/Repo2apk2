@@ -79,7 +79,57 @@ jobs:
           printf 'distributionUrl=https\\://services.gradle.org/distributions/gradle-8.5-bin.zip\n' > /tmp/app/gradle/wrapper/gradle-wrapper.properties
           printf 'plugins { id "com.android.application" }\nandroid {\n    namespace "%s"\n    compileSdk 34\n    defaultConfig { applicationId "%s"; minSdk 21; targetSdk 34; versionCode 1; versionName "1.0" }\n}\ndependencies {}\n' $PKG $PKG > /tmp/app/app/build.gradle
           printf '<?xml version="1.0" encoding="utf-8"?>\n<manifest xmlns:android="http://schemas.android.com/apk/res/android">\n<uses-permission android:name="android.permission.INTERNET"/>\n<application android:label="%s" android:icon="@mipmap/ic_launcher" android:roundIcon="@mipmap/ic_launcher_round" android:usesCleartextTraffic="true" android:theme="@android:style/Theme.NoTitleBar">\n<activity android:name=".MainActivity" android:exported="true" android:configChanges="orientation|screenSize">\n<intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter>\n</activity></application></manifest>\n' "$APP" > /tmp/app/app/src/main/AndroidManifest.xml
-          printf 'package %s;\nimport android.app.*;\nimport android.os.*;\nimport android.webkit.*;\npublic class MainActivity extends Activity {\n    private WebView w;\n    protected void onCreate(Bundle s) {\n        super.onCreate(s);\n        w=new WebView(this);setContentView(w);\n        w.getSettings().setJavaScriptEnabled(true);\n        w.getSettings().setDomStorageEnabled(true);\n        w.getSettings().setLoadWithOverviewMode(true);\n        w.getSettings().setUseWideViewPort(true);\n        w.setWebViewClient(new WebViewClient());\n        w.setWebChromeClient(new WebChromeClient());\n        w.loadUrl("%s");\n    }\n    public void onBackPressed(){if(w.canGoBack())w.goBack();else super.onBackPressed();}\n}\n' $PKG "$URL" > /tmp/app/app/src/main/java/$PKG_PATH/MainActivity.java
+          python3 -c "
+import os,sys
+pkg=os.environ['PKG']
+url=os.environ['URL']
+pp=pkg.replace('.','/')
+j='''package '''+pkg+''';
+import android.app.*;import android.content.*;import android.net.*;
+import android.os.*;import android.view.*;import android.webkit.*;
+public class MainActivity extends Activity {
+  private WebView w;
+  private String U='''+chr(34)+url+chr(34)+''';
+  protected void onCreate(Bundle s){
+    super.onCreate(s);
+    getWindow().requestFeature(Window.FEATURE_NO_TITLE);
+    getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,WindowManager.LayoutParams.FLAG_FULLSCREEN);
+    w=new WebView(this);setContentView(w);
+    WebSettings ws=w.getSettings();
+    ws.setJavaScriptEnabled(true);ws.setDomStorageEnabled(true);ws.setDatabaseEnabled(true);
+    ws.setUseWideViewPort(true);ws.setLoadWithOverviewMode(true);
+    ws.setLayoutAlgorithm(WebSettings.LayoutAlgorithm.TEXT_AUTOSIZING);
+    ws.setMediaPlaybackRequiresUserGesture(false);
+    ws.setAllowFileAccess(true);ws.setAllowContentAccess(true);
+    ws.setSupportZoom(true);ws.setBuiltInZoomControls(true);ws.setDisplayZoomControls(false);
+    ws.setCacheMode(WebSettings.LOAD_DEFAULT);
+    ws.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
+    ws.setUserAgentString("Mozilla/5.0 (Linux; Android 10; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36");
+    w.setWebViewClient(new WebViewClient(){
+      public boolean shouldOverrideUrlLoading(WebView v,WebResourceRequest r){
+        String u=r.getUrl().toString();
+        try{if(u.contains(Uri.parse(U).getHost()))return false;}catch(Exception e){}
+        if(u.startsWith("http")){startActivity(new Intent(Intent.ACTION_VIEW,Uri.parse(u)));return true;}
+        return false;
+      }
+      public void onReceivedError(WebView v,WebResourceRequest r,WebResourceError e){
+        if(r.isForMainFrame())v.loadData("<html><body style=background:#111;color:#fff;font-family:sans-serif;text-align:center;padding:60px><h2>No Connection</h2><p>Check internet and retry.</p><button onclick=location.reload() style=padding:14px 28px;background:#3b82f6;color:#fff;border:none;border-radius:10px;font-size:16px>Retry</button></body></html>","text/html","UTF-8");
+      }
+    });
+    w.setWebChromeClient(new WebChromeClient(){
+      public void onPermissionRequest(PermissionRequest r){r.grant(r.getResources());}
+    });
+    if(s!=null)w.restoreState(s);else w.loadUrl(U);
+  }
+  public void onBackPressed(){if(w.canGoBack())w.goBack();else super.onBackPressed();}
+  protected void onSaveInstanceState(Bundle o){super.onSaveInstanceState(o);w.saveState(o);}
+  protected void onResume(){super.onResume();w.onResume();}
+  protected void onPause(){super.onPause();w.onPause();}
+  protected void onDestroy(){super.onDestroy();w.destroy();}
+}''';
+open('/tmp/app/app/src/main/java/'+pp+'/MainActivity.java','w').write(j);
+print('Java written')
+" 
           printf '<?xml version="1.0" encoding="utf-8"?>\n<resources><style name="AppTheme" parent="@android:style/Theme.NoTitleBar"><item name="android:colorPrimary">#%s</item></style></resources>\n' "$COLOR" > /tmp/app/app/src/main/res/values/styles.xml
           wget -q https://services.gradle.org/distributions/gradle-8.5-bin.zip -O /tmp/gradle.zip
           unzip -q /tmp/gradle.zip -d /tmp/gradle-dist
