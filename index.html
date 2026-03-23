@@ -469,6 +469,7 @@ async function dlApk(type,runId){
 function saveHist(label,status,url){hist.unshift({label,status,url,time:Date.now()});if(hist.length>10)hist=hist.slice(0,10);localStorage.setItem('r2h',JSON.stringify(hist));upUI();renHist();}
 function renHist(){const h=hist.length?hist.map(h=>'<div class="hi"><div class="hdot '+h.status+'"></div><div style="flex:1;min-width:0"><div class="hlbl">'+h.label+'</div><div class="htime">'+new Date(h.time).toLocaleString()+'</div></div>'+(h.url?'<a href="'+h.url+'" target="_blank" class="hlink">logs</a>':'')+'</div>').join(''):'<div class="hempty">No builds yet</div>';['hl-desk','hl-mob'].forEach(id=>{const e=document.getElementById(id);if(e)e.innerHTML=h;});}
 function clrHist(){hist=[];localStorage.setItem('r2h','[]');upUI();renHist();}
+async function ghFetch(path,opts={}){const t=localStorage.getItem('r2t');return fetch(GH+path,{...opts,headers:{'Authorization':'token '+t,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json',...(opts.headers||{})}});}
 async function runBuild(type){
   const tok=getTok(type);if(!tok){showTok();return;}
   const p=getParams(type);if(!p)return;
