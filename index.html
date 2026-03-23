@@ -414,11 +414,6 @@ async function dlApk(type,runId){
     ['repoTok','urlTok','htmlTok'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=token;});
   }
 
-  // Detect WebView - skip blob download entirely to prevent crash
-  const isWebView=/wv|WebView/i.test(navigator.userAgent)||
-    (!window.chrome&&/Android/i.test(navigator.userAgent))||
-    (typeof window.Android!=='undefined');
-
   try{
     note.textContent='Finding your APK...';
     const r=await fetch(GH+'/repos/'+OWNER+'/'+REPO+'/actions/runs/'+runId+'/artifacts',{
@@ -429,42 +424,62 @@ async function dlApk(type,runId){
     const art=d.artifacts[0];
     if(art.expired)throw new Error('APK expired (7 days). Please rebuild.');
     const sizeMB=Math.round(art.size_in_bytes/1024/1024*10)/10;
+    note.textContent='Found: '+art.name+' ('+sizeMB+' MB)';
 
-    btn.disabled=false;btn.textContent='📥 Download APK';
+    // Direct download URL - works in browser and WebView
+    // This URL with token triggers direct download without GitHub login page
+    const directUrl=GH+'/repos/'+OWNER+'/'+REPO+'/actions/artifacts/'+art.id+'/zip';
 
-    if(isWebView){
-      // In WebView app - show tap link that opens in external Chrome
-      note.textContent='APK ready ('+sizeMB+' MB) — tap button below:';
-      const wrap=document.getElementById('dlnote-'+type);
-      wrap.innerHTML='';
-      const runUrl='https://github.com/'+OWNER+'/'+REPO+'/actions/runs/'+runId;
-      // Create direct artifact download link using token
-      const link=document.createElement('a');
-      link.href=runUrl;
-      link.target='_blank';
-      link.style.cssText='display:block;margin-top:8px;padding:12px;background:linear-gradient(135deg,#10b981,#34d399);color:#000;border-radius:10px;text-decoration:none;font-weight:700;text-align:center;font-size:14px;';
-      link.textContent='📥 Open Download Page ('+sizeMB+' MB)';
-      // Add instruction
-      const hint=document.createElement('div');
-      hint.style.cssText='font-size:11px;color:var(--t2);margin-top:8px;padding:10px;background:var(--s2);border-radius:8px;line-height:1.6;';
-      hint.innerHTML='<b style="color:var(--g2)">How to download:</b><br>1. Page opens in Chrome<br>2. Tap ⋮ menu → <b>Desktop site</b><br>3. Scroll down to <b>Artifacts</b><br>4. Tap your APK file to download';
-      wrap.appendChild(link);
-      wrap.appendChild(hint);
-    }else{
-      // In browser - download blob directly
-      note.textContent='Downloading '+art.name+'...';
-      const dlRes=await fetch(GH+'/repos/'+OWNER+'/'+REPO+'/actions/artifacts/'+art.id+'/zip',{
+    // Try fetch with token first (works in browser)
+    try{
+      const dlRes=await fetch(directUrl,{
         headers:{'Authorization':'token '+token,'Accept':'application/vnd.github.v3+json'}
       });
-      if(!dlRes.ok)throw new Error('Download failed: '+dlRes.status);
-      const blob=await dlRes.blob();
-      const url=URL.createObjectURL(blob);
-      const a=document.createElement('a');
-      a.href=url;a.download=art.name+'.zip';a.style.display='none';
-      document.body.appendChild(a);a.click();
-      setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(url);},2000);
-      note.textContent='✅ Downloaded! Extract ZIP to get your APK.';
-    }
+      if(dlRes.redirected||dlRes.ok){
+        // Get the real S3 URL from response or use blob
+        if(dlRes.redirected){
+          // Open the S3 URL directly - no auth needed, direct download
+          const a=document.createElement('a');
+          a.href=dlRes.url;
+          a.download=art.name+'.zip';
+          a.style.display='none';
+          document.body.appendChild(a);a.click();
+          setTimeout(()=>document.body.removeChild(a),1000);
+        }else{
+          const blob=await dlRes.blob();
+          const url=URL.createObjectURL(blob);
+          const a=document.createElement('a');
+          a.href=url;a.download=art.name+'.zip';a.style.display='none';
+          document.body.appendChild(a);a.click();
+          setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(url);},2000);
+        }
+        btn.disabled=false;btn.textContent='📥 Download APK';
+        note.textContent='✅ Downloading! Extract ZIP to get your APK.';
+        return;
+      }
+    }catch(fetchErr){}
+
+    // Fallback: get redirect URL via HEAD request then open directly
+    try{
+      const headRes=await fetch(directUrl,{
+        method:'HEAD',
+        headers:{'Authorization':'token '+token,'Accept':'application/vnd.github.v3+json'}
+      });
+      if(headRes.url&&headRes.url!==directUrl){
+        window.open(headRes.url,'_blank');
+        btn.disabled=false;btn.textContent='📥 Download APK';
+        note.textContent='✅ Download started in browser!';
+        return;
+      }
+    }catch(headErr){}
+
+    // Final fallback: open direct API URL with token in query string
+    // GitHub accepts token as query param for downloads
+    const tokenUrl=directUrl+'?token='+token;
+    window.open(tokenUrl,'_blank');
+    btn.disabled=false;btn.textContent='📥 Download APK';
+    note.textContent='✅ Download opening... check your browser.';
+
   }catch(e){
     btn.disabled=false;btn.textContent='📥 Download APK';
     note.textContent='⚠ '+e.message;
