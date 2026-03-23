@@ -202,12 +202,14 @@ input::placeholder{color:var(--t3);font-size:12px}
             <div class="fld"><div class="lbl">GitHub Token <span class="req">*</span></div><div class="ir"><span class="ii">🔑</span><input type="password" id="repoTok" placeholder="ghp_xxxxxxxx"></div></div>
           </div>
           <div class="iz-sec"><span class="iz-lbl">App Icon <span style="color:var(--t3)">(optional)</span></span>
-            <div class="iz" id="iz-repo" onclick="document.getElementById('if-repo').click()" style="cursor:pointer;">
-              <div class="iz-img" id="it-repo"><span>📱</span></div>
-              <div class="iz-txt"><div class="iz-t">Tap to upload icon</div><div class="iz-s">PNG · JPG · 512×512px</div></div>
-              <button class="iz-clr" onclick="event.stopPropagation();clrIcon('repo')">✕</button>
+            <div style="position:relative;">
+              <div class="iz" id="iz-repo">
+                <div class="iz-img" id="it-repo"><span>📱</span></div>
+                <div class="iz-txt"><div class="iz-t">Tap to upload icon</div><div class="iz-s">PNG · JPG · 512×512px</div></div>
+                <button class="iz-clr" onclick="event.stopPropagation();clrIcon('repo')">✕</button>
+              </div>
+              <input type="file" id="if-repo" accept="image/*" onchange="pickIcon('repo',this)" style="position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;z-index:5;">
             </div>
-            <input type="file" id="if-repo" accept="image/*" onchange="pickIcon('repo',this)" style="display:block;width:100%;height:44px;opacity:0;margin-top:-44px;cursor:pointer;position:relative;z-index:10;">
           </div>
           <button class="bbtn bb-r" id="bb-repo" onclick="runBuild('repo')"><span id="sp-repo" class="bspin"></span><span id="bt-repo">⚡ Build APK</span></button>
           <div class="prog" id="pg-repo">
@@ -232,12 +234,14 @@ input::placeholder{color:var(--t3);font-size:12px}
           <div class="fld"><div class="lbl">Package Name <span class="req">*</span></div><div class="ir"><span class="ii">📦</span><input type="text" id="urlPkg" placeholder="com.myapp.web"></div></div>
           <div class="fld"><div class="lbl">GitHub Token <span class="req">*</span></div><div class="ir"><span class="ii">🔑</span><input type="password" id="urlTok" placeholder="ghp_xxxxxxxx"></div></div>
           <div class="iz-sec"><span class="iz-lbl">App Icon <span style="color:var(--t3)">(optional)</span></span>
-            <div class="iz" id="iz-url" onclick="document.getElementById('if-url').click()" style="cursor:pointer;">
-              <div class="iz-img" id="it-url"><span>🌐</span></div>
-              <div class="iz-txt"><div class="iz-t">Tap to upload icon</div><div class="iz-s">PNG · JPG · 512×512px</div></div>
-              <button class="iz-clr" onclick="event.stopPropagation();clrIcon('url')">✕</button>
+            <div style="position:relative;">
+              <div class="iz" id="iz-url">
+                <div class="iz-img" id="it-url"><span>🌐</span></div>
+                <div class="iz-txt"><div class="iz-t">Tap to upload icon</div><div class="iz-s">PNG · JPG · 512×512px</div></div>
+                <button class="iz-clr" onclick="event.stopPropagation();clrIcon('url')">✕</button>
+              </div>
+              <input type="file" id="if-url" accept="image/*" onchange="pickIcon('url',this)" style="position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;z-index:5;">
             </div>
-            <input type="file" id="if-url" accept="image/*" onchange="pickIcon('url',this)" style="display:block;width:100%;height:44px;opacity:0;margin-top:-44px;cursor:pointer;position:relative;z-index:10;">
           </div>
           <button class="bbtn bb-u" id="bb-url" onclick="runBuild('url')"><span id="sp-url" class="bspin"></span><span id="bt-url">⚡ Build APK</span></button>
           <div class="prog" id="pg-url">
@@ -261,12 +265,14 @@ input::placeholder{color:var(--t3);font-size:12px}
           </div>
           <div class="fld"><div class="lbl">GitHub Token <span class="req">*</span></div><div class="ir"><span class="ii">🔑</span><input type="password" id="htmlTok" placeholder="ghp_xxxxxxxx"></div></div>
           <div class="iz-sec"><span class="iz-lbl">App Icon <span style="color:var(--t3)">(optional)</span></span>
-            <div class="iz" id="iz-html" onclick="document.getElementById('if-html').click()" style="cursor:pointer;">
-              <div class="iz-img" id="it-html"><span>📄</span></div>
-              <div class="iz-txt"><div class="iz-t">Tap to upload icon</div><div class="iz-s">PNG · JPG · 512×512px</div></div>
-              <button class="iz-clr" onclick="event.stopPropagation();clrIcon('html')">✕</button>
+            <div style="position:relative;">
+              <div class="iz" id="iz-html">
+                <div class="iz-img" id="it-html"><span>📄</span></div>
+                <div class="iz-txt"><div class="iz-t">Tap to upload icon</div><div class="iz-s">PNG · JPG · 512×512px</div></div>
+                <button class="iz-clr" onclick="event.stopPropagation();clrIcon('html')">✕</button>
+              </div>
+              <input type="file" id="if-html" accept="image/*" onchange="pickIcon('html',this)" style="position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;z-index:5;">
             </div>
-            <input type="file" id="if-html" accept="image/*" onchange="pickIcon('html',this)" style="display:block;width:100%;height:44px;opacity:0;margin-top:-44px;cursor:pointer;position:relative;z-index:10;">
           </div>
           <button class="bbtn bb-h" id="bb-html" onclick="runBuild('html')"><span id="sp-html" class="bspin"></span><span id="bt-html">⚡ Build APK</span></button>
           <div class="prog" id="pg-html">
