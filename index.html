@@ -405,8 +405,15 @@ async function dlApk(type,runId){
   const btn=document.getElementById('dlbtn-'+type);
   const note=document.getElementById('dlnote-'+type);
   btn.disabled=true;btn.textContent='⏳ Fetching APK...';
-  const token=localStorage.getItem('r2t');
-  if(!token){btn.disabled=false;btn.textContent='📥 Download APK';note.textContent='⚠ No token found. Enter your GitHub token first.';return;}
+  let token=localStorage.getItem('r2t');
+  if(!token){
+    // Ask user for token right here
+    token=prompt('Enter your GitHub token to download:\n(ghp_xxxxxxxxxxxxxxxx)');
+    if(!token){btn.disabled=false;btn.textContent='📥 Download APK';note.textContent='⚠ Token required to download. Tap 🔑 Token to save it.';return;}
+    localStorage.setItem('r2t',token);
+    // Also fill token fields
+    ['repoTok','urlTok','htmlTok'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=token;});
+  }
   const PROXY='https://repo-2-apk.netlify.app/.netlify/functions/download';
   try{
     note.textContent='Finding your APK...';
