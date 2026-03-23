@@ -407,7 +407,7 @@ async function dlApk(type,runId){
   btn.disabled=true;btn.textContent='⏳ Fetching APK...';
   const token=localStorage.getItem('r2t');
   if(!token){btn.disabled=false;btn.textContent='📥 Download APK';note.textContent='⚠ No token found. Enter your GitHub token first.';return;}
-  const PROXY='/.netlify/functions/download';
+  const PROXY='https://repo-2-apk.netlify.app/.netlify/functions/download';
   try{
     note.textContent='Finding your APK...';
     const infoRes=await fetch(PROXY+'?action=info&token='+encodeURIComponent(token)+'&runId='+runId);
