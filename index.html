@@ -430,7 +430,7 @@ async function dlApk(type,runId){
     // Step 2: Try Netlify proxy first
     try{
       note.textContent='Downloading via proxy...';
-      const PROXY='https://repo-2-apk.netlify.app/.netlify/functions/download';
+      const PROXY='https://lawalfataikola123.github.io/Repo2apk2/.netlify/functions/download';
       const dlUrl=PROXY+'?token='+encodeURIComponent(token)+'&runId='+runId;
       const testRes=await fetch(PROXY+'?action=info&token='+encodeURIComponent(token)+'&runId='+runId);
       const testData=await testRes.json();
