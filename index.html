@@ -437,14 +437,17 @@ async function dlApk(type,runId){
       note.textContent='APK ready ('+sizeMB+' MB) — tap button below:';
       const wrap=document.getElementById('dlnote-'+type);
       wrap.innerHTML='';
+      const runUrl='https://github.com/'+OWNER+'/'+REPO+'/actions/runs/'+runId;
+      // Create direct artifact download link using token
       const link=document.createElement('a');
-      link.href='https://github.com/'+OWNER+'/'+REPO+'/actions/runs/'+runId;
+      link.href=runUrl;
       link.target='_blank';
       link.style.cssText='display:block;margin-top:8px;padding:12px;background:linear-gradient(135deg,#10b981,#34d399);color:#000;border-radius:10px;text-decoration:none;font-weight:700;text-align:center;font-size:14px;';
       link.textContent='📥 Open Download Page ('+sizeMB+' MB)';
+      // Add instruction
       const hint=document.createElement('div');
-      hint.style.cssText='font-size:10px;color:var(--t3);margin-top:6px;text-align:center;';
-      hint.textContent='Scroll to Artifacts section → tap file to download';
+      hint.style.cssText='font-size:11px;color:var(--t2);margin-top:8px;padding:10px;background:var(--s2);border-radius:8px;line-height:1.6;';
+      hint.innerHTML='<b style="color:var(--g2)">How to download:</b><br>1. Page opens in Chrome<br>2. Tap ⋮ menu → <b>Desktop site</b><br>3. Scroll down to <b>Artifacts</b><br>4. Tap your APK file to download';
       wrap.appendChild(link);
       wrap.appendChild(hint);
     }else{
