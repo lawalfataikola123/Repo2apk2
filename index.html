@@ -9,6 +9,7 @@
 <script async src="https://js.paystack.co/v1/inline.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{--bg:#030508;--s1:#070c12;--s2:#0a1018;--c1:#101a25;--c2:#141f2e;--c3:#18253a;--br:#1c2d40;--br2:#243548;--a:#3b82f6;--a2:#60a5fa;--g:#10b981;--g2:#34d399;--o:#f59e0b;--o2:#fbbf24;--r:#ef4444;--r2:#f87171;--t:#e2e8f0;--t2:#94a3b8;--t3:#475569;--font:'Space Grotesk',sans-serif;--mono:'Space Mono',monospace;--rad:12px}
@@ -247,6 +248,8 @@ input::placeholder{color:var(--t3);font-size:12px}
     <div class="ng"></div>
     <button class="npill" onclick="showTok()">🔑 Token</button>
     <button class="npill hi" onclick="showPay()">⚡ <span id="credN">0</span> cr</button>
+    <button class="npill" id="navSignin" onclick="showAuthMod()" style="border-color:rgba(59,130,246,.3);color:var(--a2)">Sign In</button>
+    <div id="navAvatar" onclick="showProfile()" style="display:none;width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--a),var(--g));align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;cursor:pointer;border:2px solid var(--br2)">?</div>
     <button class="npill" id="navSignin" onclick="showAuthMod()" style="border-color:rgba(59,130,246,.3);color:var(--a2)">Sign In</button>
     <div id="navAvatar" onclick="showProfile()" style="display:none;width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--a),var(--g));align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;cursor:pointer;border:2px solid var(--br2)">?</div>
     <div class="nav-avatar" id="navAvatar" onclick="showProfile()">?</div>
@@ -489,6 +492,64 @@ const SUPA_URL='https://wilxsrbxglgqcvirqofn.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndpbHhzcmJ4Z2xncWN2aXJxb2ZuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzMjI0MzEsImV4cCI6MjA4OTg5ODQzMX0.jpWbt3BNOCg7X851NZ8xvZtaMMwQALCgvi8SWF-Br38';
 const supa=supabase.createClient(SUPA_URL,SUPA_KEY);
 
+const SUPA_URL='https://wilxsrbxglgqcvirqofn.supabase.co';
+const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndpbHhzcmJ4Z2xncWN2aXJxb2ZuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzMjI0MzEsImV4cCI6MjA4OTg5ODQzMX0.jpWbt3BNOCg7X851NZ8xvZtaMMwQALCgvi8SWF-Br38';
+const supa=supabase.createClient(SUPA_URL,SUPA_KEY);
+let currentUser=null,userProfile=null;
+supa.auth.onAuthStateChange(async(event,session)=>{
+  if(session){currentUser=session.user;await loadProfile();showUserNav();}
+  else{currentUser=null;userProfile=null;hideUserNav();}
+});
+supa.auth.getSession().then(({data:{session}})=>{if(session){currentUser=session.user;loadProfile().then(showUserNav);}});
+async function loadProfile(){
+  const{data}=await supa.from('profiles').select('*').eq('id',currentUser.id).single();
+  userProfile=data;
+  if(data){credits=data.credits||0;if(credits>0)localStorage.setItem('r2na','1');upUI();}
+}
+function showUserNav(){
+  const e=document.getElementById('navAvatar');
+  if(e){e.style.display='flex';e.textContent=(currentUser.email||'U').charAt(0).toUpperCase();}
+  const s=document.getElementById('navSignin');if(s)s.style.display='none';
+}
+function hideUserNav(){
+  const e=document.getElementById('navAvatar');if(e)e.style.display='none';
+  const s=document.getElementById('navSignin');if(s)s.style.display='flex';
+}
+async function doLogout(){await supa.auth.signOut();currentUser=null;userProfile=null;hideUserNav();closeMod('profileMod');}
+async function showProfile(){
+  if(!currentUser){showAuthMod();return;}
+  document.getElementById('profileMod').classList.add('open');
+  document.getElementById('profileEmail').textContent=currentUser.email||'';
+  document.getElementById('profileCredits').textContent=credits+' credits';
+  document.getElementById('profileBuilds').textContent=hist.length;
+  document.getElementById('profileJoined').textContent=new Date(currentUser.created_at).toLocaleDateString();
+  if(userProfile?.is_admin)document.getElementById('adminBtn').style.display='block';
+}
+function showAuthMod(){document.getElementById('authMod').classList.add('open');}
+async function doEmailAuth(mode){
+  const email=document.getElementById('authEmail').value.trim();
+  const pass=document.getElementById('authPass').value.trim();
+  const msg=document.getElementById('authMsg');
+  if(!email||!pass){msg.style.color='var(--r2)';msg.textContent='Fill in all fields';return;}
+  msg.style.color='var(--t2)';msg.textContent='Please wait...';
+  const res=mode==='login'?await supa.auth.signInWithPassword({email,password:pass}):await supa.auth.signUp({email,password:pass});
+  if(res.error){msg.style.color='var(--r2)';msg.textContent=res.error.message;}
+  else if(mode==='signup'&&!res.data.session){msg.style.color='var(--g2)';msg.textContent='✅ Check email to confirm!';}
+  else{closeMod('authMod');}
+}
+async function signInGH(){await supa.auth.signInWithOAuth({provider:'github',options:{redirectTo:window.location.href}});}
+async function signInGoogle(){await supa.auth.signInWithOAuth({provider:'google',options:{redirectTo:window.location.href}});}
+async function showAdminDash(){
+  if(!userProfile?.is_admin)return;
+  closeMod('profileMod');
+  document.getElementById('adminMod').classList.add('open');
+  const{data:users}=await supa.from('profiles').select('*').order('created_at',{ascending:false});
+  const{data:builds}=await supa.from('builds').select('*').order('created_at',{ascending:false}).limit(20);
+  const{data:pays}=await supa.from('payments').select('*').order('created_at',{ascending:false}).limit(20);
+  document.getElementById('admStats').innerHTML='<b style="color:var(--a2)">'+( users?.length||0)+'</b> users &nbsp;|&nbsp; <b style="color:var(--g2)">'+(builds?.length||0)+'</b> builds &nbsp;|&nbsp; <b style="color:var(--o2)">$'+(pays?.filter(p=>p.status==="success").reduce((s,p)=>s+(p.amount||0),0)/100).toFixed(0)+'</b> revenue';
+  document.getElementById('admUsers').innerHTML=(users||[]).map(u=>'<tr><td>'+u.email+'</td><td>'+u.credits+'</td><td>'+new Date(u.created_at).toLocaleDateString()+'</td></tr>').join('');
+  document.getElementById('admBuilds').innerHTML=(builds||[]).map(b=>'<tr><td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+b.label+'</td><td>'+b.type+'</td><td><span style="padding:2px 6px;border-radius:6px;font-size:10px;background:'+(b.status==='success'?'rgba(16,185,129,.1)':'rgba(239,68,68,.1)')+';color:'+(b.status==='success'?'var(--g2)':'var(--r2)')+'">'+b.status+'</span></td><td>'+new Date(b.created_at).toLocaleDateString()+'</td></tr>').join('');
+}
 const SUPA_URL='https://wilxsrbxglgqcvirqofn.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndpbHhzcmJ4Z2xncWN2aXJxb2ZuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzMjI0MzEsImV4cCI6MjA4OTg5ODQzMX0.jpWbt3BNOCg7X851NZ8xvZtaMMwQALCgvi8SWF-Br38';
 const supa=supabase.createClient(SUPA_URL,SUPA_KEY);
@@ -889,6 +950,58 @@ window.addEventListener('resize',chkLayout);
 // Enter key on auth
 document.addEventListener('keydown',e=>{if(e.key==='Enter'&&document.getElementById('authPage').style.display!=='none')doAuth();});
 </script>
+
+<!-- AUTH MODAL -->
+<div class="ov" id="authMod" onclick="if(event.target===this)closeMod('authMod')">
+  <div class="modal">
+    <button class="mclose" onclick="closeMod('authMod')">✕</button>
+    <div style="text-align:center;margin-bottom:20px">
+      <div style="width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,var(--a),var(--g));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;color:#fff;margin:0 auto 10px">R2</div>
+      <div style="font-size:18px;font-weight:700;margin-bottom:4px">Welcome to Repo2APK</div>
+      <div style="font-size:12px;color:var(--t2)">Sign in to save builds and track credits</div>
+    </div>
+    <div style="display:flex;background:var(--s2);border:1px solid var(--br);border-radius:10px;padding:3px;gap:3px;margin-bottom:16px">
+      <button onclick="this.parentNode.querySelectorAll('button').forEach(b=>b.style.background='');this.style.background='var(--c3)';document.getElementById('authBtnMain').textContent='Sign In';document.getElementById('authBtnMain').onclick=()=>doEmailAuth('login')" style="flex:1;padding:8px;font-size:12px;font-weight:600;border:none;border-radius:7px;background:var(--c3);color:var(--t);cursor:pointer;font-family:var(--font)">Sign In</button>
+      <button onclick="this.parentNode.querySelectorAll('button').forEach(b=>b.style.background='');this.style.background='var(--c3)';document.getElementById('authBtnMain').textContent='Create Account';document.getElementById('authBtnMain').onclick=()=>doEmailAuth('signup')" style="flex:1;padding:8px;font-size:12px;font-weight:600;border:none;border-radius:7px;background:none;color:var(--t3);cursor:pointer;font-family:var(--font)">Sign Up</button>
+    </div>
+    <input id="authEmail" type="email" placeholder="Email address" style="width:100%;padding:11px 13px;background:var(--s2);border:1px solid var(--br2);border-radius:8px;color:var(--t);font-size:15px;outline:none;font-family:var(--font);margin-bottom:8px">
+    <input id="authPass" type="password" placeholder="Password" style="width:100%;padding:11px 13px;background:var(--s2);border:1px solid var(--br2);border-radius:8px;color:var(--t);font-size:15px;outline:none;font-family:var(--font);margin-bottom:10px">
+    <button id="authBtnMain" onclick="doEmailAuth('login')" style="width:100%;padding:12px;border:none;border-radius:8px;background:linear-gradient(135deg,var(--a),#1d4ed8);color:#fff;font-family:var(--font);font-weight:700;font-size:14px;cursor:pointer;margin-bottom:10px">Sign In</button>
+    <div style="text-align:center;color:var(--t3);font-size:11px;margin:10px 0;position:relative"><span style="background:var(--c1);padding:0 8px;position:relative;z-index:1">or</span><div style="position:absolute;top:50%;left:0;right:0;height:1px;background:var(--br)"></div></div>
+    <button onclick="signInGH()" style="width:100%;padding:10px;border:1px solid var(--br2);border-radius:8px;background:var(--s2);color:var(--t);font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;margin-bottom:8px;display:flex;align-items:center;justify-content:center;gap:8px">🐙 Continue with GitHub</button>
+    <button onclick="signInGoogle()" style="width:100%;padding:10px;border:1px solid var(--br2);border-radius:8px;background:var(--s2);color:var(--t);font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">🔵 Continue with Google</button>
+    <div id="authMsg" style="font-size:12px;text-align:center;margin-top:8px;min-height:18px"></div>
+  </div>
+</div>
+
+<!-- PROFILE MODAL -->
+<div class="ov" id="profileMod" onclick="if(event.target===this)closeMod('profileMod')">
+  <div class="modal">
+    <button class="mclose" onclick="closeMod('profileMod')">✕</button>
+    <div style="text-align:center;margin-bottom:16px">
+      <div style="width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--a),var(--g));display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:#fff;margin:0 auto 10px" id="profileAv">U</div>
+      <div style="font-size:13px;color:var(--t2)" id="profileEmail">-</div>
+      <div style="font-size:26px;font-weight:700;color:var(--a2);font-family:var(--mono);margin-top:6px" id="profileCredits">0 credits</div>
+    </div>
+    <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--br);font-size:12px"><span style="color:var(--t3)">Total Builds</span><span id="profileBuilds" style="color:var(--t)">0</span></div>
+    <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--br);font-size:12px"><span style="color:var(--t3)">Member Since</span><span id="profileJoined" style="color:var(--t)">-</span></div>
+    <button id="adminBtn" onclick="showAdminDash()" style="display:none;width:100%;padding:11px;border:1px solid rgba(59,130,246,.3);border-radius:8px;background:rgba(59,130,246,.05);color:var(--a2);font-family:var(--font);font-weight:600;font-size:13px;cursor:pointer;margin-top:12px">⚙️ Admin Dashboard</button>
+    <button onclick="doLogout()" style="width:100%;padding:11px;border:1px solid rgba(239,68,68,.3);border-radius:8px;background:rgba(239,68,68,.05);color:var(--r2);font-family:var(--font);font-weight:600;font-size:13px;cursor:pointer;margin-top:8px">Sign Out</button>
+  </div>
+</div>
+
+<!-- ADMIN MODAL -->
+<div class="ov" id="adminMod" onclick="if(event.target===this)closeMod('adminMod')">
+  <div class="modal" style="max-width:700px;max-height:90vh;overflow-y:auto">
+    <button class="mclose" onclick="closeMod('adminMod')">✕</button>
+    <div style="font-size:17px;font-weight:700;margin-bottom:4px">⚙️ Admin Dashboard</div>
+    <div id="admStats" style="font-size:12px;color:var(--t2);margin-bottom:16px;font-family:var(--mono)">Loading...</div>
+    <div style="font-size:12px;font-weight:600;color:var(--t3);margin-bottom:8px;text-transform:uppercase;letter-spacing:.08em">Users</div>
+    <div style="overflow-x:auto;margin-bottom:16px"><table style="width:100%;border-collapse:collapse;font-size:11px"><thead><tr style="border-bottom:1px solid var(--br)"><th style="padding:6px 8px;text-align:left;color:var(--t3)">Email</th><th style="padding:6px 8px;text-align:left;color:var(--t3)">Credits</th><th style="padding:6px 8px;text-align:left;color:var(--t3)">Joined</th></tr></thead><tbody id="admUsers"></tbody></table></div>
+    <div style="font-size:12px;font-weight:600;color:var(--t3);margin-bottom:8px;text-transform:uppercase;letter-spacing:.08em">Recent Builds</div>
+    <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:11px"><thead><tr style="border-bottom:1px solid var(--br)"><th style="padding:6px 8px;text-align:left;color:var(--t3)">Label</th><th style="padding:6px 8px;text-align:left;color:var(--t3)">Type</th><th style="padding:6px 8px;text-align:left;color:var(--t3)">Status</th><th style="padding:6px 8px;text-align:left;color:var(--t3)">Date</th></tr></thead><tbody id="admBuilds"></tbody></table></div>
+  </div>
+</div>
 
 <!-- AUTH MODAL -->
 <div class="ov" id="authMod" onclick="if(event.target===this)closeMod('authMod')">
