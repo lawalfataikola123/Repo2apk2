@@ -33,7 +33,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--t);min-height:100v
 .nav-avatar{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--a),var(--g));display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;cursor:pointer;border:2px solid var(--br2);transition:border-color .2s}
 .nav-avatar:hover{border-color:var(--a)}
 /* AUTH PAGE */
-.auth-page{position:fixed;inset:0;background:var(--bg);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px}
+.auth-page{position:fixed;inset:0;background:var(--bg);z-index:500;align-items:center;justify-content:center;padding:20px}
 .auth-box{background:var(--c1);border:1px solid var(--br2);border-radius:16px;padding:32px 28px;width:100%;max-width:420px;animation:mIn .2s ease}
 @keyframes mIn{from{transform:translateY(16px);opacity:0}to{transform:translateY(0);opacity:1}}
 .auth-logo{text-align:center;margin-bottom:24px}
@@ -212,7 +212,7 @@ input::placeholder{color:var(--t3);font-size:12px}
 <div class="amb"><div class="a1"></div><div class="a2"></div></div>
 
 <!-- AUTH PAGE -->
-<div class="auth-page" id="authPage">
+<div class="auth-page" id="authPage" style="display:flex">
   <div class="auth-box">
     <div class="auth-logo">
       <div class="auth-logo-m">R2</div>
@@ -242,7 +242,7 @@ input::placeholder{color:var(--t3);font-size:12px}
 </div>
 
 <!-- MAIN APP -->
-<div class="app" id="mainApp">
+<div class="app" id="mainApp" style="display:none">
   <nav class="nav">
     <a class="logo" href="#"><div class="logo-m">R2</div><span class="logo-t">Repo2<b>APK</b></span></a>
     <div class="ng"></div>
@@ -690,6 +690,8 @@ async function loadProfile(){
 }
 
 function showApp(){
+  document.getElementById('authPage').style.display='none';
+  document.getElementById('mainApp').style.display='block';
   document.getElementById('authPage').style.display='none';
   document.getElementById('mainApp').style.display='block';
   const email=currentUser.email||'';
