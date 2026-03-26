@@ -490,10 +490,9 @@ input::placeholder{color:var(--t3);font-size:12px}
 // ── SUPABASE ──
 const SUPA_URL='https://wilxsrbxglgqcvirqofn.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndpbHhzcmJ4Z2xncWN2aXJxb2ZuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzMjI0MzEsImV4cCI6MjA4OTg5ODQzMX0.jpWbt3BNOCg7X851NZ8xvZtaMMwQALCgvi8SWF-Br38';
-const supa=supabase.createClient(SUPA_URL,SUPA_KEY);
-
 const SUPA_URL='https://wilxsrbxglgqcvirqofn.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndpbHhzcmJ4Z2xncWN2aXJxb2ZuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzMjI0MzEsImV4cCI6MjA4OTg5ODQzMX0.jpWbt3BNOCg7X851NZ8xvZtaMMwQALCgvi8SWF-Br38';
+const supa=supabase.createClient(SUPA_URL,SUPA_KEY);
 const supa=supabase.createClient(SUPA_URL,SUPA_KEY);
 let currentUser=null,userProfile=null;
 supa.auth.onAuthStateChange(async(event,session)=>{
