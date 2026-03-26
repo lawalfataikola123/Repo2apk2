@@ -6,55 +6,62 @@
 <title>Repo2APK — Build Android APKs</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
-<script async src="https://js.paystack.co/v1/inline.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script async src="https://js.paystack.co/v1/inline.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-:root{--bg:#030508;--s1:#070c12;--s2:#0a1018;--c1:#101a25;--c2:#141f2e;--c3:#18253a;--br:#1c2d40;--br2:#243548;--a:#3b82f6;--a2:#60a5fa;--g:#10b981;--g2:#34d399;--o:#f59e0b;--o2:#fbbf24;--r:#ef4444;--r2:#f87171;--t:#e2e8f0;--t2:#94a3b8;--t3:#475569;--font:'Space Grotesk',sans-serif;--mono:'Space Mono',monospace;--rad:12px}
+:root{
+  --bg:#030508;--s1:#070c12;--s2:#0a1018;--c1:#101a25;--c2:#141f2e;--c3:#18253a;
+  --br:#1c2d40;--br2:#243548;--a:#3b82f6;--a2:#60a5fa;--g:#10b981;--g2:#34d399;
+  --o:#f59e0b;--o2:#fbbf24;--r:#ef4444;--r2:#f87171;
+  --t:#e2e8f0;--t2:#94a3b8;--t3:#475569;
+  --font:'Space Grotesk',sans-serif;--mono:'Space Mono',monospace;--rad:12px
+}
 html{scroll-behavior:smooth}
 body{font-family:var(--font);background:var(--bg);color:var(--t);min-height:100vh;overflow-x:hidden}
 .amb{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
-.a1{position:absolute;width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(59,130,246,.07) 0%,transparent 70%);top:-200px;left:-100px;animation:d1 20s ease-in-out infinite}
-.a2{position:absolute;width:500px;height:500px;border-radius:50%;background:radial-gradient(circle,rgba(16,185,129,.05) 0%,transparent 70%);bottom:-100px;right:-50px;animation:d2 25s ease-in-out infinite}
+.a1{position:absolute;width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(59,130,246,.07),transparent 70%);top:-200px;left:-100px;animation:d1 20s ease-in-out infinite}
+.a2{position:absolute;width:500px;height:500px;border-radius:50%;background:radial-gradient(circle,rgba(16,185,129,.05),transparent 70%);bottom:-100px;right:-50px;animation:d2 25s ease-in-out infinite}
 @keyframes d1{0%,100%{transform:translate(0,0)}50%{transform:translate(60px,40px)}}
 @keyframes d2{0%,100%{transform:translate(0,0)}50%{transform:translate(-40px,-30px)}}
-/* NAV */
+
+/* ── AUTH PAGE ── */
+#authPage{position:fixed;inset:0;background:var(--bg);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px}
+.auth-box{background:var(--c1);border:1px solid var(--br2);border-radius:18px;padding:32px 28px;width:100%;max-width:400px;animation:pop .2s ease}
+@keyframes pop{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+.auth-logo{text-align:center;margin-bottom:24px}
+.auth-mark{width:52px;height:52px;border-radius:14px;background:linear-gradient(135deg,var(--a),var(--g));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:20px;color:#fff;margin:0 auto 12px}
+.auth-title{font-size:22px;font-weight:700;letter-spacing:-.5px}
+.auth-sub{font-size:13px;color:var(--t2);margin-top:4px}
+.auth-tabs{display:flex;background:var(--s2);border:1px solid var(--br);border-radius:10px;padding:3px;gap:3px;margin-bottom:18px}
+.auth-tab{flex:1;padding:9px;font-size:13px;font-weight:600;color:var(--t3);cursor:pointer;border:none;background:none;border-radius:8px;font-family:var(--font);transition:all .2s}
+.auth-tab.on{background:var(--c3);color:var(--t)}
+.auth-inp{width:100%;padding:12px 14px;background:var(--s2);border:1px solid var(--br2);border-radius:9px;color:var(--t);font-size:15px;outline:none;font-family:var(--font);margin-bottom:10px;transition:border-color .2s}
+.auth-inp:focus{border-color:var(--a);box-shadow:0 0 0 3px rgba(59,130,246,.1)}
+.auth-inp::placeholder{color:var(--t3)}
+.auth-btn{width:100%;padding:13px;border:none;border-radius:9px;background:linear-gradient(135deg,var(--a),#1d4ed8);color:#fff;font-family:var(--font);font-weight:700;font-size:14px;cursor:pointer;margin-bottom:12px;transition:filter .2s}
+.auth-btn:hover{filter:brightness(1.1)}
+.auth-btn:disabled{opacity:.6;cursor:not-allowed}
+.auth-div{text-align:center;color:var(--t3);font-size:11px;margin:4px 0 12px;position:relative}
+.auth-div::before,.auth-div::after{content:'';position:absolute;top:50%;width:44%;height:1px;background:var(--br)}
+.auth-div::before{left:0}.auth-div::after{right:0}
+.social-btn{width:100%;padding:11px;border:1px solid var(--br2);border-radius:9px;background:var(--s2);color:var(--t);font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;margin-bottom:8px;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .2s}
+.social-btn:hover{border-color:var(--a);color:var(--a2)}
+.auth-msg{font-size:12px;text-align:center;margin-top:6px;min-height:16px;line-height:1.4}
+.auth-msg.err{color:var(--r2)}.auth-msg.ok{color:var(--g2)}
+
+/* ── MAIN APP ── */
+#mainApp{display:none}
 .nav{position:sticky;top:0;z-index:200;height:56px;background:rgba(3,5,8,.95);backdrop-filter:blur(20px);border-bottom:1px solid var(--br);display:flex;align-items:center;padding:0 20px;gap:10px}
 .logo{display:flex;align-items:center;gap:8px;text-decoration:none}
-.logo-m{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,var(--a),var(--g));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;color:#fff;flex-shrink:0}
-.logo-t{font-weight:700;font-size:15px;letter-spacing:-.3px}
-.logo-t b{color:var(--a2)}
+.logo-m{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,var(--a),var(--g));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;color:#fff}
+.logo-t{font-weight:700;font-size:15px}.logo-t b{color:var(--a2)}
 .ng{flex:1}
 .npill{display:flex;align-items:center;gap:5px;padding:6px 12px;border-radius:20px;border:1px solid var(--br2);background:var(--c1);color:var(--t2);font-size:12px;cursor:pointer;transition:all .2s;white-space:nowrap;font-family:var(--font)}
 .npill:hover{border-color:var(--a);color:var(--a2)}
 .npill.hi{border-color:rgba(59,130,246,.3);color:var(--a2);background:rgba(59,130,246,.08)}
-.nav-avatar{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--a),var(--g));display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;cursor:pointer;border:2px solid var(--br2);transition:border-color .2s}
-.nav-avatar:hover{border-color:var(--a)}
-/* AUTH PAGE */
-.auth-page{position:fixed;inset:0;background:var(--bg);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px}
-.auth-box{background:var(--c1);border:1px solid var(--br2);border-radius:16px;padding:32px 28px;width:100%;max-width:420px;animation:mIn .2s ease}
-@keyframes mIn{from{transform:translateY(16px);opacity:0}to{transform:translateY(0);opacity:1}}
-.auth-logo{text-align:center;margin-bottom:24px}
-.auth-logo-m{width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,var(--a),var(--g));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:18px;color:#fff;margin:0 auto 10px}
-.auth-title{font-size:22px;font-weight:700;text-align:center;letter-spacing:-.3px;margin-bottom:6px}
-.auth-sub{font-size:13px;color:var(--t2);text-align:center;margin-bottom:24px;line-height:1.5}
-.auth-tabs{display:flex;background:var(--s2);border:1px solid var(--br);border-radius:10px;padding:3px;gap:3px;margin-bottom:20px}
-.auth-tab{flex:1;padding:8px;font-size:13px;font-weight:600;color:var(--t3);cursor:pointer;border:none;background:none;border-radius:7px;transition:all .2s;font-family:var(--font)}
-.auth-tab.on{background:var(--c3);color:var(--t)}
-.auth-input{width:100%;padding:12px 14px;background:var(--s2);border:1px solid var(--br2);border-radius:9px;color:var(--t);font-size:15px;outline:none;font-family:var(--font);margin-bottom:10px;transition:border-color .2s}
-.auth-input:focus{border-color:var(--a);box-shadow:0 0 0 3px rgba(59,130,246,.1)}
-.auth-btn{width:100%;padding:13px;border:none;border-radius:9px;background:linear-gradient(135deg,var(--a),#1d4ed8);color:#fff;font-family:var(--font);font-weight:700;font-size:14px;cursor:pointer;transition:filter .2s;margin-bottom:10px}
-.auth-btn:hover{filter:brightness(1.1)}
-.auth-btn:disabled{opacity:.6;cursor:not-allowed}
-.auth-divider{text-align:center;color:var(--t3);font-size:12px;margin:14px 0;position:relative}
-.auth-divider::before,.auth-divider::after{content:'';position:absolute;top:50%;width:42%;height:1px;background:var(--br)}
-.auth-divider::before{left:0}.auth-divider::after{right:0}
-.social-btn{width:100%;padding:11px;border:1px solid var(--br2);border-radius:9px;background:var(--s2);color:var(--t);font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;margin-bottom:8px;display:flex;align-items:center;justify-content:center;gap:8px}
-.social-btn:hover{border-color:var(--a);background:var(--c2)}
-.auth-msg{font-size:12px;text-align:center;margin-top:8px;min-height:18px}
-.auth-msg.err{color:var(--r2)}.auth-msg.ok{color:var(--g2)}
-/* MAIN APP */
-.app{display:none}
+.avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--a),var(--g));display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;cursor:pointer;border:2px solid var(--br2);flex-shrink:0;transition:border-color .2s}
+.avatar:hover{border-color:var(--a)}
 .adbar{background:var(--s1);border-bottom:1px solid var(--br);padding:8px 20px;text-align:center}
 .ad-lbl{font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px;font-family:var(--mono)}
 .metrics{position:relative;z-index:1;background:var(--s1);border-top:1px solid var(--br);border-bottom:1px solid var(--br);display:grid;grid-template-columns:repeat(3,1fr)}
@@ -75,7 +82,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--t);min-height:100v
 .ci.g{background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.15)}
 .ci.p{background:rgba(139,92,246,.12);border:1px solid rgba(139,92,246,.15)}
 .cn{font-weight:600;font-size:13px}.cd{font-size:10px;color:var(--t3);margin-top:1px;font-family:var(--mono)}
-.cs{margin-left:auto;padding:3px 8px;border-radius:6px;font-size:9px;font-weight:600;font-family:var(--mono);display:none;letter-spacing:.05em}
+.cs{margin-left:auto;padding:3px 8px;border-radius:6px;font-size:9px;font-weight:600;font-family:var(--mono);display:none}
 .cs.run{background:rgba(245,158,11,.1);color:var(--o2);border:1px solid rgba(245,158,11,.25)}
 .cs.ok{background:rgba(16,185,129,.1);color:var(--g2);border:1px solid rgba(16,185,129,.25)}
 .cs.fail{background:rgba(239,68,68,.1);color:var(--r2);border:1px solid rgba(239,68,68,.25)}
@@ -93,15 +100,15 @@ input::placeholder{color:var(--t3);font-size:12px}
 @media(max-width:500px){.two{grid-template-columns:1fr}}
 .iz-sec{margin-bottom:12px}
 .iz-lbl{font-size:10px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px;display:block}
-.iz{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--s2);border:1.5px dashed var(--br2);border-radius:10px;cursor:pointer;transition:all .2s;position:relative}
+.iz{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--s2);border:1.5px dashed var(--br2);border-radius:10px;transition:all .2s}
 .iz:hover,.iz.picked{border-color:var(--a);background:rgba(59,130,246,.04)}
 .iz.picked{border-style:solid}
 .iz-img{width:42px;height:42px;border-radius:8px;background:var(--c2);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;overflow:hidden;border:1px solid var(--br)}
 .iz-img img{width:100%;height:100%;object-fit:cover;border-radius:7px}
 .iz-txt{flex:1}.iz-t{font-size:12px;font-weight:600;color:var(--t)}.iz-s{font-size:10px;color:var(--t3);margin-top:2px}
-.iz-clr{padding:4px 8px;border-radius:6px;border:none;background:transparent;color:var(--t3);font-size:13px;cursor:pointer;transition:color .2s;flex-shrink:0;position:relative;z-index:6}
+.iz-clr{padding:4px 8px;border:none;background:transparent;color:var(--t3);font-size:13px;cursor:pointer;flex-shrink:0;position:relative;z-index:6}
 .iz-clr:hover{color:var(--r2)}
-.bbtn{width:100%;padding:13px;border:none;border-radius:10px;font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .25s;margin-top:6px;letter-spacing:.02em}
+.bbtn{width:100%;padding:13px;border:none;border-radius:10px;font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .25s;margin-top:6px}
 .bbtn:hover{transform:translateY(-1px);filter:brightness(1.1)}
 .bbtn:disabled{opacity:.5;cursor:not-allowed;transform:none;filter:none}
 .bb-r{background:linear-gradient(135deg,#3b82f6,#1d4ed8);color:#fff;box-shadow:0 4px 16px rgba(59,130,246,.2)}
@@ -156,13 +163,14 @@ input::placeholder{color:var(--t3);font-size:12px}
 .adrm{font-size:10px;color:var(--a2);cursor:pointer}
 .adc-b{padding:10px;min-height:80px;display:flex;align-items:center;justify-content:center}
 .mh{display:block}@media(min-width:960px){.mh{display:none}}
-/* MODALS */
+/* OVERLAYS */
 .ov{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:300;display:none;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(10px)}
 .ov.open{display:flex}
-.modal{background:var(--c1);border:1px solid var(--br2);border-radius:16px;padding:22px;width:100%;max-width:420px;position:relative;animation:mIn .18s ease;max-height:90vh;overflow-y:auto}
+.modal{background:var(--c1);border:1px solid var(--br2);border-radius:16px;padding:22px;width:100%;max-width:420px;position:relative;animation:pop .18s ease;max-height:92vh;overflow-y:auto}
+.modal.wide{max-width:700px}
 .mclose{position:absolute;top:12px;right:12px;width:26px;height:26px;border-radius:7px;border:1px solid var(--br2);background:var(--c2);color:var(--t2);cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center}
 .mclose:hover{border-color:var(--r2);color:var(--r2)}
-.mt{font-size:17px;font-weight:700;letter-spacing:-.3px;margin-bottom:4px}
+.mt{font-size:17px;font-weight:700;margin-bottom:4px}
 .ms{font-size:12px;color:var(--t2);margin-bottom:16px;line-height:1.6}
 .msteps{font-size:12px;color:var(--t2);line-height:2;margin-bottom:14px;padding:12px;background:var(--s2);border-radius:8px;border:1px solid var(--br)}
 .msteps a{color:var(--a2);text-decoration:none}.msteps b{color:var(--t)}
@@ -170,38 +178,40 @@ input::placeholder{color:var(--t3);font-size:12px}
 .minput:focus{border-color:var(--a)}
 .mact{width:100%;padding:12px;border:none;border-radius:8px;background:linear-gradient(135deg,var(--a),#1d4ed8);color:#fff;font-family:var(--font);font-weight:700;font-size:13px;cursor:pointer}
 .mact:hover{filter:brightness(1.1)}
+/* PROFILE MENU */
+.pmenu{position:absolute;top:60px;right:16px;width:240px;background:var(--c1);border:1px solid var(--br2);border-radius:14px;box-shadow:0 8px 32px rgba(0,0,0,.4);z-index:300;overflow:hidden;animation:pop .15s ease;display:none}
+.pmenu.open{display:block}
+.pmenu-head{padding:14px 16px;border-bottom:1px solid var(--br);background:var(--c2)}
+.pmenu-avatar{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--a),var(--g));display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff;margin-bottom:8px}
+.pmenu-name{font-size:13px;font-weight:600;color:var(--t)}
+.pmenu-email{font-size:11px;color:var(--t3);margin-top:2px;font-family:var(--mono)}
+.pmenu-credits{display:flex;align-items:center;gap:6px;margin-top:8px;padding:6px 10px;background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.15);border-radius:8px}
+.pmenu-credits-v{font-size:14px;font-weight:700;color:var(--a2);font-family:var(--mono)}
+.pmenu-credits-k{font-size:10px;color:var(--t3)}
+.pmenu-item{display:flex;align-items:center;gap:10px;padding:11px 16px;color:var(--t2);font-size:13px;cursor:pointer;transition:all .15s;border:none;background:none;width:100%;font-family:var(--font);text-align:left}
+.pmenu-item:hover{background:var(--c2);color:var(--t)}
+.pmenu-item .ico{width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+.pmenu-div{height:1px;background:var(--br);margin:4px 0}
+.pmenu-item.danger{color:var(--r2)}
+.pmenu-item.danger:hover{background:rgba(239,68,68,.06)}
+/* PLANS */
 .plans{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
-.plan{padding:12px 8px;border-radius:10px;border:1.5px solid var(--br2);background:var(--s2);cursor:pointer;text-align:center;transition:all .2s}
+.plan{padding:14px 8px;border-radius:10px;border:1.5px solid var(--br2);background:var(--s2);cursor:pointer;text-align:center;transition:all .2s}
 .plan:hover,.plan.on{border-color:var(--a);background:rgba(59,130,246,.06)}
 .plan-p{font-size:20px;font-weight:700;color:var(--a2);font-family:var(--mono)}
 .plan-c{font-size:10px;color:var(--t2);margin-top:3px}
 .plan-l{font-size:9px;color:var(--t3);margin-top:5px;text-transform:uppercase;letter-spacing:.08em}
-/* ADMIN */
-.admin-page{display:none;position:fixed;inset:0;background:var(--bg);z-index:400;overflow-y:auto}
-.admin-nav{background:var(--c1);border-bottom:1px solid var(--br);padding:14px 20px;display:flex;align-items:center;gap:12px}
-.admin-title{font-weight:700;font-size:16px}
-.admin-body{max-width:1000px;margin:0 auto;padding:24px 16px}
-.admin-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-bottom:24px}
-@media(min-width:700px){.admin-grid{grid-template-columns:repeat(4,1fr)}}
-.stat-card{background:var(--c1);border:1px solid var(--br);border-radius:var(--rad);padding:16px;text-align:center}
-.stat-v{font-size:28px;font-weight:700;color:var(--a2);font-family:var(--mono);display:block}
-.stat-k{font-size:11px;color:var(--t3);margin-top:4px;text-transform:uppercase;letter-spacing:.08em}
-.admin-table{width:100%;border-collapse:collapse;font-size:12px}
-.admin-table th{padding:10px 12px;text-align:left;border-bottom:1px solid var(--br);color:var(--t3);font-weight:600;font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.08em}
-.admin-table td{padding:10px 12px;border-bottom:1px solid var(--br);color:var(--t2)}
-.admin-table tr:hover td{background:var(--c2)}
-.badge{padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600}
+/* ADMIN TABLE */
+.adm-table{width:100%;border-collapse:collapse;font-size:11px}
+.adm-table th{padding:9px 12px;text-align:left;border-bottom:1px solid var(--br);color:var(--t3);font-weight:600;font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.08em}
+.adm-table td{padding:9px 12px;border-bottom:1px solid var(--br);color:var(--t2)}
+.adm-table tr:hover td{background:var(--c2)}
+.badge{padding:2px 7px;border-radius:8px;font-size:9px;font-weight:600;font-family:var(--mono)}
 .badge.success{background:rgba(16,185,129,.1);color:var(--g2)}
 .badge.failed{background:rgba(239,68,68,.1);color:var(--r2)}
-.badge.pending{background:rgba(245,158,11,.1);color:var(--o2)}
-/* USER PROFILE MODAL */
-.profile-avatar{width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,var(--a),var(--g));display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:#fff;margin:0 auto 12px}
-.profile-email{text-align:center;font-size:13px;color:var(--t2);margin-bottom:4px}
-.profile-credits{text-align:center;font-size:24px;font-weight:700;color:var(--a2);font-family:var(--mono);margin-bottom:16px}
-.profile-stat{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--br);font-size:12px}
-.profile-stat:last-child{border-bottom:none}
-.logout-btn{width:100%;padding:11px;border:1px solid rgba(239,68,68,.3);border-radius:8px;background:rgba(239,68,68,.05);color:var(--r2);font-family:var(--font);font-weight:600;font-size:13px;cursor:pointer;margin-top:14px;transition:all .2s}
-.logout-btn:hover{background:rgba(239,68,68,.1)}
+.adm-stat{background:var(--c1);border:1px solid var(--br);border-radius:10px;padding:14px;text-align:center}
+.adm-stat-v{font-size:26px;font-weight:700;color:var(--a2);font-family:var(--mono);display:block}
+.adm-stat-k{font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;margin-top:4px;display:block}
 ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:var(--br2);border-radius:2px}
 @media(max-width:380px){.metric-v{font-size:15px}.cb{padding:12px}}
 </style>
@@ -209,45 +219,76 @@ input::placeholder{color:var(--t3);font-size:12px}
 <body>
 <div class="amb"><div class="a1"></div><div class="a2"></div></div>
 
-<!-- AUTH PAGE -->
-<div class="auth-page" id="authPage">
+<!-- ══════════════ AUTH PAGE ══════════════ -->
+<div id="authPage">
   <div class="auth-box">
     <div class="auth-logo">
-      <div class="auth-logo-m">R2</div>
+      <div class="auth-mark">R2</div>
       <div class="auth-title">Repo2APK</div>
-      <div class="auth-sub">Build Android APKs from anything — free</div>
+      <div class="auth-sub">Build Android APKs from anything</div>
     </div>
     <div class="auth-tabs">
-      <button class="auth-tab on" onclick="switchAuth('login',this)">Sign In</button>
-      <button class="auth-tab" onclick="switchAuth('signup',this)">Sign Up</button>
+      <button class="auth-tab on" id="tabLogin" onclick="setAuthMode('login')">Sign In</button>
+      <button class="auth-tab" id="tabSignup" onclick="setAuthMode('signup')">Sign Up</button>
     </div>
-    <div id="authForm">
-      <input class="auth-input" id="authEmail" type="email" placeholder="Email address">
-      <input class="auth-input" id="authPass" type="password" placeholder="Password">
-      <button class="auth-btn" id="authBtn" onclick="doAuth()">Sign In</button>
-    </div>
-    <div class="auth-divider">or continue with</div>
-    <button class="social-btn" onclick="signInWithGitHub()">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
-      Continue with GitHub
-    </button>
-    <button class="social-btn" onclick="signInWithGoogle()">
-      <svg width="16" height="16" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-      Continue with Google
-    </button>
+    <input class="auth-inp" id="authEmail" type="email" placeholder="Email address" autocomplete="email">
+    <input class="auth-inp" id="authPass" type="password" placeholder="Password" autocomplete="current-password">
+    <button class="auth-btn" id="authSubmit" onclick="doEmailAuth()">Sign In</button>
+    <div class="auth-div">or</div>
+    <button class="social-btn" onclick="signInWithGitHub()">🐙 Continue with GitHub</button>
+    <button class="social-btn" onclick="signInWithGoogle()">🔵 Continue with Google</button>
     <div class="auth-msg" id="authMsg"></div>
   </div>
 </div>
 
-<!-- MAIN APP -->
-<div class="app" id="mainApp">
+<!-- ══════════════ MAIN APP ══════════════ -->
+<div id="mainApp">
   <nav class="nav">
     <a class="logo" href="#"><div class="logo-m">R2</div><span class="logo-t">Repo2<b>APK</b></span></a>
     <div class="ng"></div>
-    <button class="npill" onclick="showTok()">🔑 Token</button>
-    <button class="npill hi" onclick="showPay()">⚡ <span id="credN">0</span> cr</button>
-    <div class="nav-avatar" id="navAvatar" onclick="showProfile()">?</div>
+    <button class="npill" onclick="showMod('tokMod')">🔑 Token</button>
+    <button class="npill hi" onclick="showMod('payMod')">⚡ <span id="credN">0</span> cr</button>
+    <div class="avatar" id="navAvatar" onclick="toggleProfileMenu()">?</div>
   </nav>
+
+  <!-- PROFILE DROPDOWN MENU -->
+  <div class="pmenu" id="profileMenu">
+    <div class="pmenu-head">
+      <div class="pmenu-avatar" id="pmAvatar">?</div>
+      <div class="pmenu-name" id="pmName">User</div>
+      <div class="pmenu-email" id="pmEmail">-</div>
+      <div class="pmenu-credits">
+        <span class="pmenu-credits-v" id="pmCredits">0</span>
+        <span class="pmenu-credits-k">credits remaining</span>
+      </div>
+    </div>
+    <button class="pmenu-item" onclick="showMod('profileMod');closeProfileMenu()">
+      <span class="ico" style="background:rgba(59,130,246,.1)">👤</span> My Profile
+    </button>
+    <button class="pmenu-item" onclick="showMod('settingsMod');closeProfileMenu()">
+      <span class="ico" style="background:rgba(16,185,129,.1)">⚙️</span> Settings
+    </button>
+    <button class="pmenu-item" onclick="showMod('payMod');closeProfileMenu()">
+      <span class="ico" style="background:rgba(245,158,11,.1)">⚡</span> Subscription & Credits
+    </button>
+    <button class="pmenu-item" onclick="showMod('histMod');closeProfileMenu()">
+      <span class="ico" style="background:rgba(139,92,246,.1)">📋</span> Build History
+    </button>
+    <button class="pmenu-item" id="adminMenuBtn" onclick="showAdminDash();closeProfileMenu()" style="display:none">
+      <span class="ico" style="background:rgba(239,68,68,.1)">🛡️</span> Admin Dashboard
+    </button>
+    <div class="pmenu-div"></div>
+    <button class="pmenu-item" onclick="showMod('privacyMod');closeProfileMenu()">
+      <span class="ico" style="background:rgba(59,130,246,.08)">🔒</span> Privacy Policy
+    </button>
+    <button class="pmenu-item" onclick="showMod('termsMod');closeProfileMenu()">
+      <span class="ico" style="background:rgba(59,130,246,.08)">📄</span> Terms of Service
+    </button>
+    <div class="pmenu-div"></div>
+    <button class="pmenu-item danger" onclick="doLogout();closeProfileMenu()">
+      <span class="ico" style="background:rgba(239,68,68,.08)">🚪</span> Sign Out
+    </button>
+  </div>
 
   <div class="adbar" id="adTop"><div class="ad-lbl">Advertisement</div><ins class="adsbygoogle" style="display:inline-block;width:728px;max-width:100%;height:90px" data-ad-client="ca-pub-XXXXXXXXXXXXXXXX" data-ad-slot="XXXXXXXXXX"></ins></div>
 
@@ -276,22 +317,10 @@ input::placeholder{color:var(--t3);font-size:12px}
               <div class="fld"><div class="lbl">GitHub Token <span class="req">*</span></div><div class="ir"><span class="ii">🔑</span><input type="password" id="repoTok" placeholder="ghp_xxxxxxxx"></div></div>
             </div>
             <div class="iz-sec"><span class="iz-lbl">App Icon <span style="color:var(--t3)">(optional)</span></span>
-              <div style="position:relative">
-                <div class="iz" id="iz-repo">
-                  <div class="iz-img" id="it-repo"><span>📱</span></div>
-                  <div class="iz-txt"><div class="iz-t">Tap to upload icon</div><div class="iz-s">PNG · JPG · 512×512px</div></div>
-                  <button class="iz-clr" onclick="clrIcon('repo')">✕</button>
-                </div>
-                <input type="file" id="if-repo" accept="image/*" onchange="pickIcon('repo',this)" style="position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;z-index:5;">
-              </div>
+              <div style="position:relative"><div class="iz" id="iz-repo"><div class="iz-img" id="it-repo"><span>📱</span></div><div class="iz-txt"><div class="iz-t">Tap to upload icon</div><div class="iz-s">PNG · JPG · 512×512px</div></div><button class="iz-clr" onclick="clrIcon('repo')">✕</button></div><input type="file" id="if-repo" accept="image/*" onchange="pickIcon('repo',this)" style="position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;z-index:5;"></div>
             </div>
             <button class="bbtn bb-r" id="bb-repo" onclick="runBuild('repo')"><span id="sp-repo" class="bspin"></span><span id="bt-repo">⚡ Build APK</span></button>
-            <div class="prog" id="pg-repo">
-              <div class="steps"><span class="step" id="s-repo-0">Queue</span><span class="step" id="s-repo-1">Setup</span><span class="step" id="s-repo-2">Clone</span><span class="step" id="s-repo-3">Build</span><span class="step" id="s-repo-4">Upload</span></div>
-              <div class="pb-bg"><div class="pb" id="pb-repo"></div></div>
-              <div class="ch"><div class="cdot" style="background:#ff5f57"></div><div class="cdot" style="background:#ffbd2e"></div><div class="cdot" style="background:#28ca41"></div><span style="margin-left:6px;font-size:9px;color:var(--t3)">build output</span></div>
-              <div class="clog" id="log-repo"></div>
-            </div>
+            <div class="prog" id="pg-repo"><div class="steps"><span class="step" id="s-repo-0">Queue</span><span class="step" id="s-repo-1">Setup</span><span class="step" id="s-repo-2">Clone</span><span class="step" id="s-repo-3">Build</span><span class="step" id="s-repo-4">Upload</span></div><div class="pb-bg"><div class="pb" id="pb-repo"></div></div><div class="ch"><div class="cdot" style="background:#ff5f57"></div><div class="cdot" style="background:#ffbd2e"></div><div class="cdot" style="background:#28ca41"></div><span style="margin-left:6px;font-size:9px;color:var(--t3)">build output</span></div><div class="clog" id="log-repo"></div></div>
             <div class="rbox" id="rb-repo"><div class="rbox-h"><span id="ri-repo"></span><span style="font-weight:600;font-size:12px;margin-left:6px" id="rt-repo"></span></div><div class="rbox-b" id="ra-repo"></div></div>
           </div>
         </div>
@@ -310,22 +339,10 @@ input::placeholder{color:var(--t3);font-size:12px}
             <div class="fld"><div class="lbl">Package Name <span class="req">*</span></div><div class="ir"><span class="ii">📦</span><input type="text" id="urlPkg" placeholder="com.myapp.web"></div></div>
             <div class="fld"><div class="lbl">GitHub Token <span class="req">*</span></div><div class="ir"><span class="ii">🔑</span><input type="password" id="urlTok" placeholder="ghp_xxxxxxxx"></div></div>
             <div class="iz-sec"><span class="iz-lbl">App Icon <span style="color:var(--t3)">(optional)</span></span>
-              <div style="position:relative">
-                <div class="iz" id="iz-url">
-                  <div class="iz-img" id="it-url"><span>🌐</span></div>
-                  <div class="iz-txt"><div class="iz-t">Tap to upload icon</div><div class="iz-s">PNG · JPG · 512×512px</div></div>
-                  <button class="iz-clr" onclick="clrIcon('url')">✕</button>
-                </div>
-                <input type="file" id="if-url" accept="image/*" onchange="pickIcon('url',this)" style="position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;z-index:5;">
-              </div>
+              <div style="position:relative"><div class="iz" id="iz-url"><div class="iz-img" id="it-url"><span>🌐</span></div><div class="iz-txt"><div class="iz-t">Tap to upload icon</div><div class="iz-s">PNG · JPG · 512×512px</div></div><button class="iz-clr" onclick="clrIcon('url')">✕</button></div><input type="file" id="if-url" accept="image/*" onchange="pickIcon('url',this)" style="position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;z-index:5;"></div>
             </div>
             <button class="bbtn bb-u" id="bb-url" onclick="runBuild('url')"><span id="sp-url" class="bspin"></span><span id="bt-url">⚡ Build APK</span></button>
-            <div class="prog" id="pg-url">
-              <div class="steps"><span class="step" id="s-url-0">Queue</span><span class="step" id="s-url-1">Setup</span><span class="step" id="s-url-2">Build</span><span class="step" id="s-url-3">Sign</span><span class="step" id="s-url-4">Upload</span></div>
-              <div class="pb-bg"><div class="pb" id="pb-url"></div></div>
-              <div class="ch"><div class="cdot" style="background:#ff5f57"></div><div class="cdot" style="background:#ffbd2e"></div><div class="cdot" style="background:#28ca41"></div><span style="margin-left:6px;font-size:9px;color:var(--t3)">build output</span></div>
-              <div class="clog" id="log-url"></div>
-            </div>
+            <div class="prog" id="pg-url"><div class="steps"><span class="step" id="s-url-0">Queue</span><span class="step" id="s-url-1">Setup</span><span class="step" id="s-url-2">Build</span><span class="step" id="s-url-3">Sign</span><span class="step" id="s-url-4">Upload</span></div><div class="pb-bg"><div class="pb" id="pb-url"></div></div><div class="ch"><div class="cdot" style="background:#ff5f57"></div><div class="cdot" style="background:#ffbd2e"></div><div class="cdot" style="background:#28ca41"></div><span style="margin-left:6px;font-size:9px;color:var(--t3)">build output</span></div><div class="clog" id="log-url"></div></div>
             <div class="rbox" id="rb-url"><div class="rbox-h"><span id="ri-url"></span><span style="font-weight:600;font-size:12px;margin-left:6px" id="rt-url"></span></div><div class="rbox-b" id="ra-url"></div></div>
           </div>
         </div>
@@ -343,47 +360,35 @@ input::placeholder{color:var(--t3);font-size:12px}
             </div>
             <div class="fld"><div class="lbl">GitHub Token <span class="req">*</span></div><div class="ir"><span class="ii">🔑</span><input type="password" id="htmlTok" placeholder="ghp_xxxxxxxx"></div></div>
             <div class="iz-sec"><span class="iz-lbl">App Icon <span style="color:var(--t3)">(optional)</span></span>
-              <div style="position:relative">
-                <div class="iz" id="iz-html">
-                  <div class="iz-img" id="it-html"><span>📄</span></div>
-                  <div class="iz-txt"><div class="iz-t">Tap to upload icon</div><div class="iz-s">PNG · JPG · 512×512px</div></div>
-                  <button class="iz-clr" onclick="clrIcon('html')">✕</button>
-                </div>
-                <input type="file" id="if-html" accept="image/*" onchange="pickIcon('html',this)" style="position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;z-index:5;">
-              </div>
+              <div style="position:relative"><div class="iz" id="iz-html"><div class="iz-img" id="it-html"><span>📄</span></div><div class="iz-txt"><div class="iz-t">Tap to upload icon</div><div class="iz-s">PNG · JPG · 512×512px</div></div><button class="iz-clr" onclick="clrIcon('html')">✕</button></div><input type="file" id="if-html" accept="image/*" onchange="pickIcon('html',this)" style="position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;z-index:5;"></div>
             </div>
             <button class="bbtn bb-h" id="bb-html" onclick="runBuild('html')"><span id="sp-html" class="bspin"></span><span id="bt-html">⚡ Build APK</span></button>
-            <div class="prog" id="pg-html">
-              <div class="steps"><span class="step" id="s-html-0">Queue</span><span class="step" id="s-html-1">Setup</span><span class="step" id="s-html-2">Build</span><span class="step" id="s-html-3">Sign</span><span class="step" id="s-html-4">Upload</span></div>
-              <div class="pb-bg"><div class="pb" id="pb-html"></div></div>
-              <div class="ch"><div class="cdot" style="background:#ff5f57"></div><div class="cdot" style="background:#ffbd2e"></div><div class="cdot" style="background:#28ca41"></div><span style="margin-left:6px;font-size:9px;color:var(--t3)">build output</span></div>
-              <div class="clog" id="log-html"></div>
-            </div>
+            <div class="prog" id="pg-html"><div class="steps"><span class="step" id="s-html-0">Queue</span><span class="step" id="s-html-1">Setup</span><span class="step" id="s-html-2">Build</span><span class="step" id="s-html-3">Sign</span><span class="step" id="s-html-4">Upload</span></div><div class="pb-bg"><div class="pb" id="pb-html"></div></div><div class="ch"><div class="cdot" style="background:#ff5f57"></div><div class="cdot" style="background:#ffbd2e"></div><div class="cdot" style="background:#28ca41"></div><span style="margin-left:6px;font-size:9px;color:var(--t3)">build output</span></div><div class="clog" id="log-html"></div></div>
             <div class="rbox" id="rb-html"><div class="rbox-h"><span id="ri-html"></span><span style="font-weight:600;font-size:12px;margin-left:6px" id="rt-html"></span></div><div class="rbox-b" id="ra-html"></div></div>
           </div>
         </div>
       </div>
 
-      <!-- MOBILE HIST -->
+      <!-- MOBILE HISTORY -->
       <div class="card mh" id="mhist" style="display:none">
         <div class="card-top"><div class="ci b">📋</div><div><div class="cn">Build History</div></div><button class="clrbtn" onclick="clrHist()" style="margin-left:auto">Clear</button></div>
         <div class="cb"><div id="hl-mob"><div class="hempty">No builds yet</div></div></div>
       </div>
     </div>
 
-    <!-- RIGHT -->
+    <!-- RIGHT COLUMN -->
     <div class="right">
       <div class="adc" id="adRight">
-        <div class="adc-h"><span class="adlbl">Advertisement</span><span class="adrm" onclick="showPay()">⚡ Remove</span></div>
+        <div class="adc-h"><span class="adlbl">Advertisement</span><span class="adrm" onclick="showMod('payMod')">⚡ Remove</span></div>
         <div class="adc-b"><ins class="adsbygoogle" style="display:block;width:300px;max-width:100%;min-height:250px" data-ad-client="ca-pub-XXXXXXXXXXXXXXXX" data-ad-slot="XXXXXXXXXX" data-ad-format="rectangle" data-full-width-responsive="true"></ins></div>
       </div>
       <div class="card">
         <div class="card-top"><div class="ci b">📖</div><div><div class="cn">How to Use</div></div></div>
         <div class="cb">
           <div class="how-r"><div class="how-n">1</div><div><div class="how-t">Add GitHub Token</div><div class="how-s">Click 🔑 Token → Generate PAT with repo + workflow scope</div></div></div>
-          <div class="how-r"><div class="how-n">2</div><div><div class="how-t">Choose Converter</div><div class="how-s">Repo URL, Website URL, or raw HTML file link</div></div></div>
-          <div class="how-r"><div class="how-n">3</div><div><div class="how-t">Build APK</div><div class="how-s">GitHub Actions builds in ~2 min. Watch live console.</div></div></div>
-          <div class="how-r"><div class="how-n">4</div><div><div class="how-t">Download</div><div class="how-s">Tap 📥 Download APK — downloads directly to device</div></div></div>
+          <div class="how-r"><div class="how-n">2</div><div><div class="how-t">Choose Converter</div><div class="how-s">Paste a repo URL, website URL, or raw HTML file link</div></div></div>
+          <div class="how-r"><div class="how-n">3</div><div><div class="how-t">Build APK</div><div class="how-s">GitHub Actions builds in ~2 min. Watch the live console.</div></div></div>
+          <div class="how-r"><div class="how-n">4</div><div><div class="how-t">Download</div><div class="how-s">Tap 📥 Download APK — downloads directly to your device</div></div></div>
         </div>
       </div>
       <div class="card">
@@ -394,68 +399,26 @@ input::placeholder{color:var(--t3);font-size:12px}
   </div>
 </div>
 
-<!-- ADMIN PAGE -->
-<div class="admin-page" id="adminPage">
-  <div class="admin-nav">
-    <button onclick="closeAdmin()" style="background:none;border:none;color:var(--t2);cursor:pointer;font-size:20px">←</button>
-    <span class="admin-title">⚙️ Admin Dashboard</span>
-    <div style="margin-left:auto;font-size:11px;color:var(--t3);font-family:var(--mono)" id="adminTime"></div>
-  </div>
-  <div class="admin-body">
-    <div class="admin-grid">
-      <div class="stat-card"><span class="stat-v" id="adm-users">-</span><span class="stat-k">Total Users</span></div>
-      <div class="stat-card"><span class="stat-v" id="adm-builds">-</span><span class="stat-k">Total Builds</span></div>
-      <div class="stat-card"><span class="stat-v" id="adm-revenue">-</span><span class="stat-k">Revenue ($)</span></div>
-      <div class="stat-card"><span class="stat-v" id="adm-today">-</span><span class="stat-k">Builds Today</span></div>
-    </div>
-    <div class="card" style="margin-bottom:16px">
-      <div class="card-top"><div class="ci b">👥</div><div><div class="cn">Users</div></div></div>
-      <div class="cb" style="padding:0;overflow-x:auto">
-        <table class="admin-table" id="admUsersTable">
-          <thead><tr><th>Email</th><th>Credits</th><th>Builds</th><th>Joined</th></tr></thead>
-          <tbody id="admUsersTbody"><tr><td colspan="4" style="text-align:center;padding:20px;color:var(--t3)">Loading...</td></tr></tbody>
-        </table>
-      </div>
-    </div>
-    <div class="card" style="margin-bottom:16px">
-      <div class="card-top"><div class="ci g">🔨</div><div><div class="cn">Recent Builds</div></div></div>
-      <div class="cb" style="padding:0;overflow-x:auto">
-        <table class="admin-table">
-          <thead><tr><th>User</th><th>Type</th><th>Label</th><th>Status</th><th>Date</th></tr></thead>
-          <tbody id="admBuildsTbody"><tr><td colspan="5" style="text-align:center;padding:20px;color:var(--t3)">Loading...</td></tr></tbody>
-        </table>
-      </div>
-    </div>
-    <div class="card">
-      <div class="card-top"><div class="ci p">💳</div><div><div class="cn">Payments</div></div></div>
-      <div class="cb" style="padding:0;overflow-x:auto">
-        <table class="admin-table">
-          <thead><tr><th>User</th><th>Amount</th><th>Credits</th><th>Status</th><th>Date</th></tr></thead>
-          <tbody id="admPaysTbody"><tr><td colspan="5" style="text-align:center;padding:20px;color:var(--t3)">Loading...</td></tr></tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-</div>
+<!-- ══════════════ MODALS ══════════════ -->
 
-<!-- TOKEN MODAL -->
-<div class="ov" id="tokMod" onclick="if(event.target===this)closeMod('tokMod')">
+<!-- TOKEN -->
+<div class="ov" id="tokMod" onclick="if(event.target===this)hideMod('tokMod')">
   <div class="modal">
-    <button class="mclose" onclick="closeMod('tokMod')">✕</button>
+    <button class="mclose" onclick="hideMod('tokMod')">✕</button>
     <div class="mt">🔑 GitHub Token</div>
-    <div class="ms">Required to trigger builds. Stored locally only.</div>
+    <div class="ms">Required to trigger builds. Stored in your browser only.</div>
     <div class="msteps">1. Go to <a href="https://github.com/settings/tokens/new" target="_blank">github.com/settings/tokens/new</a><br>2. Note: <b>Repo2APK Builder</b><br>3. Expiration: <b>No expiration</b><br>4. Scopes: <b style="color:var(--a2)">✓ repo &nbsp;✓ workflow</b><br>5. Generate and copy</div>
     <input class="minput" id="tokIn" type="password" placeholder="ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx">
     <button class="mact" onclick="saveTok()">Save Token</button>
   </div>
 </div>
 
-<!-- PAY MODAL -->
-<div class="ov" id="payMod" onclick="if(event.target===this)closeMod('payMod')">
+<!-- PAY / SUBSCRIPTION -->
+<div class="ov" id="payMod" onclick="if(event.target===this)hideMod('payMod')">
   <div class="modal">
-    <button class="mclose" onclick="closeMod('payMod')">✕</button>
-    <div class="mt">⚡ Buy Credits</div>
-    <div class="ms">Remove ads and unlock premium features. One-time payment.</div>
+    <button class="mclose" onclick="hideMod('payMod')">✕</button>
+    <div class="mt">⚡ Subscription & Credits</div>
+    <div class="ms">Buy credits to remove ads and unlock premium features. One-time payment.</div>
     <div class="plans">
       <div class="plan" onclick="selPlan(this,3,10)"><div class="plan-p">$3</div><div class="plan-c">10 credits</div><div class="plan-l">Starter</div></div>
       <div class="plan on" onclick="selPlan(this,10,50)"><div class="plan-p">$10</div><div class="plan-c">50 credits</div><div class="plan-l">Popular</div></div>
@@ -465,207 +428,482 @@ input::placeholder{color:var(--t3);font-size:12px}
   </div>
 </div>
 
-<!-- PROFILE MODAL -->
-<div class="ov" id="profileMod" onclick="if(event.target===this)closeMod('profileMod')">
+<!-- PROFILE -->
+<div class="ov" id="profileMod" onclick="if(event.target===this)hideMod('profileMod')">
   <div class="modal">
-    <button class="mclose" onclick="closeMod('profileMod')">✕</button>
-    <div class="profile-avatar" id="profileAvatar">?</div>
-    <div class="profile-email" id="profileEmail">-</div>
-    <div class="profile-credits" id="profileCredits">0 credits</div>
-    <div class="profile-stat"><span style="color:var(--t3)">Total Builds</span><span id="profileBuilds" style="color:var(--t)">0</span></div>
-    <div class="profile-stat"><span style="color:var(--t3)">Member Since</span><span id="profileJoined" style="color:var(--t)">-</span></div>
-    <div class="profile-stat"><span style="color:var(--t3)">Account</span><span id="profileRole" style="color:var(--a2)">User</span></div>
-    <button onclick="showAdminIfAdmin()" id="adminBtn" style="display:none;width:100%;padding:11px;border:1px solid rgba(59,130,246,.3);border-radius:8px;background:rgba(59,130,246,.05);color:var(--a2);font-family:var(--font);font-weight:600;font-size:13px;cursor:pointer;margin-top:10px">⚙️ Admin Dashboard</button>
-    <button class="logout-btn" onclick="doLogout()">Sign Out</button>
+    <button class="mclose" onclick="hideMod('profileMod')">✕</button>
+    <div class="mt">👤 My Profile</div>
+    <div style="background:var(--s2);border:1px solid var(--br);border-radius:10px;padding:14px;margin-bottom:14px">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,var(--a),var(--g));display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#fff;flex-shrink:0" id="profAv">?</div>
+        <div>
+          <div style="font-size:14px;font-weight:600" id="profName">User</div>
+          <div style="font-size:11px;color:var(--t3);font-family:var(--mono)" id="profEmail">-</div>
+        </div>
+        <div style="margin-left:auto;text-align:right">
+          <div style="font-size:20px;font-weight:700;color:var(--a2);font-family:var(--mono)" id="profCredits">0</div>
+          <div style="font-size:10px;color:var(--t3)">credits</div>
+        </div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+      <div style="background:var(--s2);border:1px solid var(--br);border-radius:8px;padding:12px;text-align:center">
+        <div style="font-size:22px;font-weight:700;color:var(--g2);font-family:var(--mono)" id="profBuilds">0</div>
+        <div style="font-size:10px;color:var(--t3);margin-top:2px">Total Builds</div>
+      </div>
+      <div style="background:var(--s2);border:1px solid var(--br);border-radius:8px;padding:12px;text-align:center">
+        <div style="font-size:13px;font-weight:600;color:var(--t)" id="profJoined">-</div>
+        <div style="font-size:10px;color:var(--t3);margin-top:2px">Member Since</div>
+      </div>
+    </div>
+    <button onclick="hideMod('profileMod');showMod('payMod')" style="width:100%;padding:11px;border:1px solid rgba(59,130,246,.3);border-radius:8px;background:rgba(59,130,246,.05);color:var(--a2);font-family:var(--font);font-weight:600;font-size:13px;cursor:pointer;margin-bottom:8px">⚡ Buy More Credits</button>
+  </div>
+</div>
+
+<!-- SETTINGS -->
+<div class="ov" id="settingsMod" onclick="if(event.target===this)hideMod('settingsMod')">
+  <div class="modal">
+    <button class="mclose" onclick="hideMod('settingsMod')">✕</button>
+    <div class="mt">⚙️ Settings</div>
+    <div class="ms">Manage your account and preferences.</div>
+    <div style="margin-bottom:12px">
+      <div style="font-size:11px;color:var(--t3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">GitHub Token</div>
+      <input class="minput" id="settingsTok" type="password" placeholder="ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx">
+      <button onclick="saveTokFromSettings()" style="width:100%;padding:10px;border:none;border-radius:8px;background:var(--c3);color:var(--t);font-family:var(--font);font-weight:600;font-size:13px;cursor:pointer;margin-bottom:14px">Save Token</button>
+    </div>
+    <div style="margin-bottom:12px">
+      <div style="font-size:11px;color:var(--t3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">Account</div>
+      <div style="padding:10px 12px;background:var(--s2);border:1px solid var(--br);border-radius:8px;font-size:12px;color:var(--t2);margin-bottom:8px">Email: <span id="settingsEmail" style="color:var(--t)">-</span></div>
+    </div>
+    <div style="height:1px;background:var(--br);margin:12px 0"></div>
+    <button onclick="doLogout();hideMod('settingsMod')" style="width:100%;padding:11px;border:1px solid rgba(239,68,68,.3);border-radius:8px;background:rgba(239,68,68,.05);color:var(--r2);font-family:var(--font);font-weight:600;font-size:13px;cursor:pointer">Sign Out</button>
+  </div>
+</div>
+
+<!-- BUILD HISTORY -->
+<div class="ov" id="histMod" onclick="if(event.target===this)hideMod('histMod')">
+  <div class="modal">
+    <button class="mclose" onclick="hideMod('histMod')">✕</button>
+    <div class="mt">📋 Build History</div>
+    <div class="ms">Your recent APK builds.</div>
+    <div id="histModList"><div class="hempty">No builds yet</div></div>
+    <button onclick="clrHist()" style="width:100%;padding:10px;border:1px solid var(--br2);border-radius:8px;background:transparent;color:var(--t3);font-family:var(--font);font-size:12px;cursor:pointer;margin-top:12px">Clear History</button>
+  </div>
+</div>
+
+<!-- PRIVACY POLICY -->
+<div class="ov" id="privacyMod" onclick="if(event.target===this)hideMod('privacyMod')">
+  <div class="modal">
+    <button class="mclose" onclick="hideMod('privacyMod')">✕</button>
+    <div class="mt">🔒 Privacy Policy</div>
+    <div style="font-size:13px;color:var(--t2);line-height:1.8;margin-top:12px">
+      <p style="margin-bottom:10px"><b style="color:var(--t)">Data We Collect:</b> Email address (for authentication), build history, and payment references.</p>
+      <p style="margin-bottom:10px"><b style="color:var(--t)">GitHub Token:</b> Your GitHub token is stored locally in your browser only. We never store it on our servers.</p>
+      <p style="margin-bottom:10px"><b style="color:var(--t)">Payments:</b> Payments are processed by Paystack. We only store the payment reference, amount, and credits — no card details.</p>
+      <p style="margin-bottom:10px"><b style="color:var(--t)">Data Storage:</b> Your data is stored securely on Supabase (SOC 2 compliant).</p>
+      <p style="margin-bottom:10px"><b style="color:var(--t)">Third Parties:</b> We use Google AdSense to display ads. We do not sell your data to third parties.</p>
+      <p><b style="color:var(--t)">Contact:</b> For privacy concerns, contact us at support@repo2apk.app</p>
+    </div>
+  </div>
+</div>
+
+<!-- TERMS OF SERVICE -->
+<div class="ov" id="termsMod" onclick="if(event.target===this)hideMod('termsMod')">
+  <div class="modal">
+    <button class="mclose" onclick="hideMod('termsMod')">✕</button>
+    <div class="mt">📄 Terms of Service</div>
+    <div style="font-size:13px;color:var(--t2);line-height:1.8;margin-top:12px">
+      <p style="margin-bottom:10px"><b style="color:var(--t)">Service:</b> Repo2APK converts GitHub repositories, websites, and HTML files into Android APK files using GitHub Actions.</p>
+      <p style="margin-bottom:10px"><b style="color:var(--t)">Your Responsibility:</b> You are responsible for ensuring you have the rights to convert any repository or content. Do not convert copyrighted content without permission.</p>
+      <p style="margin-bottom:10px"><b style="color:var(--t)">Credits:</b> Credits are non-refundable once purchased. Credits do not expire.</p>
+      <p style="margin-bottom:10px"><b style="color:var(--t)">GitHub Token:</b> By using this service, you agree that your GitHub token will be used only to trigger builds on your behalf.</p>
+      <p style="margin-bottom:10px"><b style="color:var(--t)">Availability:</b> We do not guarantee 100% uptime. Service depends on GitHub Actions availability.</p>
+      <p><b style="color:var(--t)">Changes:</b> We may update these terms at any time. Continued use constitutes acceptance.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN DASHBOARD -->
+<div class="ov" id="adminMod" onclick="if(event.target===this)hideMod('adminMod')">
+  <div class="modal wide">
+    <button class="mclose" onclick="hideMod('adminMod')">✕</button>
+    <div class="mt">🛡️ Admin Dashboard</div>
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:14px 0" id="admStats">
+      <div class="adm-stat"><span class="adm-stat-v" id="adm-users">-</span><span class="adm-stat-k">Users</span></div>
+      <div class="adm-stat"><span class="adm-stat-v" id="adm-builds">-</span><span class="adm-stat-k">Total Builds</span></div>
+      <div class="adm-stat"><span class="adm-stat-v" id="adm-rev">-</span><span class="adm-stat-k">Revenue ($)</span></div>
+      <div class="adm-stat"><span class="adm-stat-v" id="adm-today">-</span><span class="adm-stat-k">Today</span></div>
+    </div>
+    <div style="font-size:11px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;margin:14px 0 8px">Users</div>
+    <div style="overflow-x:auto;margin-bottom:14px"><table class="adm-table"><thead><tr><th>Email</th><th>Credits</th><th>Admin</th><th>Joined</th></tr></thead><tbody id="admUsersTb"><tr><td colspan="4" style="text-align:center;padding:16px;color:var(--t3)">Loading...</td></tr></tbody></table></div>
+    <div style="font-size:11px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Recent Builds</div>
+    <div style="overflow-x:auto"><table class="adm-table"><thead><tr><th>Label</th><th>Type</th><th>Status</th><th>Date</th></tr></thead><tbody id="admBuildsTb"><tr><td colspan="4" style="text-align:center;padding:16px;color:var(--t3)">Loading...</td></tr></tbody></table></div>
   </div>
 </div>
 
 <script>
-// ── SUPABASE ──
-const SUPA_URL='https://wilxsrbxglgqcvirqofn.supabase.co';
-const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndpbHhzcmJ4Z2xncWN2aXJxb2ZuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzMjI0MzEsImV4cCI6MjA4OTg5ODQzMX0.jpWbt3BNOCg7X851NZ8xvZtaMMwQALCgvi8SWF-Br38';
-const supa=supabase.createClient(SUPA_URL,SUPA_KEY);
+// ══════════════════════════════════════════
+// SUPABASE — init first, before anything else
+// ══════════════════════════════════════════
+const SUPA_URL = 'https://wilxsrbxglgqcvirqofn.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndpbHhzcmJ4Z2xncWN2aXJxb2ZuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzMjI0MzEsImV4cCI6MjA4OTg5ODQzMX0.jpWbt3BNOCg7X851NZ8xvZtaMMwQALCgvi8SWF-Br38';
+const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
 
-const OWNER='lawalfataikola123',REPO='Repo2apk2',GH='https://api.github.com';
-const PSKEY='pk_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx';
-const WF={repo:'build-apk.yml',url:'url-to-apk.yml',html:'html-to-apk.yml'};
-const STEPS={repo:['Queue','Setup','Clone','Build','Upload'],url:['Queue','Setup','Build','Sign','Upload'],html:['Queue','Setup','Build','Sign','Upload']};
-let credits=0,hist=[],icons={repo:null,url:null,html:null},polls={},plan={a:10,c:50};
-let currentUser=null,userProfile=null;
-const noAds=()=>localStorage.getItem('r2na')==='1';
+// ══════════════════════════════════════════
+// APP CONSTANTS
+// ══════════════════════════════════════════
+const OWNER = 'lawalfataikola123', REPO = 'Repo2apk2', GH = 'https://api.github.com';
+const PSKEY = 'pk_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx';
+const WF = {repo:'build-apk.yml', url:'url-to-apk.yml', html:'html-to-apk.yml'};
+const STEPS = {
+  repo: ['Queue','Setup','Clone','Build','Upload'],
+  url:  ['Queue','Setup','Build','Sign','Upload'],
+  html: ['Queue','Setup','Build','Sign','Upload']
+};
 
-// ── AUTH ──
-let authMode='login';
-function switchAuth(mode,el){
-  authMode=mode;
-  document.querySelectorAll('.auth-tab').forEach(t=>t.classList.remove('on'));
-  el.classList.add('on');
-  document.getElementById('authBtn').textContent=mode==='login'?'Sign In':'Create Account';
-  document.getElementById('authMsg').textContent='';
-}
+// ══════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════
+let currentUser = null;
+let userProfile = null;
+let credits = 0;
+let hist = JSON.parse(localStorage.getItem('r2h') || '[]');
+let icons = {repo:null, url:null, html:null};
+let polls = {};
+let plan = {a:10, c:50};
+const noAds = () => localStorage.getItem('r2na') === '1';
 
-async function doAuth(){
-  const email=document.getElementById('authEmail').value.trim();
-  const pass=document.getElementById('authPass').value.trim();
-  const btn=document.getElementById('authBtn');
-  const msg=document.getElementById('authMsg');
-  if(!email||!pass){msg.className='auth-msg err';msg.textContent='Please fill in all fields';return;}
-  btn.disabled=true;btn.textContent='Please wait...';msg.textContent='';
-  try{
-    let res;
-    if(authMode==='login'){
-      res=await supa.auth.signInWithPassword({email,password:pass});
-    }else{
-      res=await supa.auth.signUp({email,password:pass});
-    }
-    if(res.error)throw res.error;
-    if(authMode==='signup'&&!res.data.session){
-      msg.className='auth-msg ok';msg.textContent='✅ Check your email to confirm your account!';
-    }
-  }catch(e){
-    msg.className='auth-msg err';msg.textContent=e.message||'Authentication failed';
-    btn.disabled=false;btn.textContent=authMode==='login'?'Sign In':'Create Account';
-  }
-}
-
-async function signInWithGitHub(){
-  await supa.auth.signInWithOAuth({provider:'github',options:{redirectTo:window.location.href}});
-}
-async function signInWithGoogle(){
-  await supa.auth.signInWithOAuth({provider:'google',options:{redirectTo:window.location.href}});
-}
-
-async function doLogout(){
-  await supa.auth.signOut();
-  currentUser=null;userProfile=null;
-  document.getElementById('mainApp').style.display='none';
-  document.getElementById('authPage').style.display='flex';
-  closeMod('profileMod');
-}
-
-// Listen for auth changes
-supa.auth.onAuthStateChange(async(event,session)=>{
-  if(session?.user){
-    currentUser=session.user;
-    await loadProfile();
-    showApp();
-  }else{
-    document.getElementById('authPage').style.display='flex';
-    document.getElementById('mainApp').style.display='none';
+// ══════════════════════════════════════════
+// AUTH LISTENER — single source of truth
+// ══════════════════════════════════════════
+supa.auth.onAuthStateChange(async (event, session) => {
+  if (session && session.user) {
+    currentUser = session.user;
+    await loadUserProfile();
+    enterApp();
+  } else {
+    currentUser = null;
+    userProfile = null;
+    showAuthPage();
   }
 });
 
-async function loadProfile(){
-  const{data}=await supa.from('profiles').select('*').eq('id',currentUser.id).single();
-  userProfile=data;
-  if(data){
-    credits=data.credits||0;
-    if(data.credits>0)localStorage.setItem('r2na','1');
-    // Load builds
-    const{data:builds}=await supa.from('builds').select('*').eq('user_id',currentUser.id).order('created_at',{ascending:false}).limit(10);
-    if(builds)hist=builds.map(b=>({label:b.label,status:b.status,url:b.run_url,time:new Date(b.created_at).getTime()}));
+function showAuthPage() {
+  document.getElementById('authPage').style.display = 'flex';
+  document.getElementById('mainApp').style.display = 'none';
+}
+
+function enterApp() {
+  document.getElementById('authPage').style.display = 'none';
+  document.getElementById('mainApp').style.display = 'block';
+  updateNavAvatar();
+  const t = localStorage.getItem('r2t');
+  if (t) ['repoTok','urlTok','htmlTok'].forEach(id => {
+    const e = document.getElementById(id); if (e) e.value = t;
+  });
+  upUI(); renHist(); applyAds(); chkLayout();
+}
+
+function updateNavAvatar() {
+  if (!currentUser) return;
+  const letter = (currentUser.email || 'U').charAt(0).toUpperCase();
+  document.getElementById('navAvatar').textContent = letter;
+  document.getElementById('pmAvatar').textContent = letter;
+  document.getElementById('pmName').textContent = currentUser.email?.split('@')[0] || 'User';
+  document.getElementById('pmEmail').textContent = currentUser.email || '';
+  document.getElementById('pmCredits').textContent = credits;
+  document.getElementById('settingsEmail').textContent = currentUser.email || '';
+}
+
+async function loadUserProfile() {
+  const { data } = await supa.from('profiles').select('*').eq('id', currentUser.id).single();
+  userProfile = data;
+  if (data) {
+    credits = data.credits || 0;
+    if (credits > 0) localStorage.setItem('r2na', '1');
+    // Load builds from Supabase
+    const { data: builds } = await supa.from('builds').select('*')
+      .eq('user_id', currentUser.id).order('created_at', {ascending: false}).limit(20);
+    if (builds) {
+      hist = builds.map(b => ({
+        label: b.label, status: b.status, url: b.run_url,
+        time: new Date(b.created_at).getTime()
+      }));
+    }
+    if (data.is_admin) {
+      document.getElementById('adminMenuBtn').style.display = 'flex';
+    }
   }
 }
 
-function showApp(){
-  document.getElementById('authPage').style.display='none';
-  document.getElementById('mainApp').style.display='block';
-  const email=currentUser.email||'';
-  const initials=email.charAt(0).toUpperCase()||'U';
-  document.getElementById('navAvatar').textContent=initials;
-  const t=localStorage.getItem('r2t');
-  if(t)['repoTok','urlTok','htmlTok'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=t;});
-  upUI();renHist();applyAds();chkLayout();
+// ══════════════════════════════════════════
+// AUTH FUNCTIONS
+// ══════════════════════════════════════════
+let authMode = 'login';
+
+function setAuthMode(mode) {
+  authMode = mode;
+  document.getElementById('tabLogin').classList.toggle('on', mode === 'login');
+  document.getElementById('tabSignup').classList.toggle('on', mode === 'signup');
+  document.getElementById('authSubmit').textContent = mode === 'login' ? 'Sign In' : 'Create Account';
+  document.getElementById('authMsg').textContent = '';
+  document.getElementById('authMsg').className = 'auth-msg';
 }
 
-// ── PROFILE ──
-function showProfile(){
-  if(!userProfile)return;
-  document.getElementById('profileAvatar').textContent=(currentUser.email||'U').charAt(0).toUpperCase();
-  document.getElementById('profileEmail').textContent=currentUser.email||'';
-  document.getElementById('profileCredits').textContent=credits+' credits';
-  document.getElementById('profileBuilds').textContent=hist.length;
-  document.getElementById('profileJoined').textContent=new Date(currentUser.created_at).toLocaleDateString();
-  document.getElementById('profileRole').textContent=userProfile.is_admin?'Admin':'User';
-  document.getElementById('adminBtn').style.display=userProfile.is_admin?'block':'none';
-  document.getElementById('profileMod').classList.add('open');
-}
+async function doEmailAuth() {
+  const email = document.getElementById('authEmail').value.trim();
+  const pass  = document.getElementById('authPass').value.trim();
+  const msg   = document.getElementById('authMsg');
+  const btn   = document.getElementById('authSubmit');
 
-function showAdminIfAdmin(){
-  if(!userProfile?.is_admin)return;
-  closeMod('profileMod');
-  loadAdminData();
-  document.getElementById('adminPage').style.display='block';
-}
-function closeAdmin(){document.getElementById('adminPage').style.display='none';}
-
-async function loadAdminData(){
-  document.getElementById('adminTime').textContent=new Date().toLocaleString();
-  // Users
-  const{data:users}=await supa.from('profiles').select('*').order('created_at',{ascending:false});
-  if(users){
-    document.getElementById('adm-users').textContent=users.length;
-    const tbody=document.getElementById('admUsersTbody');
-    tbody.innerHTML=users.map(u=>`<tr><td>${u.email||'-'}</td><td>${u.credits||0}</td><td>-</td><td>${new Date(u.created_at).toLocaleDateString()}</td></tr>`).join('');
+  if (!email || !pass) {
+    msg.className = 'auth-msg err';
+    msg.textContent = 'Please fill in email and password';
+    return;
   }
-  // Builds
-  const{data:builds}=await supa.from('builds').select('*,profiles(email)').order('created_at',{ascending:false}).limit(50);
-  if(builds){
-    document.getElementById('adm-builds').textContent=builds.length;
-    const today=new Date().toDateString();
-    const todayBuilds=builds.filter(b=>new Date(b.created_at).toDateString()===today);
-    document.getElementById('adm-today').textContent=todayBuilds.length;
-    const tbody=document.getElementById('admBuildsTbody');
-    tbody.innerHTML=builds.map(b=>`<tr><td>${b.profiles?.email||'-'}</td><td>${b.type||'-'}</td><td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${b.label||'-'}</td><td><span class="badge ${b.status}">${b.status}</span></td><td>${new Date(b.created_at).toLocaleDateString()}</td></tr>`).join('');
+  if (pass.length < 6) {
+    msg.className = 'auth-msg err';
+    msg.textContent = 'Password must be at least 6 characters';
+    return;
   }
-  // Payments
-  const{data:pays}=await supa.from('payments').select('*,profiles(email)').order('created_at',{ascending:false}).limit(50);
-  if(pays){
-    const totalRev=pays.filter(p=>p.status==='success').reduce((s,p)=>s+(p.amount||0),0);
-    document.getElementById('adm-revenue').textContent='$'+(totalRev/100).toFixed(0);
-    const tbody=document.getElementById('admPaysTbody');
-    tbody.innerHTML=pays.map(p=>`<tr><td>${p.profiles?.email||'-'}</td><td>$${((p.amount||0)/100).toFixed(0)}</td><td>${p.credits||0}</td><td><span class="badge ${p.status}">${p.status}</span></td><td>${new Date(p.created_at).toLocaleDateString()}</td></tr>`).join('');
+
+  btn.disabled = true;
+  btn.textContent = 'Please wait...';
+  msg.className = 'auth-msg';
+  msg.textContent = '';
+
+  try {
+    let result;
+    if (authMode === 'login') {
+      result = await supa.auth.signInWithPassword({ email, password: pass });
+    } else {
+      result = await supa.auth.signUp({ email, password: pass });
+    }
+
+    if (result.error) throw result.error;
+
+    if (authMode === 'signup' && !result.data.session) {
+      msg.className = 'auth-msg ok';
+      msg.textContent = '✅ Check your email to confirm your account!';
+      btn.disabled = false;
+      btn.textContent = 'Create Account';
+    }
+    // If login succeeds, onAuthStateChange handles the rest
+  } catch (e) {
+    msg.className = 'auth-msg err';
+    msg.textContent = e.message || 'Authentication failed. Please try again.';
+    btn.disabled = false;
+    btn.textContent = authMode === 'login' ? 'Sign In' : 'Create Account';
   }
 }
 
-// ── CORE ──
-function applyAds(){if(noAds()){['adTop','adRight'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display='none';});}else{try{(adsbygoogle=window.adsbygoogle||[]).push({});}catch(e){}}}
-function upUI(){document.getElementById('credN').textContent=credits;document.getElementById('s-builds').textContent=hist.length;}
-function sw(n,el){document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));['repo','url','html'].forEach(v=>{const e=document.getElementById('v-'+v);if(e)e.style.display='none';});el.classList.add('on');document.getElementById('v-'+n).style.display='block';}
-function getTok(type){const t=document.getElementById(type+'Tok').value.trim()||localStorage.getItem('r2t');if(t)localStorage.setItem('r2t',t);return t;}
-function showTok(){document.getElementById('tokMod').classList.add('open');}
-function closeMod(id){document.getElementById(id).classList.remove('open');}
-function saveTok(){const t=document.getElementById('tokIn').value.trim();if(!t)return;localStorage.setItem('r2t',t);['repoTok','urlTok','htmlTok'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=t;});closeMod('tokMod');}
-function showPay(){document.getElementById('payMod').classList.add('open');}
-function selPlan(el,a,c){document.querySelectorAll('.plan').forEach(p=>p.classList.remove('on'));el.classList.add('on');plan={a,c};}
+async function signInWithGitHub() {
+  await supa.auth.signInWithOAuth({
+    provider: 'github',
+    options: { redirectTo: window.location.href }
+  });
+}
 
-async function doPay(){
-  if(!currentUser){alert('Please sign in first');return;}
-  const tok=getTok('repo');if(!tok){alert('Enter your GitHub token first');return;}
+async function signInWithGoogle() {
+  await supa.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: window.location.href }
+  });
+}
+
+async function doLogout() {
+  await supa.auth.signOut();
+}
+
+// ══════════════════════════════════════════
+// PROFILE MENU
+// ══════════════════════════════════════════
+function toggleProfileMenu() {
+  const m = document.getElementById('profileMenu');
+  m.classList.toggle('open');
+  if (m.classList.contains('open') && currentUser) {
+    updateNavAvatar();
+    document.getElementById('pmCredits').textContent = credits;
+  }
+}
+function closeProfileMenu() {
+  document.getElementById('profileMenu').classList.remove('open');
+}
+document.addEventListener('click', e => {
+  const menu = document.getElementById('profileMenu');
+  const avatar = document.getElementById('navAvatar');
+  if (menu && !menu.contains(e.target) && e.target !== avatar) {
+    menu.classList.remove('open');
+  }
+});
+
+// ══════════════════════════════════════════
+// PROFILE MODAL
+// ══════════════════════════════════════════
+function openProfileModal() {
+  if (!currentUser) return;
+  const letter = (currentUser.email || 'U').charAt(0).toUpperCase();
+  document.getElementById('profAv').textContent = letter;
+  document.getElementById('profName').textContent = currentUser.email?.split('@')[0] || 'User';
+  document.getElementById('profEmail').textContent = currentUser.email || '';
+  document.getElementById('profCredits').textContent = credits;
+  document.getElementById('profBuilds').textContent = hist.length;
+  document.getElementById('profJoined').textContent = new Date(currentUser.created_at).toLocaleDateString();
+  showMod('profileMod');
+}
+
+// ══════════════════════════════════════════
+// ADMIN
+// ══════════════════════════════════════════
+async function showAdminDash() {
+  if (!userProfile?.is_admin) return;
+  showMod('adminMod');
+
+  const { data: users }  = await supa.from('profiles').select('*').order('created_at', {ascending:false});
+  const { data: builds } = await supa.from('builds').select('*').order('created_at', {ascending:false}).limit(30);
+  const { data: pays }   = await supa.from('payments').select('*').order('created_at', {ascending:false});
+
+  if (users)  document.getElementById('adm-users').textContent  = users.length;
+  if (builds) document.getElementById('adm-builds').textContent = builds.length;
+  if (pays) {
+    const rev = pays.filter(p => p.status === 'success').reduce((s,p) => s + (p.amount||0), 0);
+    document.getElementById('adm-rev').textContent = '$' + (rev/100).toFixed(0);
+  }
+  const today = new Date().toDateString();
+  if (builds) document.getElementById('adm-today').textContent = builds.filter(b => new Date(b.created_at).toDateString() === today).length;
+
+  if (users) {
+    document.getElementById('admUsersTb').innerHTML = users.map(u =>
+      `<tr><td>${u.email||'-'}</td><td>${u.credits||0}</td><td>${u.is_admin?'✅':'-'}</td><td>${new Date(u.created_at).toLocaleDateString()}</td></tr>`
+    ).join('');
+  }
+  if (builds) {
+    document.getElementById('admBuildsTb').innerHTML = builds.map(b =>
+      `<tr><td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${b.label||'-'}</td><td>${b.type||'-'}</td><td><span class="badge ${b.status}">${b.status}</span></td><td>${new Date(b.created_at).toLocaleDateString()}</td></tr>`
+    ).join('');
+  }
+}
+
+// ══════════════════════════════════════════
+// MODAL HELPERS
+// ══════════════════════════════════════════
+function showMod(id) {
+  if (id === 'profileMod') { openProfileModal(); return; }
+  document.getElementById(id).classList.add('open');
+}
+function hideMod(id) { document.getElementById(id).classList.remove('open'); }
+
+// ══════════════════════════════════════════
+// CORE APP
+// ══════════════════════════════════════════
+function applyAds() {
+  if (noAds()) {
+    ['adTop','adRight'].forEach(id => { const e = document.getElementById(id); if(e) e.style.display='none'; });
+  } else {
+    try { (adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+  }
+}
+function upUI() {
+  document.getElementById('credN').textContent = credits;
+  document.getElementById('s-builds').textContent = hist.length;
+  document.getElementById('pmCredits').textContent = credits;
+}
+function sw(n, el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('on'));
+  ['repo','url','html'].forEach(v => { const e = document.getElementById('v-'+v); if(e) e.style.display='none'; });
+  el.classList.add('on');
+  document.getElementById('v-'+n).style.display = 'block';
+}
+function getTok(type) {
+  const t = document.getElementById(type+'Tok').value.trim() || localStorage.getItem('r2t');
+  if (t) localStorage.setItem('r2t', t);
+  return t;
+}
+function saveTok() {
+  const t = document.getElementById('tokIn').value.trim();
+  if (!t) return;
+  localStorage.setItem('r2t', t);
+  ['repoTok','urlTok','htmlTok'].forEach(id => { const e = document.getElementById(id); if(e) e.value = t; });
+  hideMod('tokMod');
+}
+function saveTokFromSettings() {
+  const t = document.getElementById('settingsTok').value.trim();
+  if (!t) return;
+  localStorage.setItem('r2t', t);
+  ['repoTok','urlTok','htmlTok'].forEach(id => { const e = document.getElementById(id); if(e) e.value = t; });
+  hideMod('settingsMod');
+  alert('✅ Token saved!');
+}
+function selPlan(el, a, c) {
+  document.querySelectorAll('.plan').forEach(p => p.classList.remove('on'));
+  el.classList.add('on'); plan = {a, c};
+}
+async function doPay() {
+  if (!currentUser) { alert('Please sign in first'); return; }
+  const tok = getTok('repo');
+  if (!tok) { alert('Enter your GitHub token first'); return; }
   PaystackPop.setup({
-    key:PSKEY,
-    email:currentUser.email||tok.substring(0,8)+'@repo2apk.app',
-    amount:plan.a*100,currency:'USD',
-    async callback(res){
-      credits+=plan.c;
-      localStorage.setItem('r2na','1');
-      // Save to Supabase
-      await supa.from('profiles').update({credits}).eq('id',currentUser.id);
-      await supa.from('payments').insert({user_id:currentUser.id,amount:plan.a*100,credits:plan.c,reference:res.reference,status:'success'});
-      upUI();applyAds();closeMod('payMod');
-      alert('✅ '+plan.c+' credits added!');
+    key: PSKEY,
+    email: currentUser.email || tok.substring(0,8)+'@repo2apk.app',
+    amount: plan.a * 100, currency: 'USD',
+    async callback(res) {
+      credits += plan.c;
+      localStorage.setItem('r2na', '1');
+      await supa.from('profiles').update({credits}).eq('id', currentUser.id);
+      await supa.from('payments').insert({user_id:currentUser.id, amount:plan.a*100, credits:plan.c, reference:res.reference, status:'success'});
+      upUI(); applyAds(); hideMod('payMod');
+      alert('✅ ' + plan.c + ' credits added!');
     },
-    onClose(){}
+    onClose() {}
   }).openIframe();
 }
 
-function pickIcon(type,inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{icons[type]=e.target.result;const t=document.getElementById('it-'+type);t.innerHTML='<img src="'+e.target.result+'">';document.getElementById('iz-'+type).classList.add('picked');};r.readAsDataURL(f);}
-function clrIcon(type){icons[type]=null;const em={repo:'📱',url:'🌐',html:'📄'};document.getElementById('it-'+type).innerHTML='<span>'+em[type]+'</span>';document.getElementById('iz-'+type).classList.remove('picked');document.getElementById('if-'+type).value='';}
+function pickIcon(type, inp) {
+  const f = inp.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = e => {
+    icons[type] = e.target.result;
+    document.getElementById('it-'+type).innerHTML = '<img src="'+e.target.result+'">';
+    document.getElementById('iz-'+type).classList.add('picked');
+  };
+  r.readAsDataURL(f);
+}
+function clrIcon(type) {
+  icons[type] = null;
+  const em = {repo:'📱', url:'🌐', html:'📄'};
+  document.getElementById('it-'+type).innerHTML = '<span>'+em[type]+'</span>';
+  document.getElementById('iz-'+type).classList.remove('picked');
+  document.getElementById('if-'+type).value = '';
+}
 
-function getParams(type){
-  if(type==='repo'){let u=document.getElementById('repoUrl').value.trim();const bt=document.getElementById('repoBT').value;if(!u){alert('Enter a GitHub repo URL');return null;}const rm=u.match(/https:\/\/raw\.githubusercontent\.com\/([^\/]+)\/([^\/]+)/);if(rm)u='https://github.com/'+rm[1]+'/'+rm[2];const bm=u.match(/https:\/\/github\.com\/([^\/]+)\/([^\/]+)\/(blob|tree|raw)/);if(bm)u='https://github.com/'+bm[1]+'/'+bm[2];if(!/^https:\/\/github\.com\/[^\/]+\/[^\/]+/.test(u)){alert('Invalid GitHub repo URL');return null;}const m=u.match(/^https:\/\/github\.com\/([^\/]+)\/([^\/]+)/);return{wf:WF.repo,inputs:{repo_url:'https://github.com/'+m[1]+'/'+m[2],build_type:bt},label:u,type:'repo'};}
-  if(type==='url'){const u=document.getElementById('urlURL').value.trim();const n=document.getElementById('urlName').value.trim()||'My App';const p=(document.getElementById('urlPkg').value.trim()||'com.repo2apk.app').replace(/\s+/g,'').toLowerCase();const c=document.getElementById('urlColor').value.trim()||'0088ff';if(!u){alert('Enter a website URL');return null;}return{wf:WF.url,inputs:{website_url:u,app_name:n,package_name:p,app_color:c},label:u,type:'url'};}
-  if(type==='html'){const u=document.getElementById('htmlURL').value.trim();const n=document.getElementById('htmlName').value.trim()||'My App';const p=(document.getElementById('htmlPkg').value.trim()||'com.repo2apk.htmlapp').replace(/\s+/g,'').toLowerCase();if(!u){alert('Enter an HTML file URL');return null;}return{wf:WF.html,inputs:{html_url:u,app_name:n,package_name:p},label:u,type:'html'};}
+function getParams(type) {
+  if (type==='repo') {
+    let u = document.getElementById('repoUrl').value.trim();
+    const bt = document.getElementById('repoBT').value;
+    if (!u) { alert('Enter a GitHub repo URL'); return null; }
+    const rm = u.match(/https:\/\/raw\.githubusercontent\.com\/([^\/]+)\/([^\/]+)/);
+    if (rm) u = 'https://github.com/'+rm[1]+'/'+rm[2];
+    const bm = u.match(/https:\/\/github\.com\/([^\/]+)\/([^\/]+)\/(blob|tree|raw)/);
+    if (bm) u = 'https://github.com/'+bm[1]+'/'+bm[2];
+    if (!/^https:\/\/github\.com\/[^\/]+\/[^\/]+/.test(u)) { alert('Invalid GitHub repo URL'); return null; }
+    const m = u.match(/^https:\/\/github\.com\/([^\/]+)\/([^\/]+)/);
+    return {wf:WF.repo, inputs:{repo_url:'https://github.com/'+m[1]+'/'+m[2], build_type:bt}, label:u, type:'repo'};
+  }
+  if (type==='url') {
+    const u = document.getElementById('urlURL').value.trim();
+    const n = document.getElementById('urlName').value.trim() || 'My App';
+    const p = (document.getElementById('urlPkg').value.trim() || 'com.repo2apk.app').replace(/\s+/g,'').toLowerCase();
+    const c = document.getElementById('urlColor').value.trim() || '0088ff';
+    if (!u) { alert('Enter a website URL'); return null; }
+    return {wf:WF.url, inputs:{website_url:u, app_name:n, package_name:p, app_color:c}, label:u, type:'url'};
+  }
+  if (type==='html') {
+    const u = document.getElementById('htmlURL').value.trim();
+    const n = document.getElementById('htmlName').value.trim() || 'My App';
+    const p = (document.getElementById('htmlPkg').value.trim() || 'com.repo2apk.htmlapp').replace(/\s+/g,'').toLowerCase();
+    if (!u) { alert('Enter an HTML file URL'); return null; }
+    return {wf:WF.html, inputs:{html_url:u, app_name:n, package_name:p}, label:u, type:'html'};
+  }
 }
 
 function log(type,msg,c){const el=document.getElementById('log-'+type);if(!el)return;const d=document.createElement('div');d.className='l'+(c||'w');d.textContent=msg;el.appendChild(d);el.scrollTop=el.scrollHeight;}
@@ -677,14 +915,13 @@ function setSt(type,cls,txt){const el=document.getElementById('st-'+type);if(el)
 function showResult(type,ok,runId,runUrl){
   const rb=document.getElementById('rb-'+type);
   const body=document.getElementById('ra-'+type);
-  const ico=document.getElementById('ri-'+type);
-  const title=document.getElementById('rt-'+type);
   rb.className='rbox '+(ok?'ok':'fail');rb.style.display='block';
-  ico.textContent=ok?'✅':'❌';title.textContent=ok?'Build Successful!':'Build Failed';
+  document.getElementById('ri-'+type).textContent=ok?'✅':'❌';
+  document.getElementById('rt-'+type).textContent=ok?'Build Successful!':'Build Failed';
   body.innerHTML='';
   if(ok){
     const wrap=document.createElement('div');wrap.className='dl-wrap';
-    const dlBtn=document.createElement('button');dlBtn.className='dl-main';dlBtn.id='dlbtn-'+type;dlBtn.textContent='📥 Download APK';
+    const dlBtn=document.createElement('button');dlBtn.className='dl-main';dlBtn.textContent='📥 Download APK';
     dlBtn.addEventListener('click',()=>dlApk(type,runId));
     const ghLink=document.createElement('a');ghLink.href=runUrl;ghLink.target='_blank';ghLink.className='dl-gh';ghLink.textContent='View Logs →';
     wrap.appendChild(dlBtn);wrap.appendChild(ghLink);
@@ -700,36 +937,25 @@ function showResult(type,ok,runId,runUrl){
 }
 
 async function dlApk(type,runId){
-  const btn=document.getElementById('dlbtn-'+type);
-  const note=document.getElementById('dlnote-'+type);
-  btn.disabled=true;btn.textContent='⏳ Fetching APK...';
+  const btn=document.querySelector('#ra-'+type+' .dl-main');
+  const noteEl=document.getElementById('dlnote-'+type);
+  if(btn)btn.disabled=true;if(btn)btn.textContent='⏳ Fetching...';
   let token=localStorage.getItem('r2t');
-  if(!token){token=prompt('Enter your GitHub token:\nghp_xxxxxxxxxxxxxxxx');if(!token){btn.disabled=false;btn.textContent='📥 Download APK';note.textContent='⚠ Token required.';return;}localStorage.setItem('r2t',token);['repoTok','urlTok','htmlTok'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=token;});}
+  if(!token){token=prompt('Enter your GitHub token:\nghp_xxxxxxxxxxxxxxxx');if(!token){if(btn){btn.disabled=false;btn.textContent='📥 Download APK';}return;}localStorage.setItem('r2t',token);}
   const isWebView=/wv|WebView/i.test(navigator.userAgent)||(!window.chrome&&/Android/i.test(navigator.userAgent));
   try{
-    note.textContent='Finding your APK...';
+    if(noteEl)noteEl.textContent='Finding APK...';
     const r=await fetch(GH+'/repos/'+OWNER+'/'+REPO+'/actions/runs/'+runId+'/artifacts',{headers:{'Authorization':'token '+token,'Accept':'application/vnd.github.v3+json'}});
     const d=await r.json();
     if(!d.artifacts||d.artifacts.length===0)throw new Error('No APK found. Wait 30s and try again.');
     const art=d.artifacts[0];
     if(art.expired)throw new Error('APK expired (7 days). Please rebuild.');
     const sizeMB=Math.round(art.size_in_bytes/1024/1024*10)/10;
-    btn.disabled=false;btn.textContent='📥 Download APK';
+    if(btn){btn.disabled=false;btn.textContent='📥 Download APK';}
     if(isWebView){
-      note.textContent='APK ready ('+sizeMB+' MB)';
-      const wrap=document.getElementById('dlnote-'+type);
-      wrap.innerHTML='';
-      const link=document.createElement('a');
-      link.href='https://github.com/'+OWNER+'/'+REPO+'/actions/runs/'+runId;
-      link.target='_blank';
-      link.style.cssText='display:block;margin-top:8px;padding:12px;background:linear-gradient(135deg,#10b981,#34d399);color:#000;border-radius:10px;text-decoration:none;font-weight:700;text-align:center;font-size:14px;';
-      link.textContent='📥 Download APK ('+sizeMB+' MB)';
-      const hint=document.createElement('div');
-      hint.style.cssText='font-size:11px;color:var(--t2);margin-top:8px;padding:10px;background:var(--s2);border-radius:8px;line-height:1.6;';
-      hint.innerHTML='<b style="color:var(--g2)">Steps:</b><br>1. Tap button above → opens in Chrome<br>2. Tap ⋮ menu → <b>Desktop site</b><br>3. Scroll to <b>Artifacts</b> → tap to download';
-      wrap.appendChild(link);wrap.appendChild(hint);
+      if(noteEl)noteEl.innerHTML='APK ready ('+sizeMB+' MB) — <a href="https://github.com/'+OWNER+'/'+REPO+'/actions/runs/'+runId+'" target="_blank" style="color:var(--g2);font-weight:700">tap to open download page →</a>';
     }else{
-      note.textContent='Downloading '+art.name+' ('+sizeMB+' MB)...';
+      if(noteEl)noteEl.textContent='Downloading ('+sizeMB+' MB)...';
       const dlRes=await fetch(GH+'/repos/'+OWNER+'/'+REPO+'/actions/artifacts/'+art.id+'/zip',{headers:{'Authorization':'token '+token,'Accept':'application/vnd.github.v3+json'}});
       if(!dlRes.ok)throw new Error('Download failed: '+dlRes.status);
       const blob=await dlRes.blob();
@@ -737,25 +963,33 @@ async function dlApk(type,runId){
       const a=document.createElement('a');a.href=url;a.download=art.name+'.zip';a.style.display='none';
       document.body.appendChild(a);a.click();
       setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(url);},2000);
-      note.textContent='✅ Downloaded! Extract ZIP to get your APK.';
+      if(noteEl)noteEl.textContent='✅ Downloaded! Extract ZIP to get your APK.';
     }
-  }catch(e){btn.disabled=false;btn.textContent='📥 Download APK';note.textContent='⚠ '+e.message;}
+  }catch(e){
+    if(btn){btn.disabled=false;btn.textContent='📥 Download APK';}
+    if(noteEl)noteEl.textContent='⚠ '+e.message;
+  }
 }
 
 async function saveHist(label,status,url,type){
   hist.unshift({label,status,url,time:Date.now()});
-  if(hist.length>10)hist=hist.slice(0,10);
-  renHist();upUI();
-  // Save to Supabase
+  if(hist.length>20)hist=hist.slice(0,20);
+  localStorage.setItem('r2h',JSON.stringify(hist));
+  upUI();renHist();
   if(currentUser){
     await supa.from('builds').insert({user_id:currentUser.id,label,status,run_url:url,type:type||'repo'});
   }
 }
-function renHist(){const h=hist.length?hist.map(h=>'<div class="hi"><div class="hdot '+h.status+'"></div><div style="flex:1;min-width:0"><div class="hlbl">'+h.label+'</div><div class="htime">'+new Date(h.time).toLocaleString()+'</div></div>'+(h.url?'<a href="'+h.url+'" target="_blank" class="hlink">logs</a>':'')+'</div>').join(''):'<div class="hempty">No builds yet</div>';['hl-desk','hl-mob'].forEach(id=>{const e=document.getElementById(id);if(e)e.innerHTML=h;});}
-function clrHist(){hist=[];renHist();upUI();}
+function renHist(){
+  const h=hist.length?hist.map(h=>'<div class="hi"><div class="hdot '+h.status+'"></div><div style="flex:1;min-width:0"><div class="hlbl">'+h.label+'</div><div class="htime">'+new Date(h.time).toLocaleString()+'</div></div>'+(h.url?'<a href="'+h.url+'" target="_blank" class="hlink">logs</a>':'')+'</div>').join(''):'<div class="hempty">No builds yet</div>';
+  ['hl-desk','hl-mob','histModList'].forEach(id=>{const e=document.getElementById(id);if(e)e.innerHTML=h;});
+}
+function clrHist(){hist=[];localStorage.setItem('r2h','[]');upUI();renHist();}
 
-async function ghFetch(path,opts={}){const t=localStorage.getItem('r2t');return fetch(GH+path,{...opts,headers:{'Authorization':'token '+t,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json',...(opts.headers||{})}});}
-
+async function ghFetch(path,opts={}){
+  const t=localStorage.getItem('r2t');
+  return fetch(GH+path,{...opts,headers:{'Authorization':'token '+t,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json',...(opts.headers||{})}});
+}
 async function uploadIcon(type,tok){
   if(!icons[type])return null;
   try{
@@ -764,10 +998,9 @@ async function uploadIcon(type,tok){
     const path='icons/icon_'+Date.now()+'.png';
     const r=await fetch(GH+'/repos/'+OWNER+'/'+REPO+'/contents/'+path,{method:'PUT',headers:{'Authorization':'token '+tok,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json'},body:JSON.stringify({message:'add icon',content:b64,branch:'main'})});
     if(r.status===200||r.status===201){await new Promise(res=>setTimeout(res,2000));log(type,'Icon uploaded ✓','g');return'https://raw.githubusercontent.com/'+OWNER+'/'+REPO+'/main/'+path;}
-    const err=await r.json().catch(()=>({}));log(type,'Icon upload failed: '+(err.message||'?'),'y');return null;
+    const err=await r.json().catch(()=>({}));log(type,'Icon failed: '+(err.message||'?'),'y');return null;
   }catch(e){log(type,'Icon error: '+e.message,'y');return null;}
 }
-
 async function pollRun(type,runId){
   const steps=STEPS[type];let tick=0;
   return new Promise(resolve=>{
@@ -785,14 +1018,12 @@ async function pollRun(type,runId){
     },6000);
   });
 }
-
 async function runBuild(type){
-  const tok=getTok(type);if(!tok){showTok();return;}
+  const tok=getTok(type);if(!tok){showMod('tokMod');return;}
   const p=getParams(type);if(!p)return;
   const logEl=document.getElementById('log-'+type);if(logEl)logEl.innerHTML='';
   const rb=document.getElementById('rb-'+type);if(rb){rb.className='rbox';rb.style.display='none';const ra=document.getElementById('ra-'+type);if(ra)ra.innerHTML='';}
-  setPb(type,0);
-  document.getElementById('pg-'+type).style.display='block';
+  setPb(type,0);document.getElementById('pg-'+type).style.display='block';
   STEPS[type].forEach((_,i)=>setStep(type,i,''));
   setSt(type,'run','BUILDING');setBB(type,true);
   setStep(type,0,'act');setPb(type,5);
@@ -821,12 +1052,9 @@ async function runBuild(type){
     await saveHist(p.label,'failed','https://github.com/'+OWNER+'/'+REPO+'/actions',p.type);
   }finally{setBB(type,false);if(polls[type])clearInterval(polls[type]);}
 }
-
 function chkLayout(){const m=window.innerWidth<960;const e=document.getElementById('mhist');if(e)e.style.display=m?'block':'none';}
 window.addEventListener('resize',chkLayout);
-
-// Enter key on auth
-document.addEventListener('keydown',e=>{if(e.key==='Enter'&&document.getElementById('authPage').style.display!=='none')doAuth();});
+document.addEventListener('keydown',e=>{if(e.key==='Enter'){const ap=document.getElementById('authPage');if(ap&&ap.style.display!=='none')doEmailAuth();}});
 </script>
 </body>
 </html>
