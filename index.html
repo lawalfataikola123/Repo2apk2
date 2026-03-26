@@ -497,10 +497,10 @@ const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJ
 const supa=supabase.createClient(SUPA_URL,SUPA_KEY);
 let currentUser=null,userProfile=null;
 supa.auth.onAuthStateChange(async(event,session)=>{
-  if(session){currentUser=session.user;await loadProfile();showUserNav();}
-  else{currentUser=null;userProfile=null;hideUserNav();}
+  if(session){currentUser=session.user;await loadProfile();showApp();}
+  else{currentUser=null;userProfile=null;document.getElementById('authPage').style.display='flex';document.getElementById('mainApp').style.display='none';}
 });
-supa.auth.getSession().then(({data:{session}})=>{if(session){currentUser=session.user;loadProfile().then(showUserNav);}});
+supa.auth.getSession().then(({data:{session}})=>{if(session){currentUser=session.user;loadProfile().then(showApp);}});
 async function loadProfile(){
   const{data}=await supa.from('profiles').select('*').eq('id',currentUser.id).single();
   userProfile=data;
@@ -555,10 +555,10 @@ const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJ
 const supa=supabase.createClient(SUPA_URL,SUPA_KEY);
 let currentUser=null,userProfile=null;
 supa.auth.onAuthStateChange(async(event,session)=>{
-  if(session){currentUser=session.user;await loadProfile();showUserNav();}
-  else{currentUser=null;userProfile=null;hideUserNav();}
+  if(session){currentUser=session.user;await loadProfile();showApp();}
+  else{currentUser=null;userProfile=null;document.getElementById('authPage').style.display='flex';document.getElementById('mainApp').style.display='none';}
 });
-supa.auth.getSession().then(({data:{session}})=>{if(session){currentUser=session.user;loadProfile().then(showUserNav);}});
+supa.auth.getSession().then(({data:{session}})=>{if(session){currentUser=session.user;loadProfile().then(showApp);}});
 async function loadProfile(){
   const{data}=await supa.from('profiles').select('*').eq('id',currentUser.id).single();
   userProfile=data;
