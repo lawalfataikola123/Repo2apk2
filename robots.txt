@@ -1,0 +1,29 @@
+# Repo2APK Robots.txt
+# This file tells search engine crawlers which pages or files they can or can't request from your site
+
+# Allow all bots to crawl the entire site
+User-agent: *
+Allow: /
+
+# Disallow admin and private areas
+Disallow: /admin/
+Disallow: /api/
+Disallow: /auth/
+Disallow: /private/
+Disallow: /tmp/
+Disallow: /logs/
+
+# Allow access to important directories and files
+Allow: /assets/
+Allow: /css/
+Allow: /js/
+Allow: /images/
+Allow: /blog/
+Allow: /docs/
+Allow: /sitemap.xml
+
+# Crawl delay for aggressive bots
+Crawl-delay: 1
+
+# Sitemap location
+Sitemap: https://repo2apk.app/sitemap.xml
