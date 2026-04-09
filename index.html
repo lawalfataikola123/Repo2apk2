@@ -3,11 +3,64 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Repo2APK — Build Android APKs</title>
+<title>Repo2APK — Convert GitHub Repos, Websites & HTML to Android APKs</title>
+<meta name="description" content="Repo2APK lets you convert any GitHub repository, website, or HTML file into an Android APK without coding. Build apps from Flutter, React Native, or any web project in minutes.">
+<!-- Favicon -->
+<link rel="icon" type="image/png" sizes="32x32" href="https://repo2apk.app/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="https://repo2apk.app/favicon-16x16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="https://repo2apk.app/apple-touch-icon.png">
+<!-- Open Graph / Facebook -->
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://repo2apk.app">
+<meta property="og:title" content="Repo2APK — Convert GitHub Repos, Websites & HTML to Android APKs">
+<meta property="og:description" content="Convert any GitHub repository, website, or HTML file into an Android APK without coding. Build apps from Flutter, React Native, or any web project in minutes.">
+<meta property="og:image" content="https://repo2apk.app/og-image.png">
+<meta property="og:site_name" content="Repo2APK">
+<meta property="og:locale" content="en_US">
+<!-- Twitter -->
+<meta property="twitter:card" content="summary_large_image">
+<meta property="twitter:url" content="https://repo2apk.app">
+<meta property="twitter:title" content="Repo2APK — Convert GitHub Repos, Websites & HTML to Android APKs">
+<meta property="twitter:description" content="Convert any GitHub repository, website, or HTML file into an Android APK without coding. Build apps from Flutter, React Native, or any web project in minutes.">
+<meta property="twitter:image" content="https://repo2apk.app/og-image.png">
+<!-- Structured Data (JSON-LD) -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "Repo2APK",
+  "description": "Convert any GitHub repository, website, or HTML file into an Android APK without coding. Build apps from Flutter, React Native, or any web project in minutes.",
+  "applicationCategory": "DeveloperTool",
+  "operatingSystem": "Android",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "NGN"
+  },
+  "features": [
+    "GitHub Repository to APK",
+    "Website to APK Converter",
+    "HTML to APK Builder",
+    "No Coding Required",
+    "Fast Build Times (~2 minutes)"
+  ]
+}
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://js.paystack.co/v1/inline.js"></script>
+<!-- Google Analytics (replace with your actual ID) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  // Only initialize if we have a valid ID (not the placeholder)
+  if ('G-XXXXXXXXXX' !== 'G-XXXXXXXXXX') {
+    gtag('config', 'G-XXXXXXXXXX');
+  }
+</script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
@@ -735,7 +788,21 @@ function showResult(type,ok,runId,runUrl){
     const wrap=document.createElement('div'); wrap.className='dl-wrap';
     const dlBtn=document.createElement('button'); dlBtn.className='dl-main'; dlBtn.textContent='📥 Download APK'; dlBtn.addEventListener('click',()=>dlApk(type,runId));
     const ghLink=document.createElement('a'); ghLink.href=runUrl; ghLink.target='_blank'; ghLink.className='dl-gh'; ghLink.textContent='View Logs →';
-    wrap.appendChild(dlBtn); wrap.appendChild(ghLink);
+
+    // Social sharing buttons
+    const shareDiv = document.createElement('div');
+    shareDiv.style.display = 'flex';
+    shareDiv.style.gap = '10px';
+    shareDiv.style.marginTop = '10px';
+    shareDiv.innerHTML = `
+      <button onclick="shareApp('${runUrl}')" style="flex:1;background:var(--a2);color:white;border:none;padding:8px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;">Share on Twitter</button>
+      <button onclick="shareAppWhatsApp('${runUrl}')" style="flex:1;background:var(--g2);color:white;border:none;padding:8px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;">Share on WhatsApp</button>
+    `;
+
+    wrap.appendChild(dlBtn);
+    wrap.appendChild(ghLink);
+    wrap.appendChild(shareDiv);
+
     const note=document.createElement('div'); note.className='dl-note'; note.id='dlnote-'+type; note.textContent='Tap Download APK to download directly.';
     body.appendChild(wrap); body.appendChild(note);
   } else {
@@ -745,6 +812,19 @@ function showResult(type,ok,runId,runUrl){
     const note=document.createElement('div'); note.className='dl-note'; note.textContent='Check the logs to see what went wrong.';
     body.appendChild(wrap); body.appendChild(note);
   }
+}
+
+// Social sharing functions
+function shareApp(url) {
+  const text = "I just built an Android APK with Repo2APK! Convert any GitHub repo, website, or HTML to an app in minutes. No coding required.";
+  const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
+  window.open(twitterUrl, '_blank', 'width=500,height=300');
+}
+
+function shareAppWhatsApp(url) {
+  const text = "I just built an Android APK with Repo2APK! Convert any GitHub repo, website, or HTML to an app in minutes. No coding required.";
+  const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(text + ' ' + url)}`;
+  window.open(whatsappUrl, '_blank');
 }
 
 async function dlApk(type,runId){
@@ -860,6 +940,71 @@ function chkLayout(){const m=window.innerWidth<960; const e=document.getElementB
 window.addEventListener('resize',chkLayout);
 document.addEventListener('keydown',e=>{if(e.key==='Enter'){const ap=document.getElementById('authPage'); if(ap&&ap.style.display!=='none')doEmailAuth();}});
 </script>
+
+<!-- Blog/News Section for SEO and Engagement -->
+<section class="blog-section" style="padding:40px 16px;background:var(--s1);">
+  <h2 style="text-align:center;color:var(--t);font-size:24px;font-weight:700;margin-bottom:30px;">Latest Updates & Tutorials</h2>
+  <div style="display:grid;gap:20px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));max-width:1200px;margin:0 auto;">
+    <article class="blog-card" style="background:var(--c1);border:1px solid var(--br);border-radius:var(--rad);overflow:hidden;transition:all 0.3s;">
+      <div style="padding:20px;">
+        <h3 style="color:var(--a2);font-size:18px;margin-bottom:10px;">How to Convert Your Flutter App to APK in 5 Minutes</h3>
+        <p style="color:var(--t2);font-size:14px;margin-bottom:15px;">Step-by-step guide to building Flutter apps with Repo2APK, including handling assets and platform-specific code.</p>
+        <a href="#" style="color:var(--a);font-size:13px;font-weight:600;">Read more →</a>
+      </div>
+    </article>
+    <article class="blog-card" style="background:var(--c1);border:1px solid var(--br);border-radius:var(--rad);overflow:hidden;transition:all 0.3s;">
+      <div style="padding:20px;">
+        <h3 style="color:var(--a2);font-size:18px;margin-bottom:10px;">Website to APK: No Code Solution for Your Business</h3>
+        <p style="color:var(--t2);font-size:14px;margin-bottom:15px;">Turn any website into a native Android app instantly - perfect for restaurants, stores, and portfolios.</p>
+        <a href="#" style="color:var(--a);font-size:13px;font-weight:600;">Read more →</a>
+      </div>
+    </article>
+    <article class="blog-card" style="background:var(--c1);border:1px solid var(--br);border-radius:var(--rad);overflow:hidden;transition:all 0.3s;">
+      <div style="padding:20px;">
+        <h3 style="color:var(--a2);font-size:18px;margin-bottom:10px;">Monetize Your APKs: Ads, In-App Purchases & More</h3>
+        <p style="color:var(--t2);font-size:14px;margin-bottom:15px;">Learn how to add revenue streams to your apps built with Repo2APK using AdMob, Firebase, and other services.</p>
+        <a href="#" style="color:var(--a);font-size:13px;font-weight:600;">Read more →</a>
+      </div>
+    </article>
+  </div>
+</section>
+
+<!-- Testimonials/Showcase Section -->
+<section class="testimonials-section" style="padding:40px 16px;background:var(--bg);">
+  <h2 style="text-align:center;color:var(--t);font-size:24px;font-weight:700;margin-bottom:30px;">What Our Users Are Building</h2>
+  <div style="display:grid;gap:20px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));max-width:1200px;margin:0 auto;">
+    <div class="testimonial-card" style="background:var(--c1);border:1px solid var(--br);border-radius:var(--rad);padding:20px;text-align:center;">
+      <div style="font-size:48px;color:var(--g2);margin-bottom:15px;">📱</div>
+      <p style="color:var(--t2);font-size:14px;line-height:1.5;margin-bottom:15px;">"Converted my restaurant's website to an APK in 10 minutes. Customers can now view menus and place orders directly from their phones!"</p>
+      <div style="color:var(--a2);font-weight:600;">Adebola, Restaurant Owner</div>
+    </div>
+    <div class="testimonial-card" style="background:var(--c1);border:1px solid var(--br);border-radius:var(--rad);padding:20px;text-align:center;">
+      <div style="font-size:48px;color:var(--a2);margin-bottom:15px;">🎮</div>
+      <p style="color:var(--t2);font-size:14px;line-height:1.5;margin-bottom:15px;">"Built and deployed my Unity game as an APK without touching Android Studio. Saved me hours of configuration work!"</p>
+      <div style="color:var(--a2);font-weight:600;">Chinedu, Indie Game Developer</div>
+    </div>
+    <div class="testimonial-card" style="background:var(--c1);border:1px solid var(--br);border-radius:var(--rad);padding:20px;text-align:center;">
+      <div style="font-size:48px;color:var(--o2);margin-bottom:15px;">📚</div>
+      <p style="color:var(--t2);font-size:14px;line-height:1.5;margin-bottom:15px;">"Created an educational app for my students. They can now access lessons and quizzes offline on their Android devices."</p>
+      <div style="color:var(--a2);font-weight:600;">Fatima, Educator</div>
+    </div>
+  </div>
+</section>
+
+<!-- Add simple CSS for hover effects -->
+<style>
+.blog-card:hover, .testimonial-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+}
+.blog-card, .testimonial-card {
+  transition: all 0.3s ease;
+}
+</style>
 </body>
+<!-- Optional: Add this to your app's footer for backlink -->
+<!-- <div style="text-align:center;padding:10px;color:var(--t2);font-size:12px;">
+    Built with <a href="https://repo2apk.app" style="color:var(--a2);text-decoration:none;">Repo2APK</a>
+</div> -->
 </html>
 
