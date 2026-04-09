@@ -442,9 +442,9 @@ input::placeholder{color:var(--t3);font-size:12px}
     <div class="mt">⚡ Subscription & Credits</div>
     <div class="ms">Buy credits to remove ads and unlock premium features. One-time payment.</div>
     <div class="plans">
-      <div class="plan" onclick="selPlan(this,1500,10)"><div class="plan-p">₦1,500</div><div class="plan-c">10 credits</div><div class="plan-l">Starter</div></div>
-      <div class="plan on" onclick="selPlan(this,5000,50)"><div class="plan-p">₦5,000</div><div class="plan-c">50 credits</div><div class="plan-l">Popular</div></div>
-      <div class="plan" onclick="selPlan(this,12500,200)"><div class="plan-p">₦12,500</div><div class="plan-c">200 credits</div><div class="plan-l">Pro</div></div>
+      <div class="plan" onclick="selPlan(this,5000,10)"><div class="plan-p">#5000</div><div class="plan-c">10 credits</div><div class="plan-l">Starter</div></div>
+      <div class="plan on" onclick="selPlan(this,13000,50)"><div class="plan-p">#13000</div><div class="plan-c">50 credits</div><div class="plan-l">Popular</div></div>
+      <div class="plan" onclick="selPlan(this,20000,200)"><div class="plan-p">#20000</div><div class="plan-c">200 credits</div><div class="plan-l">Pro</div></div>
     </div>
     <button class="mact" onclick="doPay()">Pay with Paystack</button>
   </div>
@@ -560,7 +560,7 @@ const OWNER = 'lawalfataikola123', REPO = 'Repo2apk2', GH = 'https://api.github.
 const PSKEY = 'pk_test_6af987cbdbb89d1ffef24e6880356ac59600e73e';
 const WF = {repo:'build-apk.yml', url:'url-to-apk.yml', html:'html-to-apk.yml'};
 const STEPS = {repo: ['Queue','Setup','Clone','Build','Upload'], url: ['Queue','Setup','Build','Sign','Upload'], html: ['Queue','Setup','Build','Sign','Upload']};
-let currentUser = null, userProfile = null, credits = 0, hist = JSON.parse(localStorage.getItem('r2h') || '[]'), icons = {repo:null, url:null, html:null}, polls = {}, plan = {a:5000, c:50};
+let currentUser = null, userProfile = null, credits = 0, hist = JSON.parse(localStorage.getItem('r2h') || '[]'), icons = {repo:null, url:null, html:null}, polls = {}, plan = {a:13000, c:50};
 const noAds = () => localStorage.getItem('r2na') === '1';
 
 supa.auth.onAuthStateChange(async (event, session) => {
