@@ -49,7 +49,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://js.paystack.co/v1/inline.js"></script>
+<script src="https://checkout.flutterwave.com/v3.js"></script>
 <!-- Google Analytics (replace with your actual ID) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
 <script>
@@ -499,7 +499,7 @@ input::placeholder{color:var(--t3);font-size:12px}
       <div class="plan on" onclick="selPlan(this,13000,50)"><div class="plan-p">#13000</div><div class="plan-c">50 credits</div><div class="plan-l">Popular</div></div>
       <div class="plan" onclick="selPlan(this,20000,200)"><div class="plan-p">#20000</div><div class="plan-c">200 credits</div><div class="plan-l">Pro</div></div>
     </div>
-    <button class="mact" onclick="doPay()">Pay with Paystack</button>
+    <button class="mact" onclick="doPay()">Pay with Flutterwave</button>
   </div>
 </div>
 
@@ -570,7 +570,7 @@ input::placeholder{color:var(--t3);font-size:12px}
     <div style="font-size:13px;color:var(--t2);line-height:1.8;margin-top:12px">
       <p style="margin-bottom:10px"><b style="color:var(--t)">Data We Collect:</b> Email address (for authentication), build history, and payment references.</p>
       <p style="margin-bottom:10px"><b style="color:var(--t)">GitHub Token:</b> Your GitHub token is stored locally in your browser only. We never store it on our servers.</p>
-      <p style="margin-bottom:10px"><b style="color:var(--t)">Payments:</b> Payments are processed by Paystack. We only store the payment reference, amount, and credits — no card details.</p>
+      <p style="margin-bottom:10px"><b style="color:var(--t)">Payments:</b> Payments are processed by Flutterwave. We only store the payment reference, amount, and credits — no card details.</p>
       <p><b style="color:var(--t)">Contact:</b> For privacy concerns, contact us at support@repo2apk.app</p>
     </div>
   </div>
@@ -610,7 +610,7 @@ const SUPA_URL = 'https://wilxsrbxglgqcvirqofn.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndpbHhzcmJ4Z2xncWN2aXJxb2ZuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzMjI0MzEsImV4cCI6MjA4OTg5ODQzMX0.jpWbt3BNOCg7X851NZ8xvZtaMMwQALCgvi8SWF-Br38';
 const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
 const OWNER = 'lawalfataikola123', REPO = 'Repo2apk2', GH = 'https://api.github.com';
-const PSKEY = 'pk_test_6af987cbdbb89d1ffef24e6880356ac59600e73e';
+const FLW_PUB_KEY = 'FLWPUBK_TEST-8b0b5b0b-2bd3-4abe-98b7-e78a75b118ec-X';
 const WF = {repo:'build-apk.yml', url:'url-to-apk.yml', html:'html-to-apk.yml'};
 const STEPS = {repo: ['Queue','Setup','Clone','Build','Upload'], url: ['Queue','Setup','Build','Sign','Upload'], html: ['Queue','Setup','Build','Sign','Upload']};
 let currentUser = null, userProfile = null, credits = 0, hist = JSON.parse(localStorage.getItem('r2h') || '[]'), icons = {repo:null, url:null, html:null}, polls = {}, plan = {a:13000, c:50};
@@ -722,25 +722,45 @@ function doPay() {
   if (!currentUser) { alert('Please sign in first'); return; }
   const tok = getTok('repo');
   if (!tok) { alert('Enter your GitHub token first'); return; }
-  if (typeof PaystackPop === 'undefined') { alert('Payment system loading... Please try again.'); return; }
+  if (typeof Flutterwave === 'undefined') { alert('Payment system loading... Please try again.'); return; }
   const email = currentUser.email || tok.substring(0,8)+'@repo2apk.app';
   const amount = plan.a;
   const creditsToAdd = plan.c;
   try {
-    const handler = PaystackPop.setup({
-      key: PSKEY, email: email, amount: amount, currency: 'NGN',
-      ref: 'r2a_' + Date.now() + '_' + Math.floor(Math.random() * 1000000),
-      callback: function(res) { console.log('Payment success:', res); handlePaymentSuccess(res, amount, creditsToAdd); },
-      onClose: function() { console.log('Payment closed'); }
+    FlutterwaveCheckout({
+      public_key: FLW_PUB_KEY,
+      tx_ref: 'r2a_' + Date.now() + '_' + Math.floor(Math.random() * 1000000),
+      amount: amount.toString(),
+      currency: 'NGN',
+      payment_options: 'card',
+      redirect_url: window.location.href,
+      customer: {
+        email: email,
+        phone_number: '',
+        name: currentUser.email?.split('@')[0] || 'Customer'
+      },
+      customizations: {
+        title: 'Repo2APK Credits',
+        description: 'Purchase credits for APK builds',
+        logo: 'https://repo2apk.app/logo.png'
+      },
+      callback: function(data) {
+        if (data.status === 'successful') {
+          console.log('Payment successful:', data);
+          handlePaymentSuccess(data, amount, creditsToAdd);
+        }
+      },
+      onclose: function() {
+        console.log('Payment widget closed');
+      }
     });
-    handler.openIframe();
-  } catch (e) { console.error('Paystack error:', e); alert('Payment error: ' + e.message); }
+  } catch (e) { console.error('Flutterwave error:', e); alert('Payment error: ' + e.message); }
 }
 
 async function handlePaymentSuccess(res, amount, creditsToAdd) {
   credits += creditsToAdd; localStorage.setItem('r2na', '1');
   await supa.from('profiles').update({credits: credits}).eq('id', currentUser.id);
-  await supa.from('payments').insert({ user_id: currentUser.id, amount: amount, credits: creditsToAdd, reference: res.reference, status: 'success' });
+  await supa.from('payments').insert({ user_id: currentUser.id, amount: amount, credits: creditsToAdd, reference: res.tx.ref || res.transaction_id, status: 'success' });
   upUI(); applyAds(); hideMod('payMod'); alert('✅ ' + creditsToAdd + ' credits added!');
 }
 
