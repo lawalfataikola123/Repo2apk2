@@ -720,20 +720,18 @@ function selPlan(el, a, c) { document.querySelectorAll('.plan').forEach(p => p.c
 
 function doPay() {
   if (!currentUser) { alert('Please sign in first'); return; }
-  const tok = getTok('repo');
-  if (!tok) { alert('Enter your GitHub token first'); return; }
-  if (typeof Flutterwave === 'undefined') { alert('Payment system loading... Please try again.'); return; }
-  const email = currentUser.email || tok.substring(0,8)+'@repo2apk.app';
+  if (typeof FlutterwaveCheckout === 'undefined') { alert('Payment system loading... Please try again in a moment.'); return; }
+  const email = currentUser.email || 'user_' + Date.now() + '@repo2apk.app';
   const amount = plan.a;
   const creditsToAdd = plan.c;
+  const txRef = 'r2a_' + Date.now() + '_' + Math.floor(Math.random() * 1000000);
   try {
     FlutterwaveCheckout({
       public_key: FLW_PUB_KEY,
-      tx_ref: 'r2a_' + Date.now() + '_' + Math.floor(Math.random() * 1000000),
-      amount: amount.toString(),
+      tx_ref: txRef,
+      amount: amount,
       currency: 'NGN',
-      payment_options: 'card',
-      redirect_url: window.location.href,
+      payment_options: 'card,ussd,bank_transfer',
       customer: {
         email: email,
         phone_number: '',
@@ -741,13 +739,15 @@ function doPay() {
       },
       customizations: {
         title: 'Repo2APK Credits',
-        description: 'Purchase credits for APK builds',
-        logo: 'https://repo2apk.app/logo.png'
+        description: creditsToAdd + ' credits for APK builds',
+        logo: 'https://repo2apk.app/favicon-32x32.png'
       },
       callback: function(data) {
-        if (data.status === 'successful') {
-          console.log('Payment successful:', data);
+        console.log('Flutterwave callback:', data);
+        if (data.status === 'successful' || data.status === 'completed') {
           handlePaymentSuccess(data, amount, creditsToAdd);
+        } else {
+          alert('Payment was not completed. Status: ' + data.status);
         }
       },
       onclose: function() {
@@ -757,11 +757,33 @@ function doPay() {
   } catch (e) { console.error('Flutterwave error:', e); alert('Payment error: ' + e.message); }
 }
 
-async function handlePaymentSuccess(res, amount, creditsToAdd) {
-  credits += creditsToAdd; localStorage.setItem('r2na', '1');
-  await supa.from('profiles').update({credits: credits}).eq('id', currentUser.id);
-  await supa.from('payments').insert({ user_id: currentUser.id, amount: amount, credits: creditsToAdd, reference: res.tx.ref || res.transaction_id, status: 'success' });
-  upUI(); applyAds(); hideMod('payMod'); alert('✅ ' + creditsToAdd + ' credits added!');
+async function handlePaymentSuccess(data, amount, creditsToAdd) {
+  try {
+    const txRef = data.tx_ref || data.transaction_id || (data.tx && data.tx.ref);
+    if (!txRef) {
+      console.error('No transaction reference found in:', data);
+      alert('Payment successful but reference missing. Contact support.');
+      return;
+    }
+    credits += creditsToAdd;
+    localStorage.setItem('r2na', '1');
+    const { error: profileError } = await supa.from('profiles').update({credits: credits}).eq('id', currentUser.id);
+    if (profileError) throw profileError;
+    const { error: paymentError } = await supa.from('payments').insert({
+      user_id: currentUser.id,
+      amount: amount,
+      credits: creditsToAdd,
+      reference: txRef,
+      status: 'success',
+      created_at: new Date().toISOString()
+    });
+    if (paymentError) throw paymentError;
+    upUI(); applyAds(); hideMod('payMod');
+    alert('✅ ' + creditsToAdd + ' credits added successfully!');
+  } catch (e) {
+    console.error('Payment success handler error:', e);
+    alert('Payment successful! Credits will be added shortly. Ref: ' + (data.tx_ref || data.transaction_id));
+  }
 }
 
 function pickIcon(type, inp) { const f = inp.files[0]; if (!f) return; const r = new FileReader(); r.onload = e => { icons[type] = e.target.result; document.getElementById('it-'+type).innerHTML = '<img src="'+e.target.result+'">'; document.getElementById('iz-'+type).classList.add('picked'); }; r.readAsDataURL(f); }
@@ -1027,4 +1049,3 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter'){const ap=document.ge
     Built with <a href="https://repo2apk.app" style="color:var(--a2);text-decoration:none;">Repo2APK</a>
 </div> -->
 </html>
-
