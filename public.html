@@ -610,7 +610,8 @@ const SUPA_URL = 'https://wilxsrbxglgqcvirqofn.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndpbHhzcmJ4Z2xncWN2aXJxb2ZuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzMjI0MzEsImV4cCI6MjA4OTg5ODQzMX0.jpWbt3BNOCg7X851NZ8xvZtaMMwQALCgvi8SWF-Br38';
 const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
 const OWNER = 'lawalfataikola123', REPO = 'Repo2apk2', GH = 'https://api.github.com';
-const FLW_PUB_KEY = 'FLWPUBK_TEST-8b0b5b0b-2bd3-4abe-98b7-e78a75b118ec-X';
+// FLUTTERWAVE PUBLIC KEY
+const FLW_PUB_KEY = 'FLWPUBK-39fe1c7bed0ed5f14f7a5029656b991b-X';
 const WF = {repo:'build-apk.yml', url:'url-to-apk.yml', html:'html-to-apk.yml'};
 const STEPS = {repo: ['Queue','Setup','Clone','Build','Upload'], url: ['Queue','Setup','Build','Sign','Upload'], html: ['Queue','Setup','Build','Sign','Upload']};
 let currentUser = null, userProfile = null, credits = 0, hist = JSON.parse(localStorage.getItem('r2h') || '[]'), icons = {repo:null, url:null, html:null}, polls = {}, plan = {a:13000, c:50};
@@ -721,6 +722,11 @@ function selPlan(el, a, c) { document.querySelectorAll('.plan').forEach(p => p.c
 function doPay() {
   if (!currentUser) { alert('Please sign in first'); return; }
   if (typeof FlutterwaveCheckout === 'undefined') { alert('Payment system loading... Please try again in a moment.'); return; }
+  // Validate Flutterwave public key
+  if (!FLW_PUB_KEY || FLW_PUB_KEY === 'YOUR_FLUTTERWAVE_PUBLIC_KEY_HERE' || !FLW_PUB_KEY.startsWith('FLWPUBK')) {
+    alert('Payment configuration error: Invalid or missing Flutterwave public key.\n\nPlease set your Flutterwave public key in the code.\nGet your key from: https://dashboard.flutterwave.com/dashboard/settings/apis');
+    return;
+  }
   const email = currentUser.email || 'user_' + Date.now() + '@repo2apk.app';
   const amount = plan.a;
   const creditsToAdd = plan.c;
