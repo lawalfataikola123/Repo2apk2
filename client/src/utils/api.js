@@ -69,6 +69,13 @@ export const buildApi = {
     api.delete(`/build/${buildId}`)
 };
 
+// ─── Flutterwave Payments API ────────────────────────────────────────────────
+export const paymentApi = {
+  getConfig: () => api.get('/payment/config'),
+  getCredits: () => api.get('/payment/credits'),
+  checkout: () => api.post('/payment/checkout', {})
+};
+
 // ─── Auth API ─────────────────────────────────────────────────────────────────
 export const authApi = {
   login: (email, password) =>
