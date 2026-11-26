@@ -259,7 +259,8 @@ jobs:
               }
           }
           JAVA
-          sed -i "s/__PACKAGE__/$PKG/; s/__URL_B64__/$URL_B64/" app/src/main/java/$PKG_PATH/MainActivity.javaEOF
+          sed -i "s/__PACKAGE__/$PKG/; s/__URL_B64__/$URL_B64/" app/src/main/java/$PKG_PATH/MainActivity.java
+
 
           cat > app/src/main/res/values/colors.xml << EOF
           <?xml version="1.0" encoding="utf-8"?>
@@ -276,6 +277,11 @@ jobs:
               </style>
           </resources>
           EOF
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: 8.7
 
       - name: Build APK
         run: |
