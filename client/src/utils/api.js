@@ -6,7 +6,7 @@ import axios from 'axios';
 
 // Set VITE_API_BASE_URL to the deployed API origin + /api when frontend and API
 // are hosted separately. Leave unset for same-origin hosting/development proxy.
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '/api').replace(/\\/$/, '');
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '/api').replace(/\/$/, '');
 
 const api = axios.create({
   baseURL: API_BASE_URL,
