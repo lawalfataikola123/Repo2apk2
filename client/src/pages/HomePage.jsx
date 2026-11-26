@@ -110,7 +110,7 @@ export default function HomePage() {
               <div className="glass-panel rounded-2xl p-6">
                 <DownloadButton
                   status={build.status}
-                  downloadUrl={build.downloadUrl ? `/api${build.downloadUrl}` : null}
+                  buildId={build.buildId}
                   error={build.error}
                   onReset={build.reset}
                 />
