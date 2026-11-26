@@ -32,9 +32,8 @@ async function verifyTransaction(transactionId, txRef) {
   if (!response.ok || body.status !== 'success' || !body.data) throw new Error('Flutterwave transaction verification failed');
   const tx = body.data;
   const order = paymentStore.get(txRef);
-  if (!order || tx.tx_ref !== txRef || String(order.transactionId || '') === '') {
-    if (!order) throw new Error('Payment reference not found');
-  }
+  if (!order) throw new Error('Payment reference not found');
+  if (tx.tx_ref !== txRef) throw new Error('Flutterwave transaction reference mismatch');
   if (tx.status !== 'successful' || tx.currency !== currency || Number(tx.amount) < order.amount) {
     paymentStore.markFailed(txRef);
     throw new Error('Payment amount, currency or status did not match');
@@ -59,6 +58,11 @@ router.post('/checkout', authenticate, async (req, res, next) => {
     if (!amount) return res.status(503).json({ success: false, error: 'Build price is not configured on the server' });
     if (!process.env.FLW_SECRET_KEY || !apiBase() || !clientBase()) {
       return res.status(503).json({ success: false, error: 'Flutterwave payment settings are incomplete' });
+    }
+    try {
+      if (new URL(apiBase()).protocol !== 'https:' || new URL(clientBase()).protocol !== 'https:') throw new Error();
+    } catch {
+      return res.status(503).json({ success: false, error: 'API_BASE_URL and CLIENT_URL must be valid HTTPS URLs' });
     }
     const user = users.findById(req.user.id);
     if (!user) return res.status(401).json({ success: false, error: 'Account not found' });
