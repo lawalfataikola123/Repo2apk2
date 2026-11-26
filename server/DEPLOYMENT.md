@@ -20,3 +20,14 @@ The JSON stores are intended for a **single backend instance**. Mount persistent
 ## Deployment note
 
 These source changes do not automatically configure hosting environment variables or storage volumes. After setting the variables and mounts, redeploy the backend and verify `GET /api/health`, account registration/login, authenticated build submission, and APK download.
+
+## Flutterwave payments
+
+Configure these backend-only environment variables before enabling checkout:
+
+- `BUILD_PRICE_NGN`: price for one APK build, as a whole-number NGN amount (for example `500`). Choose your own price; the code does not hardcode one.
+- `FLW_SECRET_KEY`: Flutterwave secret key. Use test-mode keys for testing, then live keys after verification. Never expose this value to the client or commit it.
+- `FLW_SECRET_HASH`: webhook secret hash configured in the Flutterwave dashboard.
+- `API_BASE_URL`: public HTTPS backend origin, without a trailing slash, used for the payment callback.
+
+Set the Flutterwave webhook URL to `https://YOUR_API_HOST/api/payment/webhook` and use the same secret hash. Payment confirmation is verified against Flutterwave's transaction API before one build credit is granted. Configure `BUILD_PRICE_NGN`, `FLW_SECRET_KEY`, `FLW_SECRET_HASH`, and `API_BASE_URL` in the host's environment settings.
