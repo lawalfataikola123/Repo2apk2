@@ -1,0 +1,37 @@
+name: Deploy Repo2APK Supabase Function
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "supabase/functions/repo2apk-api/**"
+      - "supabase/config.toml"
+      - ".github/workflows/deploy-supabase.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Set function secret and deploy
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+          REPO2APK_GITHUB_TOKEN: ${{ secrets.REPO2APK_GITHUB_TOKEN }}
+        run: |
+          test -n "$SUPABASE_ACCESS_TOKEN" || (echo "Missing SUPABASE_ACCESS_TOKEN secret" && exit 1)
+          test -n "$SUPABASE_PROJECT_REF" || (echo "Missing SUPABASE_PROJECT_REF secret" && exit 1)
+          test -n "$REPO2APK_GITHUB_TOKEN" || (echo "Missing REPO2APK_GITHUB_TOKEN secret" && exit 1)
+          printf 'GITHUB_TOKEN=%s\n' "$REPO2APK_GITHUB_TOKEN" > /tmp/repo2apk-function-secrets.env
+          supabase secrets set --env-file /tmp/repo2apk-function-secrets.env --project-ref "$SUPABASE_PROJECT_REF"
+          rm -f /tmp/repo2apk-function-secrets.env
+          supabase functions deploy repo2apk-api --project-ref "$SUPABASE_PROJECT_REF"
