@@ -3,9 +3,7 @@ import { Github, ChevronDown, Zap, AlertCircle } from 'lucide-react';
 
 const BUILD_TYPES = [
   { value: 'auto', label: '🔍 Auto Detect', desc: 'Automatically detect project type' },
-  { value: 'gradle', label: '🤖 Native Android', desc: 'Java/Kotlin with Gradle' },
-  { value: 'flutter', label: '🐦 Flutter', desc: 'Flutter/Dart project' },
-  { value: 'react-native', label: '⚛️ React Native', desc: 'React Native project' }
+  { value: 'gradle', label: '🤖 Native Android', desc: 'Java/Kotlin with Gradle' }
 ];
 
 const EXAMPLE_REPOS = [
