@@ -37,8 +37,11 @@ function readSession() {
 }
 
 function saveSession(session) {
-  if (session) localStorage.setItem(SESSION_KEY, JSON.stringify(session));
-  else localStorage.removeItem(SESSION_KEY);
+  if (session) {
+    const stored = { ...session };
+    if (!stored.expires_at && stored.expires_in) stored.expires_at = Math.floor(Date.now() / 1000) + stored.expires_in;
+    localStorage.setItem(SESSION_KEY, JSON.stringify(stored));
+  } else localStorage.removeItem(SESSION_KEY);
 }
 
 async function supabaseAuth(path, payload) {
@@ -99,7 +102,17 @@ export const authApi = {
 export const buildApi = {
   startBuild: (repoUrl, buildType = 'auto') => functionRequest('start', { repoUrl, buildType }),
   getStatus: (buildId) => functionRequest('status', { buildId }, 'GET'),
-  getHistory: () => functionRequest('history', {}, 'GET'),
+  getHistory: async () => {
+    const data = await functionRequest('history', {}, 'GET');
+    return { builds: (data.builds || []).map(build => ({
+      ...build,
+      buildId: build.id,
+      repoUrl: build.repo_url,
+      projectType: build.project_type || build.build_type,
+      startedAt: build.created_at,
+      downloadUrl: build.status === 'success' ? buildApi.getDownloadUrl(build.id) : null
+    })) };
+  },
   getDownloadUrl: (buildId) => `${FUNCTION_URL}?action=download&buildId=${encodeURIComponent(buildId)}`,
   downloadBuild: async (buildId) => {
     requireSupabaseConfig();
