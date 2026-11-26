@@ -47,12 +47,31 @@ jobs:
           echo "ANDROID_HOME=$HOME/android-sdk" >> $GITHUB_ENV
           echo "ANDROID_SDK_ROOT=$HOME/android-sdk" >> $GITHUB_ENV
 
-      - name: Create WebView App
+      - name: Validate inputs
+        shell: bash
+        env:
+          SITE_URL: ${{ inputs.website_url }}
+          APP_LABEL: ${{ inputs.app_name }}
+          APP_PACKAGE: ${{ inputs.package_name }}
+          APP_COLOR: ${{ inputs.app_color }}
         run: |
-          APP_NAME="${{ github.event.inputs.app_name }}"
-          PKG="${{ github.event.inputs.package_name }}"
-          URL="${{ github.event.inputs.website_url }}"
-          COLOR="${{ github.event.inputs.app_color }}"
+          set -euo pipefail
+          [[ "$SITE_URL" =~ ^https://[^[:space:]]+$ ]] || { echo "Use a valid HTTPS website URL"; exit 1; }
+          [[ "$APP_PACKAGE" =~ ^[a-zA-Z][a-zA-Z0-9_]*(\.[a-zA-Z][a-zA-Z0-9_]*){1,}$ ]] || { echo "Invalid Android package name"; exit 1; }
+          [[ "$APP_COLOR" =~ ^[0-9A-Fa-f]{6}$ ]] || { echo "Theme color must be 6 hex digits"; exit 1; }
+          [[ "$APP_LABEL" =~ ^[A-Za-z0-9][A-Za-z0-9 ._-]{0,39}$ ]] || { echo "App name must use simple letters, numbers, spaces"; exit 1; }
+
+      - name: Create WebView App
+        env:
+          APP_NAME_INPUT: ${{ inputs.app_name }}
+          PACKAGE_INPUT: ${{ inputs.package_name }}
+          URL_INPUT: ${{ inputs.website_url }}
+          COLOR_INPUT: ${{ inputs.app_color }}
+        run: |
+          APP_NAME="$APP_NAME_INPUT"
+          PKG="$PACKAGE_INPUT"
+          URL="$URL_INPUT"
+          COLOR="$COLOR_INPUT"
           PKG_PATH=$(echo $PKG | tr '.' '/')
 
           mkdir -p /tmp/webviewapp
@@ -259,7 +278,7 @@ jobs:
               }
           }
           JAVA
-          sed -i "s/__PACKAGE__/$PKG/; s/__URL_B64__/$URL_B64/" app/src/main/java/$PKG_PATH/MainActivity.java
+          sed -i "s|__PACKAGE__|$PKG|; s|__URL_B64__|$URL_B64|" app/src/main/java/$PKG_PATH/MainActivity.java
 
 
           cat > app/src/main/res/values/colors.xml << EOF
