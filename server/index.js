@@ -18,6 +18,8 @@ const rateLimiter = require('./middleware/rateLimiter');
 const errorHandler = require('./middleware/errorHandler');
 const buildRoutes = require('./routes/build');
 const authRoutes = require('./routes/auth');
+const paymentRoutes = require('./routes/payment');
+const { jwtSecret } = require('./middleware/authenticate');
 const { setupSocketHandlers } = require('./services/socketService');
 const { cleanupOldBuilds } = require('./services/cleanupService');
 
@@ -69,6 +71,7 @@ fs.ensureDirSync(buildsDir);
 // ─── Routes ───────────────────────────────────────────────────────────────────
 app.use('/api/build', buildRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/payment', paymentRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
