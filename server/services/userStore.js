@@ -9,5 +9,6 @@ catch (e) { if (e.code !== 'ENOENT') throw e; }
 function persist() { const tmp=file+'.tmp'; fs.writeJsonSync(tmp,Object.fromEntries(users),{spaces:2}); fs.renameSync(tmp,file); }
 module.exports = {
  findByEmail(email) { return users.get(email) || null; },
+ findById(id) { return [...users.values()].find(user => user.id === id) || null; },
  create(email,user) { if(users.has(email)) return false; users.set(email,user); persist(); return true; }
 };
