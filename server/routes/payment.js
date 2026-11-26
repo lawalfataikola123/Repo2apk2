@@ -63,6 +63,9 @@ router.post('/checkout', authenticate, async (req, res, next) => {
     }
     const user = users.findById(req.user.id);
     if (!user) return res.status(401).json({ success: false, error: 'Account not found' });
+    if (plan.id === 'monthly' && paymentStore.getEntitlement(user.id).lifetime) {
+      return res.status(409).json({ success: false, error: 'Lifetime access is already active' });
+    }
     const txRef = 'repo2apk_' + crypto.randomUUID();
     const order = paymentStore.create({
       txRef, userId: user.id, plan: plan.id, amount: plan.amount, currency: plan.currency, status: 'pending',
