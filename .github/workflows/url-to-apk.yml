@@ -172,6 +172,7 @@ jobs:
           import android.webkit.WebSettings;
           import android.webkit.PermissionRequest;
           import android.webkit.DownloadListener;
+          import android.webkit.MimeTypeMap;
           import android.widget.Toast;
           import java.nio.charset.StandardCharsets;
 
@@ -236,7 +237,9 @@ jobs:
                           req.setTitle("Saving edited photo");
                           req.setDescription("Photo editor download");
                           req.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
-                          req.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, "EditedPhoto_" + System.currentTimeMillis());
+                          String ext = MimeTypeMap.getSingleton().getExtensionFromMimeType(mimeType);
+                          String filename = "EditedPhoto_" + System.currentTimeMillis() + (ext == null ? ".jpg" : "." + ext);
+                          req.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, filename);
                           ((DownloadManager)getSystemService(DOWNLOAD_SERVICE)).enqueue(req);
                           Toast.makeText(this, "Download started", Toast.LENGTH_SHORT).show();
                       } catch (Exception e) {
