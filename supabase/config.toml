@@ -1,0 +1,4 @@
+project_id = "zrxfvgujugfhsltlhzem"
+
+[functions.repo2apk-api]
+verify_jwt = true
