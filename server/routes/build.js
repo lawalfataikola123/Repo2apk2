@@ -13,6 +13,7 @@ const logger = require('../utils/logger');
 const { validateGitHubUrl, sanitizeUrl } = require('../utils/validators');
 const buildService = require('../services/buildService');
 const buildStore = require('../services/buildStore');
+const { authenticate } = require('../middleware/authenticate');
 
 // ─── Validation Middleware ────────────────────────────────────────────────────
 const validateBuildRequest = [
@@ -30,7 +31,7 @@ const validateBuildRequest = [
 ];
 
 // ─── POST /api/build ──────────────────────────────────────────────────────────
-router.post('/', validateBuildRequest, async (req, res) => {
+router.post('/', authenticate, validateBuildRequest, async (req, res) => {
   // Validate input
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -75,7 +76,7 @@ router.post('/', validateBuildRequest, async (req, res) => {
 });
 
 // ─── GET /api/build/status/:buildId ──────────────────────────────────────────
-router.get('/status/:buildId', (req, res) => {
+router.get('/status/:buildId', authenticate, (req, res) => {
   const { buildId } = req.params;
 
   // Sanitize buildId (UUID format only)
@@ -144,7 +145,7 @@ router.get('/download/:buildId', (req, res) => {
 });
 
 // ─── GET /api/build/history ───────────────────────────────────────────────────
-router.get('/history', (req, res) => {
+router.get('/history', authenticate, (req, res) => {
   const builds = buildStore.getAll();
   const history = Object.entries(builds).map(([id, build]) => ({
     buildId: id,
@@ -164,7 +165,7 @@ router.get('/history', (req, res) => {
 });
 
 // ─── DELETE /api/build/:buildId ───────────────────────────────────────────────
-router.delete('/:buildId', async (req, res) => {
+router.delete('/:buildId', authenticate, async (req, res) => {
   const { buildId } = req.params;
 
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(buildId)) {
