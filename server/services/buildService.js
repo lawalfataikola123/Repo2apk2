@@ -146,11 +146,18 @@ async function cloneRepository(repoUrl, destDir, log) {
   });
 
   try {
-    await git.clone(repoUrl, destDir, [
-      '--depth', '1',        // Shallow clone for speed
+    const cloneOptions = [
+      '--depth', '1',
       '--single-branch',
       '--no-tags'
-    ]);
+    ];
+    // Optional GitHub PAT enables cloning private repositories. Never place it in
+    // the remote URL or logs; Git receives it through an HTTP authorization header.
+    if (process.env.GITHUB_TOKEN) {
+      const auth = Buffer.from('x-access-token:' + process.env.GITHUB_TOKEN).toString('base64');
+      cloneOptions.unshift('-c', 'http.extraheader=AUTHORIZATION: basic ' + auth);
+    }
+    await git.clone(repoUrl, destDir, cloneOptions);
 
     // Check repo size
     const { size } = await getDirSize(destDir);
@@ -166,11 +173,11 @@ async function cloneRepository(repoUrl, destDir, log) {
     if (error.message.includes('Repository not found') ||
         error.message.includes('not found') ||
         error.message.includes('does not exist')) {
-      throw new Error('Repository not found. Ensure it exists and is public.');
+      throw new Error('Repository not found or inaccessible. For private GitHub repositories, configure GITHUB_TOKEN with repository read access.');
     }
     if (error.message.includes('Authentication failed') ||
         error.message.includes('could not read')) {
-      throw new Error('Repository is private or inaccessible. Only public repositories are supported.');
+      throw new Error('Repository access denied. Configure GITHUB_TOKEN with read access to this repository if it is private.');
     }
     throw error;
   }
