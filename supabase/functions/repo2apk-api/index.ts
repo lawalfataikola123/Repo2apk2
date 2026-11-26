@@ -67,8 +67,8 @@ Deno.serve(async (req) => {
     const buildType = String(body.buildType || "auto");
     const validRepo = /^https:\/\/github\.com\/[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repoUrl);
     if (!validRepo) return json({ error: "Enter a valid public GitHub repository URL." }, 400);
-    if (!["auto", "gradle", "flutter", "react-native"].includes(buildType)) {
-      return json({ error: "Unsupported build type." }, 400);
+    if (!["auto", "gradle"].includes(buildType)) {
+      return json({ error: "This workflow currently supports Auto Detect and Native Android/Gradle builds." }, 400);
     }
 
     const { data: entitlement, error: entitlementError } = await admin
