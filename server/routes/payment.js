@@ -5,11 +5,10 @@ const { authenticate } = require('../middleware/authenticate');
 const users = require('../services/userStore');
 const paymentStore = require('../services/paymentStore');
 
-const currency = 'NGN';
-function amountNgn() {
-  const value = Number(process.env.BUILD_PRICE_NGN);
-  return Number.isSafeInteger(value) && value > 0 ? value : null;
-}
+const plans = {
+  monthly: { id: 'monthly', name: 'Monthly', amount: 5, currency: 'USD', durationDays: 30 },
+  lifetime: { id: 'lifetime', name: 'Lifetime', amount: 20, currency: 'USD', durationDays: null }
+};
 function apiBase() {
   return (process.env.API_BASE_URL || '').replace(/\/$/, '');
 }
@@ -34,7 +33,7 @@ async function verifyTransaction(transactionId, txRef) {
   const order = paymentStore.get(txRef);
   if (!order) throw new Error('Payment reference not found');
   if (tx.tx_ref !== txRef) throw new Error('Flutterwave transaction reference mismatch');
-  if (tx.status !== 'successful' || tx.currency !== currency || Number(tx.amount) < order.amount) {
+  if (tx.status !== 'successful' || tx.currency !== order.currency || Number(tx.amount) < order.amount) {
     paymentStore.markFailed(txRef);
     throw new Error('Payment amount, currency or status did not match');
   }
@@ -43,19 +42,17 @@ async function verifyTransaction(transactionId, txRef) {
 }
 
 router.get('/config', (req, res) => {
-  const amount = amountNgn();
-  if (!amount) return res.status(503).json({ success: false, error: 'Build price is not configured on the server' });
-  res.json({ success: true, currency, amount });
+  res.json({ success: true, plans: Object.values(plans) });
 });
 
-router.get('/credits', authenticate, (req, res) => {
-  res.json({ success: true, credits: paymentStore.getCredits(req.user.id) });
+router.get('/entitlement', authenticate, (req, res) => {
+  res.json({ success: true, entitlement: paymentStore.getEntitlement(req.user.id) });
 });
 
 router.post('/checkout', authenticate, async (req, res, next) => {
   try {
-    const amount = amountNgn();
-    if (!amount) return res.status(503).json({ success: false, error: 'Build price is not configured on the server' });
+    const plan = plans[req.body?.plan];
+    if (!plan) return res.status(400).json({ success: false, error: 'Choose monthly or lifetime plan' });
     if (!process.env.FLW_SECRET_KEY || !apiBase() || !clientBase()) {
       return res.status(503).json({ success: false, error: 'Flutterwave payment settings are incomplete' });
     }
@@ -68,7 +65,7 @@ router.post('/checkout', authenticate, async (req, res, next) => {
     if (!user) return res.status(401).json({ success: false, error: 'Account not found' });
     const txRef = 'repo2apk_' + crypto.randomUUID();
     const order = paymentStore.create({
-      txRef, userId: user.id, amount, currency, status: 'pending',
+      txRef, userId: user.id, plan: plan.id, amount: plan.amount, currency: plan.currency, status: 'pending',
       createdAt: new Date().toISOString(), transactionId: null
     });
     const response = await fetch('https://api.flutterwave.com/v3/payments', {
@@ -80,12 +77,12 @@ router.post('/checkout', authenticate, async (req, res, next) => {
       },
       body: JSON.stringify({
         tx_ref: txRef,
-        amount: String(amount),
-        currency,
+        amount: String(plan.amount),
+        currency: plan.currency,
         redirect_url: apiBase() + '/api/payment/callback',
         customer: { email: user.email },
-        customizations: { title: 'Repo2APK', description: 'One APK build credit' },
-        meta: { userId: user.id, product: 'apk_build_credit' },
+        customizations: { title: 'Repo2APK', description: plan.name + ' plan' },
+        meta: { userId: user.id, product: 'subscription', plan: plan.id },
         configurations: { session_duration: 20, max_retry_attempt: 3 }
       }),
       signal: AbortSignal.timeout(15000)
