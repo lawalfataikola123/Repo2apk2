@@ -13,6 +13,7 @@ const logger = require('../utils/logger');
 const { validateGitHubUrl, sanitizeUrl } = require('../utils/validators');
 const buildService = require('../services/buildService');
 const buildStore = require('../services/buildStore');
+const paymentStore = require('../services/paymentStore');
 const { authenticate } = require('../middleware/authenticate');
 
 // ─── Validation Middleware ────────────────────────────────────────────────────
@@ -43,11 +44,19 @@ router.post('/', authenticate, validateBuildRequest, async (req, res) => {
   }
 
   const { repoUrl, buildType = 'auto' } = req.body;
+  if (paymentStore.getCredits(req.user.id) < 1) {
+    return res.status(402).json({ success: false, error: 'Payment required. Purchase one build credit to continue.', code: 'PAYMENT_REQUIRED' });
+  }
   const sanitizedUrl = sanitizeUrl(repoUrl);
   const buildId = uuidv4();
 
+  // Charge one previously verified build credit per build request.
+  if (!paymentStore.consumeCredit(req.user.id)) {
+    return res.status(402).json({ success: false, error: 'Payment required. Purchase one build credit to continue.', code: 'PAYMENT_REQUIRED' });
+  }
+
   // Initialize build record
-  buildStore.create(buildId, {
+  try { buildStore.create(buildId, {
     repoUrl: sanitizedUrl,
     ownerId: req.user.id,
     buildType,
@@ -56,7 +65,10 @@ router.post('/', authenticate, validateBuildRequest, async (req, res) => {
     logs: [],
     apkPath: null,
     error: null
-  });
+  }); } catch (error) {
+    paymentStore.refundCredit(req.user.id);
+    throw error;
+  }
 
   logger.info(`Build initiated: ${buildId} for ${sanitizedUrl}`);
 
