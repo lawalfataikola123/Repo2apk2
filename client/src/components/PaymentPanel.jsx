@@ -8,6 +8,7 @@ function money(amount, currency = 'USD') {
 
 export default function PaymentPanel() {
   const [plans, setPlans] = useState([]);
+  const [session, setSession] = useState(() => authApi.getSession());
   const [entitlement, setEntitlement] = useState(null);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -17,7 +18,7 @@ export default function PaymentPanel() {
   const [error, setError] = useState('');
 
   const loadEntitlement = useCallback(async () => {
-    if (!localStorage.getItem('token')) { setEntitlement(null); return; }
+    if (!authApi.getSession()) { setEntitlement(null); return; }
     try {
       const result = await paymentApi.getEntitlement();
       setEntitlement(result.entitlement);
@@ -45,7 +46,7 @@ export default function PaymentPanel() {
       const result = mode === 'register'
         ? await authApi.register(email.trim(), password)
         : await authApi.login(email.trim(), password);
-      localStorage.setItem('token', result.token);
+      setSession(authApi.getSession());
       setMessage(mode === 'register' ? 'Account created and signed in.' : 'Signed in successfully.');
       await loadEntitlement();
     } catch (e) { setError(e.message); }
@@ -61,7 +62,8 @@ export default function PaymentPanel() {
   };
 
   const signOut = () => {
-    localStorage.removeItem('token');
+    authApi.signOut();
+    setSession(null);
     setEntitlement(null);
     setMessage('Signed out.');
   };
@@ -75,7 +77,7 @@ export default function PaymentPanel() {
         <p className="text-xs text-gray-500 mt-1">Choose a plan to unlock APK builds.</p>
       </div>
 
-      {localStorage.getItem('token') ? (
+      {session ? (
         <div className="rounded-lg bg-white/5 border border-white/5 p-3">
           <div className="flex items-center justify-between gap-3">
             <p className="text-sm text-gray-200">
@@ -101,13 +103,13 @@ export default function PaymentPanel() {
 
       <div className="grid grid-cols-1 gap-2">
         {plans.map(plan => (
-          <button key={plan.id} type="button" onClick={() => checkout(plan.id)} disabled={!!busy || !localStorage.getItem('token') || entitlement?.lifetime} className="btn-primary w-full flex items-center justify-between gap-3 text-sm">
+          <button key={plan.id} type="button" onClick={() => checkout(plan.id)} disabled={!!busy || !session || entitlement?.lifetime} className="btn-primary w-full flex items-center justify-between gap-3 text-sm">
             <span className="flex items-center gap-2"><CreditCard size={15}/>{plan.id === 'monthly' ? 'Monthly · 30 days' : 'Lifetime'}</span>
             <span className="flex items-center gap-2">{money(plan.amount, plan.currency)} {busy === plan.id && <Loader2 size={14} className="animate-spin"/>}</span>
           </button>
         ))}
       </div>
-      {!localStorage.getItem('token') && <p className="text-[11px] text-gray-500">Sign in or create an account to purchase a plan.</p>}
+      {!session && <p className="text-[11px] text-gray-500">Sign in or create an account to purchase a plan.</p>}
       {entitlement?.lifetime && <p className="text-xs text-neon-green">Lifetime plan already active. No further payment is required.</p>}
       {message && <p className="text-xs text-neon-green">{message}</p>}
       {error && <p className="text-xs text-red-400">{error}</p>}
