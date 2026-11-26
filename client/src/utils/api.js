@@ -72,8 +72,8 @@ export const buildApi = {
 // ─── Flutterwave Payments API ────────────────────────────────────────────────
 export const paymentApi = {
   getConfig: () => api.get('/payment/config'),
-  getCredits: () => api.get('/payment/credits'),
-  checkout: () => api.post('/payment/checkout', {})
+  getEntitlement: () => api.get('/payment/entitlement'),
+  checkout: (plan) => api.post('/payment/checkout', { plan })
 };
 
 // ─── Auth API ─────────────────────────────────────────────────────────────────
