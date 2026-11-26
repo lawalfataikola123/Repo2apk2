@@ -49,6 +49,7 @@ router.post('/', authenticate, validateBuildRequest, async (req, res) => {
   // Initialize build record
   buildStore.create(buildId, {
     repoUrl: sanitizedUrl,
+    ownerId: req.user.id,
     buildType,
     status: 'queued',
     startedAt: new Date().toISOString(),
@@ -85,7 +86,7 @@ router.get('/status/:buildId', authenticate, (req, res) => {
   }
 
   const build = buildStore.get(buildId);
-  if (!build) {
+  if (!build || build.ownerId !== req.user.id) {
     return res.status(404).json({ success: false, error: 'Build not found' });
   }
 
@@ -147,7 +148,7 @@ router.get('/download/:buildId', (req, res) => {
 // ─── GET /api/build/history ───────────────────────────────────────────────────
 router.get('/history', authenticate, (req, res) => {
   const builds = buildStore.getAll();
-  const history = Object.entries(builds).map(([id, build]) => ({
+  const history = Object.entries(builds).filter(([, build]) => build.ownerId === req.user.id).map(([id, build]) => ({
     buildId: id,
     repoUrl: build.repoUrl,
     buildType: build.buildType,
@@ -173,7 +174,7 @@ router.delete('/:buildId', authenticate, async (req, res) => {
   }
 
   const build = buildStore.get(buildId);
-  if (!build) {
+  if (!build || build.ownerId !== req.user.id) {
     return res.status(404).json({ success: false, error: 'Build not found' });
   }
 
