@@ -2,7 +2,7 @@
   "name": "repo2apk",
   "version": "1.0.0",
   "scripts": {
-    "start": "node app.js"
+    "start": "node server/index.js"
   },
   "engines": {
     "node": "20.x"
