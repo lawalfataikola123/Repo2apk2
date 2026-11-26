@@ -36,7 +36,7 @@ export default function HomePage() {
   const handleSubmit = useCallback(async (repoUrl, buildType) => {
     try {
       await build.startBuild(repoUrl, buildType);
-      window.dispatchEvent(new Event('repo2apk:credits-refresh'));
+      window.dispatchEvent(new Event('repo2apk:entitlement-refresh'));
     } catch (err) {
       build.handleSocketError({ error: err.message });
     }
