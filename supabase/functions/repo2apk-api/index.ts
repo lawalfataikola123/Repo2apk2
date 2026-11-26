@@ -169,7 +169,7 @@ Deno.serve(async (req) => {
         const run = await runRes.json();
         let status = build.status;
         if (run.status === "completed") status = run.conclusion === "success" ? "success" : "failed";
-        else if (run.status === "in_progress") status = "running";
+        else if (run.status === "in_progress") status = "building";
         else status = "queued";
         const downloadUrl = status === "success"
           ? `/functions/v1/repo2apk-api?action=download&buildId=${build.id}`
