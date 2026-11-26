@@ -1,91 +1,19 @@
-/**
- * Build Store - In-memory state management for builds
- * Replace with Redis or database for multi-instance deployments
- */
-
-const builds = new Map();
-
-const buildStore = {
-  /**
-   * Create a new build record
-   */
-  create(buildId, data) {
-    builds.set(buildId, {
-      ...data,
-      logs: [],
-      createdAt: new Date().toISOString()
-    });
-    return builds.get(buildId);
-  },
-
-  /**
-   * Get a build by ID
-   */
-  get(buildId) {
-    return builds.get(buildId) || null;
-  },
-
-  /**
-   * Get all builds
-   */
-  getAll() {
-    return Object.fromEntries(builds);
-  },
-
-  /**
-   * Update build fields
-   */
-  update(buildId, updates) {
-    const build = builds.get(buildId);
-    if (!build) return null;
-    const updated = { ...build, ...updates };
-    builds.set(buildId, updated);
-    return updated;
-  },
-
-  /**
-   * Append a log entry to a build
-   */
-  addLog(buildId, logEntry) {
-    const build = builds.get(buildId);
-    if (!build) return;
-    build.logs.push(logEntry);
-    // Keep only last 1000 log entries in memory
-    if (build.logs.length > 1000) {
-      build.logs = build.logs.slice(-1000);
-    }
-  },
-
-  /**
-   * Delete a build record
-   */
-  delete(buildId) {
-    return builds.delete(buildId);
-  },
-
-  /**
-   * Get builds older than a threshold (for cleanup)
-   */
-  getExpired(maxAgeMs = 60 * 60 * 1000) {
-    const now = Date.now();
-    const expired = [];
-
-    for (const [id, build] of builds.entries()) {
-      const age = now - new Date(build.createdAt).getTime();
-      if (age > maxAgeMs) {
-        expired.push(id);
-      }
-    }
-
-    return expired;
-  },
-
-  /**
-   * Get build count
-   */
-  count() {
-    return builds.size;
-  }
+/** Persistent build state for a single server instance. Use a shared database for multi-instance deployments. */
+const path=require('path');
+const fs=require('fs-extra');
+const dir=path.join(__dirname,'../data');
+const file=path.join(dir,'builds.json');
+fs.ensureDirSync(dir);
+let builds=new Map();
+try{builds=new Map(Object.entries(fs.readJsonSync(file)||{}));}catch(e){if(e.code!=='ENOENT')throw e;}
+function persist(){const tmp=file+'.tmp';fs.writeJsonSync(tmp,Object.fromEntries(builds),{spaces:2});fs.renameSync(tmp,file);}
+module.exports={
+ create(id,data){builds.set(id,{...data,logs:[],createdAt:new Date().toISOString()});persist();return builds.get(id);},
+ get(id){return builds.get(id)||null;},
+ getAll(){return Object.fromEntries(builds);},
+ update(id,updates){const b=builds.get(id);if(!b)return null;const next={...b,...updates};builds.set(id,next);persist();return next;},
+ addLog(id,entry){const b=builds.get(id);if(!b)return;b.logs.push(entry);if(b.logs.length>1000)b.logs=b.logs.slice(-1000);persist();},
+ delete(id){const ok=builds.delete(id);if(ok)persist();return ok;},
+ getExpired(maxAgeMs=3600000){const now=Date.now();return [...builds.entries()].filter(([,b])=>now-new Date(b.createdAt).getTime()>maxAgeMs).map(([id])=>id);},
+ count(){return builds.size;}
 };
-
-module.exports = buildStore;
