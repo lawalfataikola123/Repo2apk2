@@ -113,7 +113,7 @@ Deno.serve(async (req) => {
     return json({ buildId: build.id, status: "queued" }, 202);
   }
 
-  if (action === "status") {
+  if (action === "status" || action === "download") {
     const buildId = String(body.buildId || new URL(req.url).searchParams.get("buildId") || "");
     const { data: build, error } = await admin
       .from("repo2apk_builds")
@@ -122,6 +122,68 @@ Deno.serve(async (req) => {
       .eq("user_id", userId)
       .maybeSingle();
     if (error || !build) return json({ error: "Build not found." }, 404);
+    if (!githubToken) return json({ error: "Build service is not configured yet." }, 503);
+
+    if (action === "download") {
+      if (!build.github_run_id || build.status !== "success") {
+        return json({ error: "APK is not ready for download." }, 409);
+      }
+      const artifactsRes = await fetch(
+        `https://api.github.com/repos/${githubRepo}/actions/runs/${build.github_run_id}/artifacts`,
+        { headers: { Authorization: `Bearer ${githubToken}`, Accept: "application/vnd.github+json" } },
+      );
+      if (!artifactsRes.ok) return json({ error: "Could not retrieve build artifact." }, 502);
+      const artifacts = await artifactsRes.json();
+      const artifact = (artifacts.artifacts || []).find((item: { name: string; expired: boolean }) => item.name === "app-debug" && !item.expired);
+      if (!artifact) return json({ error: "Build artifact has expired or is missing." }, 404);
+      const archive = await fetch(
+        `https://api.github.com/repos/${githubRepo}/actions/artifacts/${artifact.id}/zip`,
+        { headers: { Authorization: `Bearer ${githubToken}`, Accept: "application/vnd.github+json" }, redirect: "manual" },
+      );
+      const location = archive.headers.get("location");
+      if (location) return new Response(null, { status: 302, headers: { Location: location } });
+      return json({ error: "Could not create artifact download link." }, 502);
+    }
+
+    if (!build.github_run_id) {
+      const runsRes = await fetch(
+        `https://api.github.com/repos/${githubRepo}/actions/workflows/build-apk.yml/runs?branch=main&event=workflow_dispatch&per_page=30`,
+        { headers: { Authorization: `Bearer ${githubToken}`, Accept: "application/vnd.github+json" } },
+      );
+      if (runsRes.ok) {
+        const runs = await runsRes.json();
+        const run = (runs.workflow_runs || []).find((item: { display_title?: string; name?: string }) =>
+          item.display_title === `Repo2APK-${build.id}` || item.name === `Repo2APK-${build.id}`);
+        if (run) build.github_run_id = run.id;
+      }
+    }
+
+    if (build.github_run_id) {
+      const runRes = await fetch(
+        `https://api.github.com/repos/${githubRepo}/actions/runs/${build.github_run_id}`,
+        { headers: { Authorization: `Bearer ${githubToken}`, Accept: "application/vnd.github+json" } },
+      );
+      if (runRes.ok) {
+        const run = await runRes.json();
+        let status = build.status;
+        if (run.status === "completed") status = run.conclusion === "success" ? "success" : "failed";
+        else if (run.status === "in_progress") status = "running";
+        else status = "queued";
+        const downloadUrl = status === "success"
+          ? `/functions/v1/repo2apk-api?action=download&buildId=${build.id}`
+          : null;
+        const updates = {
+          github_run_id: run.id,
+          status,
+          artifact_name: status === "success" ? "app-debug" : null,
+          download_url: downloadUrl,
+          updated_at: new Date().toISOString(),
+          logs: status === "failed" ? [{ message: "GitHub Actions build failed. Open the run in GitHub Actions for the detailed log." }] : build.logs,
+        };
+        await admin.from("repo2apk_builds").update(updates).eq("id", build.id).eq("user_id", userId);
+        Object.assign(build, updates);
+      }
+    }
     return json({ build });
   }
 
