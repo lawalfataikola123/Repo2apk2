@@ -63,7 +63,9 @@ Deno.serve(async (req) => {
 
   if (action === "start") {
     if (!githubToken) return json({ error: "Build service is not configured yet." }, 503);
-    const repoUrl = String(body.repoUrl || "").trim().replace(/\\.git$/, "").replace(/\\/$/, "");
+    let repoUrl = String(body.repoUrl || "").trim();
+    if (repoUrl.endsWith(".git")) repoUrl = repoUrl.slice(0, -4);
+    if (repoUrl.endsWith("/")) repoUrl = repoUrl.slice(0, -1);
     const buildType = String(body.buildType || "auto");
     const validRepo = /^https:\/\/github\.com\/[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repoUrl);
     if (!validRepo) return json({ error: "Enter a valid public GitHub repository URL." }, 400);
