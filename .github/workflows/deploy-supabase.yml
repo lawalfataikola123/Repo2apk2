@@ -18,9 +18,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: supabase/setup-cli@v1
+      - uses: supabase/setup-cli@v3
         with:
-          version: latest
+          version: ^2
 
       - name: Set function secret and deploy
         env:
