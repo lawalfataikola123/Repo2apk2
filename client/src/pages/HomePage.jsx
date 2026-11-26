@@ -4,6 +4,7 @@ import BuildForm from '../components/BuildForm.jsx';
 import TerminalLog from '../components/TerminalLog.jsx';
 import BuildProgress from '../components/BuildProgress.jsx';
 import DownloadButton from '../components/DownloadButton.jsx';
+import PaymentPanel from '../components/PaymentPanel.jsx';
 import { useBuild } from '../hooks/useBuild.js';
 import { useBuildSocket } from '../hooks/useSocket.js';
 import { buildApi } from '../utils/api.js';
@@ -92,6 +93,8 @@ export default function HomePage() {
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
           {/* Left Panel: Controls */}
           <div className="lg:col-span-2 space-y-6">
+            <PaymentPanel />
+
             {/* Build Form */}
             <div className="glass-panel rounded-2xl p-6">
               <h2 className="text-sm font-semibold text-gray-300 mb-5 font-display flex items-center gap-2">
