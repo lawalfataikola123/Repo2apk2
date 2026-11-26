@@ -44,16 +44,11 @@ router.post('/', authenticate, validateBuildRequest, async (req, res) => {
   }
 
   const { repoUrl, buildType = 'auto' } = req.body;
-  if (paymentStore.getCredits(req.user.id) < 1) {
-    return res.status(402).json({ success: false, error: 'Payment required. Purchase one build credit to continue.', code: 'PAYMENT_REQUIRED' });
+  if (!paymentStore.hasAccess(req.user.id)) {
+    return res.status(402).json({ success: false, error: 'An active monthly or lifetime plan is required to build APKs.', code: 'PLAN_REQUIRED' });
   }
   const sanitizedUrl = sanitizeUrl(repoUrl);
   const buildId = uuidv4();
-
-  // Charge one previously verified build credit per build request.
-  if (!paymentStore.consumeCredit(req.user.id)) {
-    return res.status(402).json({ success: false, error: 'Payment required. Purchase one build credit to continue.', code: 'PAYMENT_REQUIRED' });
-  }
 
   // Initialize build record
   try { buildStore.create(buildId, {
@@ -66,7 +61,6 @@ router.post('/', authenticate, validateBuildRequest, async (req, res) => {
     apkPath: null,
     error: null
   }); } catch (error) {
-    paymentStore.refundCredit(req.user.id);
     throw error;
   }
 
