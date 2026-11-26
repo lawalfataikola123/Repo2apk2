@@ -10,9 +10,9 @@ import { useBuildSocket } from '../hooks/useSocket.js';
 import { buildApi } from '../utils/api.js';
 
 const FEATURES = [
-  { icon: Smartphone, label: 'Multi-Framework', desc: 'Native Android, Flutter & React Native' },
-  { icon: Zap, label: 'Real-time Logs', desc: 'Watch your build live via WebSocket' },
-  { icon: Shield, label: 'Secure Builds', desc: 'Isolated Docker environment' },
+  { icon: Smartphone, label: 'Android Gradle', desc: 'Build native Android projects' },
+  { icon: Zap, label: 'Build Tracking', desc: 'Track build progress automatically' },
+  { icon: Shield, label: 'Secure Builds', desc: 'Builds run through GitHub Actions' },
   { icon: GitBranch, label: 'Auto Detect', desc: 'Automatically detects project type' }
 ];
 
@@ -65,10 +65,7 @@ export default function HomePage() {
           </h1>
 
           <p className="text-lg text-gray-400 max-w-xl mx-auto leading-relaxed">
-            Convert any public GitHub repository into a downloadable Android APK.
-            Supports <span className="text-gray-300">Native Android</span>,{' '}
-            <span className="text-gray-300">Flutter</span>, and{' '}
-            <span className="text-gray-300">React Native</span> projects.
+            Convert public GitHub Android Gradle projects into downloadable APK build artifacts.
           </p>
 
           {/* Feature pills */}
