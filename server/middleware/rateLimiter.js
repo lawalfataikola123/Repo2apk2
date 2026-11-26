@@ -15,7 +15,7 @@ const rateLimiter = rateLimit({
   },
   skip: (req) => {
     // Skip rate limit for status/download checks
-    return req.path.startsWith('/status/') || req.path.startsWith('/download/');
+    return req.path.startsWith('/status/') || req.path.startsWith('/download/') || req.path === '/payment/webhook';
   }
 });
 
