@@ -1,76 +1,62 @@
 /**
- * useSocket Hook - Socket.io connection management
+ * Supabase-backed build status polling.
+ * The deployed Edge Function does not expose Socket.IO events.
  */
+import { useEffect } from 'react';
+import { buildApi } from '../utils/api.js';
 
-import { useEffect, useRef, useCallback } from 'react';
-import { io } from 'socket.io-client';
-
-let socketInstance = null;
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || window.location.origin;
-
-function getSocket() {
-  if (!socketInstance || socketInstance.disconnected) {
-    socketInstance = io(SOCKET_URL, {
-      path: '/socket.io',
-      transports: ['websocket', 'polling'],
-      reconnection: true,
-      reconnectionAttempts: 5,
-      reconnectionDelay: 1000
-    });
-  }
-  return socketInstance;
-}
-
-/**
- * Hook to subscribe to real-time build events
- */
 export function useBuildSocket(buildId, handlers = {}) {
-  const socketRef = useRef(null);
-
-  const {
-    onLog,
-    onStatus,
-    onComplete,
-    onError,
-    onDetected
-  } = handlers;
+  const { onLog, onStatus, onComplete, onError, onDetected } = handlers;
 
   useEffect(() => {
-    if (!buildId) return;
+    if (!buildId) return undefined;
+    let active = true;
+    let timer;
 
-    const socket = getSocket();
-    socketRef.current = socket;
+    const poll = async () => {
+      try {
+        const result = await buildApi.getStatus(buildId);
+        if (!active || !result?.build) return;
+        const build = result.build;
 
-    // Subscribe to this build's room
-    socket.emit('subscribe:build', buildId);
+        if (Array.isArray(build.logs) && onLog) {
+          build.logs.forEach(entry => onLog(entry));
+        }
+        if (build.project_type && onDetected) onDetected({ projectType: build.project_type });
 
-    // Event handlers
-    if (onLog) socket.on('build:log', onLog);
-    if (onStatus) socket.on('build:status', onStatus);
-    if (onComplete) socket.on('build:complete', onComplete);
-    if (onError) socket.on('build:error', onError);
-    if (onDetected) socket.on('build:detected', onDetected);
-
-    socket.on('connect', () => {
-      // Re-subscribe on reconnect
-      socket.emit('subscribe:build', buildId);
-    });
-
-    return () => {
-      socket.emit('unsubscribe:build', buildId);
-      socket.off('build:log', onLog);
-      socket.off('build:status', onStatus);
-      socket.off('build:complete', onComplete);
-      socket.off('build:error', onError);
-      socket.off('build:detected', onDetected);
+        if (onStatus) {
+          onStatus({
+            status: build.status,
+            projectType: build.project_type || null,
+            error: build.status === 'failed' ? (build.logs?.[0]?.message || 'Build failed.') : null
+          });
+        }
+        if (build.status === 'success' && onComplete) {
+          onComplete({ buildId, downloadUrl: buildApi.getDownloadUrl(buildId) });
+          active = false;
+          return;
+        }
+        if (build.status === 'failed') {
+          if (onError) onError({ error: build.logs?.[0]?.message || 'Build failed.' });
+          active = false;
+          return;
+        }
+      } catch (error) {
+        if (active && onError && /sign in|session|unauthorized/i.test(error.message)) {
+          onError({ error: error.message });
+          active = false;
+          return;
+        }
+      }
+      if (active) timer = window.setTimeout(poll, 5000);
     };
-  }, [buildId]);
 
-  const disconnect = useCallback(() => {
-    if (socketRef.current) {
-      socketRef.current.emit('unsubscribe:build', buildId);
-    }
-  }, [buildId]);
+    poll();
+    return () => {
+      active = false;
+      window.clearTimeout(timer);
+    };
+  }, [buildId, onLog, onStatus, onComplete, onError, onDetected]);
 
-  return { disconnect };
+  return { disconnect: () => {} };
 }
