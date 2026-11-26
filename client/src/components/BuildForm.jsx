@@ -8,8 +8,7 @@ const BUILD_TYPES = [
 
 const EXAMPLE_REPOS = [
   'https://github.com/android/sunflower',
-  'https://github.com/flutter/gallery',
-  'https://github.com/facebook/react-native'
+  'https://github.com/android/architecture-samples'
 ];
 
 export default function BuildForm({ onSubmit, isBuilding }) {
