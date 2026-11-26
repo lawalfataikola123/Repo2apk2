@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { History, Download, Trash2, RefreshCw, CheckCircle, XCircle, Clock, Loader } from 'lucide-react';
+import { History, Download, RefreshCw, CheckCircle, XCircle, Clock, Loader } from 'lucide-react';
 import { buildApi } from '../utils/api.js';
 import { Link } from 'react-router-dom';
 
@@ -23,7 +23,7 @@ function timeAgo(dateStr) {
   return 'Just now';
 }
 
-function BuildCard({ build, onDelete }) {
+function BuildCard({ build }) {
   const cfg = STATUS_CONFIG[build.status] || STATUS_CONFIG.failed;
   const StatusIcon = cfg.icon;
 
@@ -60,22 +60,14 @@ function BuildCard({ build, onDelete }) {
         {/* Actions */}
         <div className="flex items-center gap-2 shrink-0">
           {build.downloadUrl && (
-            <a
-              href={build.downloadUrl}
-              download
+            <button
+              onClick={() => buildApi.downloadBuild(build.buildId).catch(err => window.alert(err.message))}
               className="p-2 rounded-lg text-gray-400 hover:text-neon-green hover:bg-neon-green/10 transition-all duration-150"
               title="Download APK"
             >
               <Download size={15} />
-            </a>
+            </button>
           )}
-          <button
-            onClick={() => onDelete(build.buildId)}
-            className="p-2 rounded-lg text-gray-600 hover:text-red-400 hover:bg-red-400/10 transition-all duration-150"
-            title="Delete"
-          >
-            <Trash2 size={15} />
-          </button>
         </div>
       </div>
     </div>
@@ -103,15 +95,6 @@ export default function HistoryPage() {
   useEffect(() => {
     fetchHistory();
   }, []);
-
-  const handleDelete = async (buildId) => {
-    try {
-      await buildApi.deleteBuild(buildId);
-      setBuilds(prev => prev.filter(b => b.buildId !== buildId));
-    } catch (err) {
-      console.error('Delete failed:', err);
-    }
-  };
 
   return (
     <div className="min-h-screen py-12 px-4">
@@ -162,7 +145,7 @@ export default function HistoryPage() {
         ) : (
           <div className="space-y-3">
             {builds.map(build => (
-              <BuildCard key={build.buildId} build={build} onDelete={handleDelete} />
+              <BuildCard key={build.buildId} build={build} />
             ))}
           </div>
         )}
