@@ -21,13 +21,15 @@ The JSON stores are intended for a **single backend instance**. Mount persistent
 
 These source changes do not automatically configure hosting environment variables or storage volumes. After setting the variables and mounts, redeploy the backend and verify `GET /api/health`, account registration/login, authenticated build submission, and APK download.
 
-## Flutterwave payments
+## Flutterwave plans
 
-Configure these backend-only environment variables before enabling checkout:
+The checkout offers the previously selected plans: **$5 monthly for 30 days** and **$20 lifetime**. Monthly purchases extend an active monthly expiry by 30 days; lifetime access does not expire and supersedes monthly access.
 
-- `BUILD_PRICE_NGN`: price for one APK build, as a whole-number NGN amount (for example `500`). Choose your own price; the code does not hardcode one.
-- `FLW_SECRET_KEY`: Flutterwave secret key. Use test-mode keys for testing, then live keys after verification. Never expose this value to the client or commit it.
+Configure these backend-only environment variables:
+
+- `FLW_SECRET_KEY`: Flutterwave secret key. Use test-mode keys first, then live keys after successful testing. Never expose this value to the client or commit it.
 - `FLW_SECRET_HASH`: webhook secret hash configured in the Flutterwave dashboard.
 - `API_BASE_URL`: public HTTPS backend origin, without a trailing slash, used for the payment callback.
+- `CLIENT_URL`: public HTTPS frontend origin.
 
-Set the Flutterwave webhook URL to `https://YOUR_API_HOST/api/payment/webhook` and use the same secret hash. Payment confirmation is verified against Flutterwave's transaction API before one build credit is granted. Configure `BUILD_PRICE_NGN`, `FLW_SECRET_KEY`, `FLW_SECRET_HASH`, and `API_BASE_URL` in the host's environment settings.
+Set the Flutterwave webhook URL to `https://YOUR_API_HOST/api/payment/webhook` and use the same secret hash. The backend verifies transaction ID, reference, successful status, currency, and amount with Flutterwave before activating a plan. Configure the environment variables in the hosting provider, not in Git.
