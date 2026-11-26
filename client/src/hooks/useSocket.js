@@ -6,10 +6,11 @@ import { useEffect, useRef, useCallback } from 'react';
 import { io } from 'socket.io-client';
 
 let socketInstance = null;
+const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || window.location.origin;
 
 function getSocket() {
   if (!socketInstance || socketInstance.disconnected) {
-    socketInstance = io(window.location.origin, {
+    socketInstance = io(SOCKET_URL, {
       path: '/socket.io',
       transports: ['websocket', 'polling'],
       reconnection: true,
