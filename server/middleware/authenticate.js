@@ -5,7 +5,7 @@ function jwtSecret() {
  return 'local-development-only-secret';
 }
 function authenticate(req,res,next) {
- const m=(req.get('authorization')||'').match(/^Bearer\\s+(.+)$/i);
+ const m=(req.get('authorization')||'').match(/^Bearer\s+(.+)$/i);
  if(!m) return res.status(401).json({success:false,error:'Authentication required'});
  try { const p=jwt.verify(m[1],jwtSecret(),{algorithms:['HS256']}); if(!p.userId) throw new Error(); req.user={id:p.userId}; return next(); }
  catch { return res.status(401).json({success:false,error:'Invalid or expired token'}); }
