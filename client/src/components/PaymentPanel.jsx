@@ -31,6 +31,9 @@ export default function PaymentPanel({ onCreditsChange }) {
     if (params.get('payment') === 'success') setMessage('Payment verified. Your build credit is ready.');
     if (params.get('payment') === 'failed') setError('Payment was not confirmed. You were not given a build credit.');
     loadCredits();
+    const refreshCredits = () => loadCredits();
+    window.addEventListener('repo2apk:credits-refresh', refreshCredits);
+    return () => window.removeEventListener('repo2apk:credits-refresh', refreshCredits);
   }, [loadCredits]);
 
   const authenticate = async (e) => {
