@@ -1,0 +1,36 @@
+name: Verify Flutterwave integration
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  server-syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install
+      - name: Check backend JavaScript syntax
+        run: |
+          node --check server/index.js
+          node --check server/routes/payment.js
+          node --check server/routes/build.js
+          node --check server/services/paymentStore.js
+          node --check server/services/userStore.js
+          node --check server/middleware/authenticate.js
+          node --check server/middleware/rateLimiter.js
+
+  frontend-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install --prefix client
+      - run: npm run build --prefix client
