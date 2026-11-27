@@ -15,6 +15,9 @@ on:
         required: true
         default: 'com.repo2apk.htmlapp'
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -155,6 +158,17 @@ jobs:
           name: ${{ github.event.inputs.app_name }}-html-apk
           path: /tmp/html-app.apk
           retention-days: 7
+
+
+      - name: Publish direct APK download
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: repo2apk-${{ github.run_id }}
+          name: "${{ inputs.app_name }} APK"
+          body: "Download the APK file below and open it on your Android device."
+          files: /tmp/html-app.apk
+          draft: false
+          prerelease: true
 
       - name: Summary
         run: |
