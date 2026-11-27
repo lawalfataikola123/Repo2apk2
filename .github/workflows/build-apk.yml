@@ -22,7 +22,7 @@ on:
         type: string
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
@@ -77,3 +77,19 @@ jobs:
           name: app-debug
           path: /tmp/app/**/*.apk
           retention-days: 1
+
+      - name: Prepare APK for direct download
+        run: |
+          APK_PATH=$(find /tmp/app -type f -name "*.apk" | head -n 1)
+          test -n "$APK_PATH" || { echo "No APK file was produced"; exit 1; }
+          cp "$APK_PATH" /tmp/repo2apk-output.apk
+
+      - name: Publish direct APK download
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: repo2apk-${{ github.run_id }}
+          name: "Repo2APK build ${{ github.run_number }}"
+          body: "Download the APK file below and open it on your Android device."
+          files: /tmp/repo2apk-output.apk
+          draft: false
+          prerelease: true
