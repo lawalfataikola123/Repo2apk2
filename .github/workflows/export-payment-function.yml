@@ -1,0 +1,37 @@
+name: Export Supabase Payments Function
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Download existing payments function
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: |
+          supabase functions download payments --project-ref zrxfvgujugfhsltlhzem
+
+      - name: Package function source
+        run: |
+          test -d supabase/functions/payments
+          zip -r harny-dsh-payments-source.zip supabase/functions/payments
+
+      - name: Upload source artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: harny-dsh-payments-source
+          path: harny-dsh-payments-source.zip
+          retention-days: 1
