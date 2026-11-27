@@ -16,6 +16,7 @@ on:
         options:
           - auto
           - gradle
+          - release
       build_id:
         description: 'Repo2APK database build ID'
         required: true
