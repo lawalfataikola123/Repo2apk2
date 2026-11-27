@@ -59,7 +59,8 @@ jobs:
           [[ "$SITE_URL" =~ ^https://[^[:space:]]+$ ]] || { echo "Use a valid HTTPS website URL"; exit 1; }
           [[ "$APP_PACKAGE" =~ ^[a-zA-Z][a-zA-Z0-9_]*(\.[a-zA-Z][a-zA-Z0-9_]*){1,}$ ]] || { echo "Invalid Android package name"; exit 1; }
           [[ "$APP_COLOR" =~ ^[0-9A-Fa-f]{6}$ ]] || { echo "Theme color must be 6 hex digits"; exit 1; }
-          APP_LABEL_RE='^[A-Za-z0-9][A-Za-z0-9 ._-]{0,39}
+          APP_LABEL_RE='^[A-Za-z0-9][A-Za-z0-9 ._-]{0,39}$'
+          [[ "$APP_LABEL" =~ $APP_LABEL_RE ]] || { echo "App name must use simple letters, numbers, spaces"; exit 1; }
 
       - name: Create WebView App
         env:
