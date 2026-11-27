@@ -19,6 +19,9 @@ on:
         required: false
         default: '2196F3'
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -334,6 +337,16 @@ jobs:
           name: ${{ github.event.inputs.app_name }}-webview-apk
           path: /tmp/final.apk
           retention-days: 7
+
+      - name: Publish direct APK download
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: repo2apk-${{ github.run_id }}
+          name: "${{ inputs.app_name }} APK"
+          body: "APK built by Repo2APK. Download the .apk file below and open it on Android."
+          files: /tmp/final.apk
+          draft: false
+          prerelease: true
 
       - name: Summary
         run: |
