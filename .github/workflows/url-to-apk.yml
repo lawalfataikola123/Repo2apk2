@@ -177,6 +177,7 @@ jobs:
           import android.webkit.PermissionRequest;
           import android.webkit.DownloadListener;
           import android.webkit.MimeTypeMap;
+          import android.webkit.URLUtil;
           import android.widget.Toast;
           import java.nio.charset.StandardCharsets;
 
@@ -234,15 +235,16 @@ jobs:
                   webView.setDownloadListener((url, userAgent, disposition, mimeType, length) -> {
                       try {
                           DownloadManager.Request req = new DownloadManager.Request(Uri.parse(url));
-                          req.setMimeType(mimeType);
+                          String filename = URLUtil.guessFileName(url, disposition, mimeType);
+                          if (filename == null || filename.isEmpty()) filename = "Repo2APK-download";
+                          boolean isApk = filename.toLowerCase().endsWith(".apk") || url.toLowerCase().contains(".apk");
+                          req.setMimeType(isApk ? "application/vnd.android.package-archive" : mimeType);
                           String cookie = CookieManager.getInstance().getCookie(url);
                           if (cookie != null) req.addRequestHeader("Cookie", cookie);
                           req.addRequestHeader("User-Agent", userAgent);
-                          req.setTitle("Saving edited photo");
-                          req.setDescription("Photo editor download");
+                          req.setTitle(filename);
+                          req.setDescription("Download complete. Tap to open the file.");
                           req.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
-                          String ext = MimeTypeMap.getSingleton().getExtensionFromMimeType(mimeType);
-                          String filename = "EditedPhoto_" + System.currentTimeMillis() + (ext == null ? ".jpg" : "." + ext);
                           req.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, filename);
                           ((DownloadManager)getSystemService(DOWNLOAD_SERVICE)).enqueue(req);
                           Toast.makeText(this, "Download started", Toast.LENGTH_SHORT).show();
