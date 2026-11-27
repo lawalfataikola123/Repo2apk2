@@ -8,6 +8,7 @@ import axios from 'axios';
 const SUPABASE_URL = (import.meta.env.VITE_SUPABASE_URL || '').replace(/\/$/, '');
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 const FUNCTION_URL = SUPABASE_URL ? `${SUPABASE_URL}/functions/v1/repo2apk-api` : '';
+const PAYMENT_FUNCTION_URL = SUPABASE_URL ? `${SUPABASE_URL}/functions/v1/repo2apk-payments` : '';
 const SESSION_KEY = 'repo2apk_supabase_session';
 const LEGACY_API_BASE = (import.meta.env.VITE_API_BASE_URL || '/api').replace(/\/$/, '');
 
@@ -137,12 +138,28 @@ export const buildApi = {
   }
 };
 
-// Payment endpoints are kept separate until the existing Flutterwave Edge Function
-// contract is confirmed. They must not be guessed or silently reimplemented here.
+async function paymentRequest(action, payload = {}, needsSession = true) {
+  requireSupabaseConfig();
+  const session = readSession();
+  if (needsSession && !session?.access_token) throw new Error('Please sign in to continue.');
+  const response = await fetch(PAYMENT_FUNCTION_URL, {
+    method: 'POST',
+    headers: {
+      apikey: SUPABASE_ANON_KEY,
+      ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ action, ...payload })
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.error || data.message || `Payment request failed (${response.status}).`);
+  return data;
+}
+
 export const paymentApi = {
-  getConfig: () => legacyApi.get('/payment/config').then(r => r.data),
-  getEntitlement: () => legacyApi.get('/payment/entitlement').then(r => r.data),
-  checkout: (plan) => legacyApi.post('/payment/checkout', { plan }).then(r => r.data)
+  getConfig: () => paymentRequest('config', {}, false),
+  getEntitlement: () => paymentRequest('entitlement'),
+  checkout: (plan) => paymentRequest('checkout', { plan })
 };
 
 export default legacyApi;
