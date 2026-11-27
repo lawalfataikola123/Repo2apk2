@@ -136,8 +136,12 @@ async function verifyAndApply(admin: ReturnType<typeof createClient>, key: strin
   if (orderError || !order) throw new Error("Payment reference not found");
   if (order.status === "paid") return;
 
-  const response = await fetch("https://api.flutterwave.com/v3/transactions/" + encodeURIComponent(transactionId) + "/verify", {
-    headers: { Authorization: "Bearer " + key, Accept: "application/json },
+  const verifyUrl = `https://api.flutterwave.com/v3/transactions/${encodeURIComponent(transactionId)}/verify`;
+  const response = await fetch(verifyUrl, {
+    headers: {
+      Authorization: "Bearer " + key,
+      Accept: "application/json"
+    }
   });
   const result = await response.json().catch(() => ({}));
   const tx = result.data;
