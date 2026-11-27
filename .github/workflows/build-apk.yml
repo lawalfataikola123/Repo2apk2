@@ -1,5 +1,5 @@
 name: Build Android APK
-run-name: Repo2APK-${{ inputs.build_id }}
+run-name: Repo2APK-${{ inputs.build_id || github.run_id }}
 
 on:
   workflow_dispatch:
@@ -18,8 +18,9 @@ on:
           - gradle
           - release
       build_id:
-        description: 'Repo2APK database build ID'
-        required: true
+        description: 'Repo2APK database build ID (optional)'
+        required: false
+        default: ''
         type: string
 
 permissions:
