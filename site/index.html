@@ -876,33 +876,42 @@ function shareAppWhatsApp(url) {
 }
 
 async function dlApk(type,runId){
-  const btn=document.querySelector('#ra-'+type+' .dl-main'); const noteEl=document.getElementById('dlnote-'+type);
-  if(btn){btn.disabled=true; btn.textContent='⏳ Fetching...';}
-  let token=localStorage.getItem('r2t');
-  if(!token){token=prompt('Enter your GitHub token:\nghp_xxxxxxxxxxxxxxxx'); if(!token){if(btn){btn.disabled=false; btn.textContent='📥 Download APK';} return;} localStorage.setItem('r2t',token);}
-  const isWebView=/wv|WebView/i.test(navigator.userAgent)||(!window.chrome&&/Android/i.test(navigator.userAgent));
+  const btn=document.querySelector('#ra-'+type+' .dl-main');
+  const noteEl=document.getElementById('dlnote-'+type);
+  if(btn){btn.disabled=true;btn.textContent='⏳ Preparing APK...';}
   try{
-    if(noteEl)noteEl.textContent='Finding APK...';
-    const r=await fetch(GH+'/repos/'+OWNER+'/'+REPO+'/actions/runs/'+runId+'/artifacts',{headers:{'Authorization':'token '+token,'Accept':'application/vnd.github.v3+json'}});
-    const d=await r.json();
-    if(!d.artifacts||d.artifacts.length===0)throw new Error('No APK found. Wait 30s and try again.');
-    const art=d.artifacts[0];
-    if(art.expired)throw new Error('APK expired (7 days). Please rebuild.');
-    const sizeMB=Math.round(art.size_in_bytes/1024/1024*10)/10;
-    if(btn){btn.disabled=false; btn.textContent='📥 Download APK';}
-    if(isWebView){
-      if(noteEl)noteEl.innerHTML='APK ready ('+sizeMB+' MB) — <a href="https://github.com/'+OWNER+'/'+REPO+'/actions/runs/'+runId+'" target="_blank" style="color:var(--g2);font-weight:700">tap to open download page →</a>';
-    } else {
-      if(noteEl)noteEl.textContent='Downloading ('+sizeMB+' MB)...';
-      const dlRes=await fetch(GH+'/repos/'+OWNER+'/'+REPO+'/actions/artifacts/'+art.id+'/zip',{headers:{'Authorization':'token '+token,'Accept':'application/vnd.github.v3+json'}});
-      if(!dlRes.ok)throw new Error('Download failed: '+dlRes.status);
-      const blob=await dlRes.blob(); const url=URL.createObjectURL(blob);
-      const a=document.createElement('a'); a.href=url; a.download=art.name+'.zip'; a.style.display='none';
-      document.body.appendChild(a); a.click();
-      setTimeout(()=>{document.body.removeChild(a); URL.revokeObjectURL(url);},2000);
-      if(noteEl)noteEl.textContent='✅ Downloaded! Extract ZIP to get your APK.';
+    if(noteEl)noteEl.textContent='Finding direct APK download...';
+    const tag='repo2apk-'+runId;
+    const r=await fetch(GH+'/repos/'+OWNER+'/'+REPO+'/releases/tags/'+tag,{
+      headers:{'Accept':'application/vnd.github+json'}
+    });
+    if(!r.ok)throw new Error(r.status===404?'Direct APK is not ready yet. Wait a few seconds and try again.':'Could not find APK release ('+r.status+').');
+    const release=await r.json();
+    const asset=(release.assets||[]).find(x=>x.name&&x.name.toLowerCase().endsWith('.apk'));
+    if(!asset||!asset.browser_download_url)throw new Error('APK file is missing from the release. Please rebuild.');
+    if(btn){btn.disabled=false;btn.textContent='📥 Download APK';}
+    if(noteEl)noteEl.textContent='APK ready ('+(Math.max(1,Math.round(asset.size/1024/1024*10)/10))+' MB). Opening Android download...';
+    const link=document.createElement('a');
+    link.href=asset.browser_download_url;
+    link.download=asset.name;
+    link.rel='noopener';
+    link.style.display='none';
+    document.body.appendChild(link);
+    link.click();
+    setTimeout(()=>link.remove(),1500);
+    if(noteEl)noteEl.textContent='If the download does not start, tap here: '+asset.name;
+    if(noteEl){
+      const fallback=document.createElement('a');
+      fallback.href=asset.browser_download_url;
+      fallback.textContent=' Download APK';
+      fallback.style.cssText='color:var(--g2);font-weight:700;margin-left:5px';
+      fallback.rel='noopener';
+      noteEl.appendChild(fallback);
     }
-  } catch(e) { if(btn){btn.disabled=false; btn.textContent='📥 Download APK';} if(noteEl)noteEl.textContent='⚠ '+e.message; }
+  }catch(e){
+    if(btn){btn.disabled=false;btn.textContent='📥 Download APK';}
+    if(noteEl)noteEl.textContent='⚠ '+e.message;
+  }
 }
 
 async function saveHist(label,status,url,type){
