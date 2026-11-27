@@ -1,3 +1,4 @@
+// Repo2APK standalone payment function; deployed separately from Harny DSH payments.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const cors = {
