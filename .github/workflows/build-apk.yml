@@ -9,7 +9,7 @@ on:
         required: true
         type: string
       build_type:
-        description: 'Build type (currently Gradle/native Android)'
+        description: 'Build type'
         required: true
         default: 'auto'
         type: choice
@@ -29,10 +29,12 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
-      - uses: actions/setup-java@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
         with:
-          java-version: '17'
+          java-version: '21'
           distribution: 'temurin'
 
       - name: Setup Android SDK
@@ -46,52 +48,165 @@ jobs:
           echo "ANDROID_HOME=$HOME/android-sdk" >> $GITHUB_ENV
           echo "ANDROID_SDK_ROOT=$HOME/android-sdk" >> $GITHUB_ENV
 
-      - name: Clone repository
-        run: git clone --depth 1 "${{ inputs.repo_url }}" /tmp/app
-
-      - name: Fix Gradle and AndroidX
+      - name: Clone source repository
+        env:
+          REPO_URL: ${{ inputs.repo_url }}
         run: |
-          cd /tmp/app
-          if [ -d "android" ]; then
-            cd android
-          fi
-          echo "android.useAndroidX=true" >> gradle.properties
-          echo "android.enableJetifier=true" >> gradle.properties
-          if [ -f "gradle/wrapper/gradle-wrapper.properties" ]; then
-            sed -i 's/gradle-[0-9.]*-bin.zip/gradle-8.7-bin.zip/g' gradle/wrapper/gradle-wrapper.properties
+          set -e
+          git clone --depth 1 "$REPO_URL" /tmp/source
+          mkdir -p /tmp/webviewapp/app/src/main/assets/website
+          cp -R /tmp/source/. /tmp/webviewapp/app/src/main/assets/website/
+          rm -rf /tmp/webviewapp/app/src/main/assets/website/.git
+          if [ -f /tmp/webviewapp/app/src/main/assets/website/site/index.html ]; then
+            echo "HTML_ENTRY=website/site/index.html" >> "$GITHUB_ENV"
+          elif [ -f /tmp/webviewapp/app/src/main/assets/website/index.html ]; then
+            echo "HTML_ENTRY=website/index.html" >> "$GITHUB_ENV"
+          elif [ -f /tmp/webviewapp/app/src/main/assets/website/public.html ]; then
+            echo "HTML_ENTRY=website/public.html" >> "$GITHUB_ENV"
           else
-            mkdir -p gradle/wrapper
-            echo "distributionUrl=https\\://services.gradle.org/distributions/gradle-8.7-bin.zip" > gradle/wrapper/gradle-wrapper.properties
+            echo "No index.html or public.html found in repository (root or site/). This workflow builds HTML websites."
+            exit 1
           fi
 
-      - name: Build debug APK
+      - name: Create Android WebView project
+        env:
+          REPO_URL: ${{ inputs.repo_url }}
         run: |
-          cd /tmp/app
-          if [ -d "android" ]; then cd android; fi
-          export ANDROID_HOME=$HOME/android-sdk
-          export ANDROID_SDK_ROOT=$HOME/android-sdk
-          chmod +x gradlew 2>/dev/null || true
-          ./gradlew assembleDebug -Pandroid.useAndroidX=true -Pandroid.enableJetifier=true || gradle assembleDebug --no-daemon -Pandroid.useAndroidX=true -Pandroid.enableJetifier=true
+          set -e
+          cd /tmp/webviewapp
+          APP_LABEL="Repo2APK"
+          PKG="com.repo2apk.web"
+          PKG_PATH="com/repo2apk/web"
+          cat > settings.gradle <<'EOF'
+          pluginManagement { repositories { google(); mavenCentral(); gradlePluginPortal() } }
+          dependencyResolutionManagement { repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS); repositories { google(); mavenCentral() } }
+          rootProject.name = "Repo2APKWeb"
+          include ':app'
+          EOF
+          cat > build.gradle <<'EOF'
+          plugins {
+              id 'com.android.application' version '8.5.0' apply false
+          }
+          EOF
+          cat > gradle.properties <<'EOF'
+          android.useAndroidX=true
+          android.enableJetifier=true
+          org.gradle.jvmargs=-Xmx3g -Dfile.encoding=UTF-8
+          EOF
+          cat > app/build.gradle <<'EOF'
+          plugins { id 'com.android.application' }
+          android {
+              namespace 'com.repo2apk.web'
+              compileSdk 34
+              defaultConfig {
+                  applicationId 'com.repo2apk.web'
+                  minSdk 23
+                  targetSdk 34
+                  versionCode 1
+                  versionName '1.0'
+              }
+          }
+          EOF
+          mkdir -p app/src/main/java/$PKG_PATH app/src/main/res/values
+          cat > app/src/main/AndroidManifest.xml <<'EOF'
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+              <uses-permission android:name="android.permission.INTERNET"/>
+              <application android:label="Repo2APK" android:theme="@android:style/Theme.Material.Light.NoActionBar" android:usesCleartextTraffic="true">
+                  <activity android:name=".MainActivity" android:exported="true" android:configChanges="orientation|screenSize">
+                      <intent-filter>
+                          <action android:name="android.intent.action.MAIN"/>
+                          <category android:name="android.intent.category.LAUNCHER"/>
+                      </intent-filter>
+                  </activity>
+              </application>
+          </manifest>
+          EOF
+          cat > app/src/main/java/$PKG_PATH/MainActivity.java <<'EOF'
+          package com.repo2apk.web;
+          import android.app.Activity;
+          import android.os.Bundle;
+          import android.webkit.WebSettings;
+          import android.webkit.WebView;
+          import android.webkit.WebViewClient;
+          import android.webkit.WebChromeClient;
+          import android.webkit.DownloadListener;
+          import android.app.DownloadManager;
+          import android.net.Uri;
+          import android.os.Environment;
+          import android.webkit.URLUtil;
+          import android.widget.Toast;
+          public class MainActivity extends Activity {
+              WebView web;
+              @Override public void onCreate(Bundle b) {
+                  super.onCreate(b);
+                  web = new WebView(this);
+                  setContentView(web);
+                  WebSettings s = web.getSettings();
+                  s.setJavaScriptEnabled(true);
+                  s.setDomStorageEnabled(true);
+                  s.setDatabaseEnabled(true);
+                  s.setAllowFileAccess(true);
+                  s.setAllowContentAccess(true);
+                  s.setLoadWithOverviewMode(true);
+                  s.setUseWideViewPort(true);
+                  web.setWebViewClient(new WebViewClient());
+                  web.setWebChromeClient(new WebChromeClient());
+                  web.setDownloadListener((url, agent, disposition, mime) -> {
+                      try {
+                          DownloadManager.Request r = new DownloadManager.Request(Uri.parse(url));
+                          String name = URLUtil.guessFileName(url, disposition, mime);
+                          r.setTitle(name);
+                          r.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+                          r.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, name);
+                          if (mime != null) r.setMimeType(mime);
+                          r.addRequestHeader("User-Agent", agent);
+                          ((DownloadManager)getSystemService(DOWNLOAD_SERVICE)).enqueue(r);
+                          Toast.makeText(this, "Download started", Toast.LENGTH_SHORT).show();
+                      } catch (Exception e) {
+                          Toast.makeText(this, "Download failed", Toast.LENGTH_SHORT).show();
+                      }
+                  });
+                  web.loadUrl("file:///android_asset/" + getString(com.repo2apk.web.R.string.html_entry));
+              }
+              @Override public void onBackPressed() {
+                  if (web != null && web.canGoBack()) web.goBack(); else super.onBackPressed();
+              }
+              @Override protected void onDestroy() {
+                  if (web != null) { web.destroy(); web = null; }
+                  super.onDestroy();
+              }
+          }
+          EOF
+          cat > app/src/main/res/values/strings.xml <<EOF
+          <resources><string name="html_entry">${HTML_ENTRY}</string></resources>
+          EOF
 
-      - name: Upload APK
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: 8.7
+
+      - name: Build APK
+        run: |
+          cd /tmp/webviewapp
+          gradle assembleDebug --no-daemon
+          APK_PATH=$(find app/build/outputs/apk -type f -name '*.apk' | head -n 1)
+          test -n "$APK_PATH" || { echo "APK not generated"; exit 1; }
+          cp "$APK_PATH" /tmp/repo2apk.apk
+
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: app-debug
-          path: /tmp/app/**/*.apk
-          retention-days: 1
+          name: Repo2APK-html-apk
+          path: /tmp/repo2apk.apk
+          retention-days: 7
 
-      - name: Prepare APK for direct download
-        run: |
-          APK_PATH=$(find /tmp/app -type f -name "*.apk" | head -n 1)
-          test -n "$APK_PATH" || { echo "No APK file was produced"; exit 1; }
-          cp "$APK_PATH" /tmp/repo2apk-output.apk
-
-      - name: Publish direct APK download
+      - name: Publish direct APK
         uses: softprops/action-gh-release@v2
         with:
           tag_name: repo2apk-${{ github.run_id }}
-          name: "Repo2APK build ${{ github.run_number }}"
-          body: "Download the APK file below and open it on your Android device."
-          files: /tmp/repo2apk-output.apk
+          name: "Repo2APK HTML build ${{ github.run_number }}"
+          body: "Download the APK asset and install it on Android."
+          files: /tmp/repo2apk.apk
           draft: false
           prerelease: true
