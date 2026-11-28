@@ -947,7 +947,12 @@ async function pollRun(type,runId){
   return new Promise(resolve=>{
     polls[type]=setInterval(async()=>{
       try{
-        const r=await ghFetch('/repos/'+OWNER+'/'+REPO+'/actions/runs/'+runId);
+        // Workflow runs are public in this repository. Poll without a PAT to avoid
+        // browser/WebView CORS preflight failures on Authorization headers.
+        const r=await fetch(GH+'/repos/'+OWNER+'/'+REPO+'/actions/runs/'+runId,{
+          headers:{'Accept':'application/vnd.github+json'}
+        });
+        if(!r.ok) throw new Error('GitHub status HTTP '+r.status);
         const d=await r.json(); tick++;
         setPb(type,Math.min(20+tick*8,90));
         const si=Math.min(Math.floor(tick/3),steps.length-2);
