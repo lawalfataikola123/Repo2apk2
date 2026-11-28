@@ -3,6 +3,10 @@ run-name: REA-Android-${{ github.run_number }}
 
 on:
   workflow_dispatch:
+  push:
+    paths:
+      - 'android-rea/**'
+      - '.github/workflows/rea-android-apk.yml'
 
 permissions:
   contents: write
