@@ -949,9 +949,9 @@ async function pollRun(type,runId){
       try{
         // Workflow runs are public in this repository. Poll without a PAT to avoid
         // browser/WebView CORS preflight failures on Authorization headers.
-        const r=await fetch(GH+'/repos/'+OWNER+'/'+REPO+'/actions/runs/'+runId,{
-          headers:{'Accept':'application/vnd.github+json'}
-        });
+        // Use a simple GET with no custom headers. Custom Accept headers can
+        // trigger a CORS preflight that fails in Android WebView.
+        const r=await fetch(GH+'/repos/'+OWNER+'/'+REPO+'/actions/runs/'+runId);
         if(!r.ok) throw new Error('GitHub status HTTP '+r.status);
         const d=await r.json(); tick++;
         setPb(type,Math.min(20+tick*8,90));
@@ -960,7 +960,7 @@ async function pollRun(type,runId){
         if(si+1<steps.length)setStep(type,si+1,'act');
         log(type,'['+d.status+'] '+(d.conclusion||'running')+'...','w');
         if(d.status==='completed'){clearInterval(polls[type]); steps.forEach((_,i)=>setStep(type,i,d.conclusion==='success'?'done':'err')); setPb(type,100); resolve(d);}
-      } catch(e){ log(type,'Poll error: '+e.message,'r'); }
+      } catch(e){ log(type,'Poll connection failed. Retrying... ('+e.message+')','r'); }
     },6000);
   });
 }
