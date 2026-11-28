@@ -16,6 +16,7 @@ import java.util.ArrayList;
 public class MainActivity extends Activity {
     private EditText argsInput;
     private EditText opencodeInput;
+    private EditText hermesInput;
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
@@ -25,7 +26,7 @@ public class MainActivity extends Activity {
         root.setBackgroundColor(0xFF08111D);
 
         TextView title = new TextView(this);
-        title.setText("REA + OpenCode Android");
+        title.setText("REA + OpenCode + Hermes");
         title.setTextSize(28);
         title.setTextColor(0xFFEAF2FF);
         title.setGravity(Gravity.CENTER);
@@ -41,7 +42,7 @@ public class MainActivity extends Activity {
         root.addView(subtitle, sp);
 
         TextView notice = new TextView(this);
-        notice.setText("REA and OpenCode run inside Termux. Install them here, then launch the agent or send commands. The engines are not bundled in this APK.");
+        notice.setText("REA, OpenCode and Hermes run inside Termux. This app launches the agents installed in Termux; the engines are not bundled in this APK.");
         notice.setTextSize(13);
         notice.setTextColor(0xFFFFD28A);
         notice.setPadding(14, 14, 14, 14);
@@ -87,6 +88,38 @@ public class MainActivity extends Activity {
         });
 
         
+
+        TextView hermesTitle = new TextView(this);
+        hermesTitle.setText("Hermes Agent");
+        hermesTitle.setTextColor(0xFFEAF2FF);
+        hermesTitle.setTextSize(19);
+        LinearLayout.LayoutParams hermesTitleP = new LinearLayout.LayoutParams(-1, -2);
+        hermesTitleP.setMargins(0, 22, 0, 4);
+        root.addView(hermesTitle, hermesTitleP);
+        addButton(root, "Launch Hermes Agent", v -> runHermes());
+        addButton(root, "Hermes version", v -> runHermes("--version"));
+        TextView hermesLabel = new TextView(this);
+        hermesLabel.setText("Hermes arguments (example: --help)");
+        hermesLabel.setTextColor(0xFFEAF2FF);
+        hermesLabel.setTextSize(13);
+        LinearLayout.LayoutParams hermesLabelP = new LinearLayout.LayoutParams(-1, -2);
+        hermesLabelP.setMargins(0, 12, 0, 8);
+        root.addView(hermesLabel, hermesLabelP);
+        hermesInput = new EditText(this);
+        hermesInput.setSingleLine(true);
+        hermesInput.setHint("enter Hermes arguments");
+        hermesInput.setTextColor(0xFFEAF2FF);
+        hermesInput.setHintTextColor(0xFF7E91AA);
+        hermesInput.setPadding(12, 10, 12, 10);
+        hermesInput.setBackgroundColor(0xFF192638);
+        root.addView(hermesInput, new LinearLayout.LayoutParams(-1, -2));
+        addButton(root, "Run Hermes command", v -> {
+            String raw = hermesInput.getText().toString().trim();
+            if (raw.isEmpty()) { toast("Enter Hermes arguments first"); return; }
+            ArrayList<String> list = new ArrayList<>();
+            for (String part : raw.split("\\s+")) if (!part.isEmpty()) list.add(part);
+            runTermux("/data/data/com.termux/files/usr/bin/hermes", list);
+        });
 
         TextView label = new TextView(this);
         label.setText("Custom REA arguments (example: inspect --help)");
@@ -144,6 +177,12 @@ public class MainActivity extends Activity {
         args.add("-lc");
         args.add("export PATH=/data/data/com.termux/files/usr/bin:$PATH; " + command);
         runTermux("/data/data/com.termux/files/usr/bin/bash", args);
+    }
+
+    private void runHermes(String... args) {
+        ArrayList<String> list = new ArrayList<>();
+        for (String a : args) list.add(a);
+        runTermux("/data/data/com.termux/files/usr/bin/hermes", list);
     }
 
     private void runOpenCode(String... args) {
