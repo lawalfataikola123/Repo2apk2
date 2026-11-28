@@ -109,7 +109,7 @@ public class MainActivity extends Activity {
             if (raw.isEmpty()) { toast("Enter REA arguments first"); return; }
             ArrayList<String> args = new ArrayList<>();
             for (String part : raw.split("\\s+")) if (!part.isEmpty()) args.add(part);
-            runTermux("rea", args);
+            runTermux("/data/data/com.termux/files/usr/bin/rea", args);
         });
 
         TextView footer = new TextView(this);
@@ -153,7 +153,7 @@ public class MainActivity extends Activity {
     }
 
     private void installOpenCode() {
-        runShell("pkg install -y curl ripgrep && curl -fL https://github.com/guysoft/opencode-termux/releases/latest/download/opencode-aarch64.deb -o $TMPDIR/opencode-aarch64.deb && dpkg -i $TMPDIR/opencode-aarch64.deb");
+        runShell("pkg install -y curl ripgrep && curl -fL https://github.com/guysoft/opencode-termux/releases/latest/download/opencode-aarch64.deb -o $TMPDIR/opencode-aarch64.deb && (dpkg -i $TMPDIR/opencode-aarch64.deb || { apt-get install -y -f && dpkg -i $TMPDIR/opencode-aarch64.deb; })");
     }
 
     private void runTermux(String executable, ArrayList<String> args) {
