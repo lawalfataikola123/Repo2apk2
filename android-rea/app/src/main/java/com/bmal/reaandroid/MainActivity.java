@@ -15,6 +15,7 @@ import java.util.ArrayList;
 
 public class MainActivity extends Activity {
     private EditText argsInput;
+    private EditText opencodeInput;
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
@@ -24,14 +25,14 @@ public class MainActivity extends Activity {
         root.setBackgroundColor(0xFF08111D);
 
         TextView title = new TextView(this);
-        title.setText("REA Android");
+        title.setText("REA + OpenCode Android");
         title.setTextSize(28);
         title.setTextColor(0xFFEAF2FF);
         title.setGravity(Gravity.CENTER);
         root.addView(title, new LinearLayout.LayoutParams(-1, -2));
 
         TextView subtitle = new TextView(this);
-        subtitle.setText("Android companion for the REA CLI");
+        subtitle.setText("Run coding agents from Termux on Android");
         subtitle.setTextSize(14);
         subtitle.setTextColor(0xFF9DB2CC);
         subtitle.setGravity(Gravity.CENTER);
@@ -40,7 +41,7 @@ public class MainActivity extends Activity {
         root.addView(subtitle, sp);
 
         TextView notice = new TextView(this);
-        notice.setText("Requires Termux and REA installed in Termux. This app sends commands to your Termux session; it does not bundle the REA engine.");
+        notice.setText("REA and OpenCode run inside Termux. Install them here, then launch the agent or send commands. The engines are not bundled in this APK.");
         notice.setTextSize(13);
         notice.setTextColor(0xFFFFD28A);
         notice.setPadding(14, 14, 14, 14);
@@ -51,6 +52,41 @@ public class MainActivity extends Activity {
         addButton(root, "REA doctor", v -> runRea("doctor"));
         addButton(root, "REA help", v -> runRea("--help"));
         addButton(root, "Start REA MCP", v -> runRea("mcp"));
+
+        TextView opTitle = new TextView(this);
+        opTitle.setText("OpenCode Agent");
+        opTitle.setTextColor(0xFFEAF2FF);
+        opTitle.setTextSize(19);
+        LinearLayout.LayoutParams opTitleP = new LinearLayout.LayoutParams(-1, -2);
+        opTitleP.setMargins(0, 22, 0, 4);
+        root.addView(opTitle, opTitleP);
+        addButton(root, "Install OpenCode for Termux", v -> installOpenCode());
+        addButton(root, "Launch OpenCode", v -> runOpenCode());
+        addButton(root, "OpenCode version", v -> runOpenCode("--version"));
+        TextView opLabel = new TextView(this);
+        opLabel.setText("OpenCode arguments (example: --help)");
+        opLabel.setTextColor(0xFFEAF2FF);
+        opLabel.setTextSize(13);
+        LinearLayout.LayoutParams opLabelP = new LinearLayout.LayoutParams(-1, -2);
+        opLabelP.setMargins(0, 12, 0, 8);
+        root.addView(opLabel, opLabelP);
+        opencodeInput = new EditText(this);
+        opencodeInput.setSingleLine(true);
+        opencodeInput.setHint("enter OpenCode arguments");
+        opencodeInput.setTextColor(0xFFEAF2FF);
+        opencodeInput.setHintTextColor(0xFF7E91AA);
+        opencodeInput.setPadding(12, 10, 12, 10);
+        opencodeInput.setBackgroundColor(0xFF192638);
+        root.addView(opencodeInput, new LinearLayout.LayoutParams(-1, -2));
+        addButton(root, "Run OpenCode command", v -> {
+            String raw = opencodeInput.getText().toString().trim();
+            if (raw.isEmpty()) { toast("Enter OpenCode arguments first"); return; }
+            ArrayList<String> list = new ArrayList<>();
+            for (String part : raw.split("\\s+")) if (!part.isEmpty()) list.add(part);
+            runTermux("/data/data/com.termux/files/usr/bin/opencode", list);
+        });
+
+        
 
         TextView label = new TextView(this);
         label.setText("Custom REA arguments (example: inspect --help)");
@@ -100,14 +136,24 @@ public class MainActivity extends Activity {
     private void runRea(String... args) {
         ArrayList<String> list = new ArrayList<>();
         for (String a : args) list.add(a);
-        runTermux("rea", list);
+        runTermux("/data/data/com.termux/files/usr/bin/rea", list);
     }
 
     private void runShell(String command) {
         ArrayList<String> args = new ArrayList<>();
         args.add("-lc");
-        args.add(command);
-        runTermux("bash", args);
+        args.add("export PATH=/data/data/com.termux/files/usr/bin:$PATH; " + command);
+        runTermux("/data/data/com.termux/files/usr/bin/bash", args);
+    }
+
+    private void runOpenCode(String... args) {
+        ArrayList<String> list = new ArrayList<>();
+        for (String a : args) list.add(a);
+        runTermux("/data/data/com.termux/files/usr/bin/opencode", list);
+    }
+
+    private void installOpenCode() {
+        runShell("pkg install -y curl ripgrep && curl -fL https://github.com/guysoft/opencode-termux/releases/latest/download/opencode-aarch64.deb -o $TMPDIR/opencode-aarch64.deb && dpkg -i $TMPDIR/opencode-aarch64.deb");
     }
 
     private void runTermux(String executable, ArrayList<String> args) {
